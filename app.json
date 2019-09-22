@@ -1,0 +1,15 @@
+{
+  "name": "Ladon",
+  "description": "Ladon Microservice API to purchase vouchers from PolisPay",
+  "repository": "https://github.com/grupokindynos/ladon",
+  "logo": "https://avatars0.githubusercontent.com/u/43501156?s=200&v=4",
+  "keywords": ["golang", "REST api", "gin", "cryptocurrencies"],
+  "env": {
+    "PLUTUS_PUBLIC_KEY": {"description": "Plutus public key"},
+    "PLUTUS_AUTH_USERNAME": {"description": "Plutus auth username for REST API"},
+    "PLUTUS_AUTH_PASSWORD": {"description": "Plutus auth password for REST API"},
+    "LADON_PUBLIC_KEY": {"description": "Ladon public key"},
+    "LADON_PRIVATE_KEY": {"description": "Ladon private key"},
+    "HESTIA_PUBLIC_KEY": {"description":  "Hestia public key"}
+  }
+}
