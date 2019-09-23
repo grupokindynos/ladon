@@ -59,7 +59,12 @@ func ApplyRoutes(r *gin.Engine) {
 	{
 		bitcouService := services.InitService()
 		vouchersCtrl := controllers.VouchersController{BitcouService: bitcouService}
-		api.GET("/list", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetVouchersList) })
+		api.GET("/status", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetServiceStatus) })
+		api.GET("/list", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetList) })
+		api.GET("/info/:voucherid", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetInfo) })
+		api.POST("/prepare", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetToken) })
+		api.POST("/new", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.Store) })
+		api.POST("/update", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.Update) })
 	}
 	r.NoRoute(func(c *gin.Context) {
 		c.String(http.StatusNotFound, "Not Found")
