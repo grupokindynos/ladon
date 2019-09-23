@@ -17,7 +17,7 @@ func GetVoucherInfo() {
 }
 
 func ValidateToken(token string) bool {
-	encodedToken, err := jws.EncodeJWS(token, os.Getenv("LADON_PUBLIC_KEY"))
+	encodedToken, err := jws.EncodeJWS(token, os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return false
 	}
