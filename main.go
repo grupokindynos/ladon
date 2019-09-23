@@ -3,10 +3,14 @@ package main
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/grupokindynos/ladon/config"
+	"github.com/grupokindynos/ladon/controllers"
 	"github.com/grupokindynos/ladon/processor"
+	"github.com/grupokindynos/ladon/services"
 	"github.com/joho/godotenv"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -51,13 +55,37 @@ func GetApp() *gin.Engine {
 }
 
 func ApplyRoutes(r *gin.Engine) {
-	_ = r.Group("/")
+	api := r.Group("/")
 	{
-
+		bitcouService := services.InitService()
+		vouchersCtrl := controllers.VouchersController{BitcouService: bitcouService}
+		api.GET("/list", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetVouchersList) })
 	}
 	r.NoRoute(func(c *gin.Context) {
 		c.String(http.StatusNotFound, "Not Found")
 	})
+}
+
+func ValidateRequest(c *gin.Context, method func() (interface{}, error)) {
+	reqToken, ok := c.Request.Header["Authorization"]
+	if !ok {
+		config.GlobalResponseNoAuth(c)
+		return
+	}
+	splitToken := strings.Split(reqToken[0], "Bearer ")
+	token := splitToken[1]
+	// If there is no token on the header, return non-authed
+	if token == "" {
+		config.GlobalResponseNoAuth(c)
+		return
+	}
+	valid := services.ValidateToken(token)
+	if !valid {
+		config.GlobalResponseNoAuth(c)
+		return
+	}
+	res, err := method()
+	config.GlobalResponseError(res, err, c)
 }
 
 func timer() {
