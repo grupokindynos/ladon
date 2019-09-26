@@ -3,14 +3,14 @@ package main
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/grupokindynos/ladon/config"
+	"github.com/grupokindynos/common/responses"
+	"github.com/grupokindynos/common/tokens/ppat"
 	"github.com/grupokindynos/ladon/controllers"
 	"github.com/grupokindynos/ladon/processor"
 	"github.com/grupokindynos/ladon/services"
 	"github.com/joho/godotenv"
 	"net/http"
 	"os"
-	"strings"
 	"sync"
 	"time"
 )
@@ -59,43 +59,46 @@ func ApplyRoutes(r *gin.Engine) {
 	{
 		bitcouService := services.InitService()
 		vouchersCtrl := controllers.VouchersController{BitcouService: bitcouService}
-		api.GET("/status", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetServiceStatus) })
-		api.GET("/list", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetList) })
-		api.GET("/info/:voucherid", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetInfo) })
+		// New voucher routes
 		api.POST("/prepare", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetToken) })
 		api.POST("/new", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.Store) })
-		api.POST("/update", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.Update) })
+		// Service status
+		api.GET("/status", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetServiceStatus) })
+		// Available vouchers
+		api.GET("/list", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetList) })
+		// Processing voucher information
+		api.GET("/info/:voucherid", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetInfo) })
 	}
 	r.NoRoute(func(c *gin.Context) {
 		c.String(http.StatusNotFound, "Not Found")
 	})
 }
 
-func ValidateRequest(c *gin.Context, method func() (interface{}, error)) {
-	reqToken, ok := c.Request.Header["Authorization"]
-	if !ok {
-		config.GlobalResponseNoAuth(c)
-		return
-	}
-	splitToken := strings.Split(reqToken[0], "Bearer ")
-	token := splitToken[1]
-	// If there is no token on the header, return non-authed
+func ValidateRequest(c *gin.Context, method func(payload []byte, uid string, voucherid string) (interface{}, error)) {
+	token := c.GetHeader("token")
+	voucherid := c.Param("voucherid")
 	if token == "" {
-		config.GlobalResponseNoAuth(c)
+		responses.GlobalResponseNoAuth(c)
 		return
 	}
-	valid := services.ValidateToken(token)
+	var body []byte
+	err := c.BindJSON(&body)
+	if err != nil {
+		responses.GlobalResponseNoAuth(c)
+		return
+	}
+	valid, payload, uid := ppat.VerifyPPATToken("ladon", os.Getenv("MASTER_PASSWORD"), token, body, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"), os.Getenv("HESTIA_PUBLIC_KEY"))
 	if !valid {
-		config.GlobalResponseNoAuth(c)
+		responses.GlobalResponseNoAuth(c)
 		return
 	}
-	res, err := method()
-	config.GlobalResponseError(res, err, c)
+	res, err := method(payload, uid, voucherid)
+	responses.GlobalResponseError(res, err, c)
 }
 
 func timer() {
 	for {
-		time.Sleep(time.Duration(1 * time.Second))
+		time.Sleep(1 * time.Second)
 		currTime = CurrentTime{
 			Hour:   time.Now().Hour(),
 			Day:    time.Now().Day(),
