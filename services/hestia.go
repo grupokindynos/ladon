@@ -13,10 +13,6 @@ import (
 
 var HestiaURL = hestia.ProductionURL
 
-func StoreNewVoucher() {
-
-}
-
 func GetVouchersStatus() (hestia.Config, error) {
 	req, err := mvt.CreateMVTToken("GET", HestiaURL+"/config", "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
