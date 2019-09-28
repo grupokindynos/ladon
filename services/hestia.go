@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"time"
 )
 
 var HestiaURL = hestia.ProductionURL
@@ -19,7 +20,7 @@ func GetVouchersStatus() (hestia.Config, error) {
 		return hestia.Config{}, err
 	}
 	client := http.Client{
-		Timeout: 5,
+		Timeout: 5 * time.Second,
 	}
 	res, err := client.Do(req)
 	if err != nil {
@@ -30,11 +31,16 @@ func GetVouchersStatus() (hestia.Config, error) {
 	if err != nil {
 		return hestia.Config{}, err
 	}
+	var tokenString string
+	err = json.Unmarshal(tokenResponse, &tokenString)
+	if err != nil {
+		return hestia.Config{}, err
+	}
 	headerSignature := res.Header.Get("service")
 	if headerSignature == "" {
 		return hestia.Config{}, errors.New("no header signature")
 	}
-	valid, payload := mrt.VerifyMRTToken(headerSignature, tokenResponse, os.Getenv("HESTIA_PUBLIC_KEY"), os.Getenv("MASTER_PASSWORD"))
+	valid, payload := mrt.VerifyMRTToken(headerSignature, tokenString, os.Getenv("HESTIA_PUBLIC_KEY"), os.Getenv("MASTER_PASSWORD"))
 	if !valid {
 		return hestia.Config{}, err
 	}
@@ -52,7 +58,7 @@ func GetVoucherInfo(voucherid string) (hestia.Voucher, error) {
 		return hestia.Voucher{}, err
 	}
 	client := http.Client{
-		Timeout: 5,
+		Timeout: 5 * time.Second,
 	}
 	res, err := client.Do(req)
 	if err != nil {
@@ -63,11 +69,16 @@ func GetVoucherInfo(voucherid string) (hestia.Voucher, error) {
 	if err != nil {
 		return hestia.Voucher{}, err
 	}
+	var tokenString string
+	err = json.Unmarshal(tokenResponse, &tokenString)
+	if err != nil {
+		return hestia.Voucher{}, err
+	}
 	headerSignature := res.Header.Get("service")
 	if headerSignature == "" {
 		return hestia.Voucher{}, errors.New("no header signature")
 	}
-	valid, payload := mrt.VerifyMRTToken(headerSignature, tokenResponse, os.Getenv("HESTIA_PUBLIC_KEY"), os.Getenv("MASTER_PASSWORD"))
+	valid, payload := mrt.VerifyMRTToken(headerSignature, tokenString, os.Getenv("HESTIA_PUBLIC_KEY"), os.Getenv("MASTER_PASSWORD"))
 	if !valid {
 		return hestia.Voucher{}, err
 	}

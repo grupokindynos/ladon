@@ -14,10 +14,8 @@ github.com/golang/protobuf v1.3.1/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5y
 github.com/google/go-querystring v1.0.0/go.mod h1:odCYkC5MyYFN7vkCjXpyrEuKhc/BUO6wN/zVPAxq5ck=
 github.com/google/uuid v1.0.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/grupokindynos/common v0.0.0-20190925222243-8ae28b5b0fea h1:NQtspvZwlPfD6Vf7Mr2hTpW+BQLcVw9BJEtOSnpfc1k=
-github.com/grupokindynos/common v0.0.0-20190925222243-8ae28b5b0fea/go.mod h1:LWwa+FAKwMTYMlmxqB+BFH2VyKth9j2Lkk0l1mLd6XU=
-github.com/grupokindynos/common v0.0.0-20190926220432-984e3bd18ef0 h1:JN8R1ld11Qv5GGERhI2BUoRR/pMztoYrXEI5zNqeawg=
-github.com/grupokindynos/common v0.0.0-20190926220432-984e3bd18ef0/go.mod h1:LWwa+FAKwMTYMlmxqB+BFH2VyKth9j2Lkk0l1mLd6XU=
+github.com/grupokindynos/common v0.0.0-20190927220616-6ba7f90b2c75 h1:dd9tsZeFElzWNENebGuIDNDDvYsRe05wfEdw+8rrx5k=
+github.com/grupokindynos/common v0.0.0-20190927220616-6ba7f90b2c75/go.mod h1:LWwa+FAKwMTYMlmxqB+BFH2VyKth9j2Lkk0l1mLd6XU=
 github.com/heroku/heroku-go/v5 v5.1.0/go.mod h1:d+1QrZyjbnQJG1f8xIoVvMQRFLt3XRVZOdlm26Sr73U=
 github.com/interagent/schematic v0.0.0-20180830170528-b5e8ba7aa570/go.mod h1:4X9u5iNUePRrRDdwjok6skjlQBXTcNfWa4C3uS1+5SQ=
 github.com/joho/godotenv v1.3.0 h1:Zjp+RcGpHhGlrMbJzXTrZZPrWj+1vfm90La1wgB6Bhc=

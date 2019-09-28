@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/grupokindynos/common/responses"
@@ -49,7 +50,10 @@ func main() {
 
 func GetApp() *gin.Engine {
 	App := gin.Default()
-	App.Use(cors.Default())
+	corsConf := cors.DefaultConfig()
+	corsConf.AllowAllOrigins = true
+	corsConf.AllowHeaders = []string{"token", "service"}
+	App.Use(cors.New(corsConf))
 	ApplyRoutes(App)
 	return App
 }
@@ -75,26 +79,30 @@ func ApplyRoutes(r *gin.Engine) {
 }
 
 func ValidateRequest(c *gin.Context, method func(payload []byte, uid string, voucherid string) (interface{}, error)) {
-	token := c.GetHeader("token")
+	fbToken := c.GetHeader("token")
 	voucherid := c.Param("voucherid")
-	if token == "" {
+	if fbToken == "" {
 		responses.GlobalResponseNoAuth(c)
 		return
 	}
-	var body []byte
-	err := c.BindJSON(&body)
-	if err != nil {
-		responses.GlobalResponseNoAuth(c)
+	tokenBytes, _ := c.GetRawData()
+	var tokenStr string
+	if len(tokenBytes) > 0 {
+		err := json.Unmarshal(tokenBytes, &tokenStr)
+		responses.GlobalResponseError(nil, err, c)
 		return
 	}
-	valid, payload, uid := ppat.VerifyPPATToken("ladon", os.Getenv("MASTER_PASSWORD"), token, body, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"), os.Getenv("HESTIA_PUBLIC_KEY"))
+	valid, payload, uid, err := ppat.VerifyPPATToken("ladon", os.Getenv("MASTER_PASSWORD"), fbToken, tokenStr, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"), os.Getenv("HESTIA_PUBLIC_KEY"))
 	if !valid {
 		responses.GlobalResponseNoAuth(c)
 		return
 	}
-	res, err := method(payload, uid, voucherid)
-	responses.GlobalResponseError(res, err, c)
+	response, err := method(payload, uid, voucherid)
+	responses.GlobalResponseError(response, err, c)
+	return
 }
+
+
 
 func timer() {
 	for {
