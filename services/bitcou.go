@@ -37,6 +37,32 @@ func (bs *BitcouService) GetVouchersList() ([]models.Voucher, error) {
 	return bs.VouchersList.List, nil
 }
 
+func (bs *BitcouService) GetPhoneTopUpList(countryCode string) (interface{}, error) {
+	url := os.Getenv("BITCOU_URL") + "voucher/availableVouchersByPhoneNb?phone_number=" + countryCode
+	token := "Bearer " + os.Getenv("BITCOU_TOKEN")
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Authorization", token)
+	client := &http.Client{Timeout: 5 * time.Second}
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = res.Body.Close()
+	}()
+	contents, _ := ioutil.ReadAll(res.Body)
+	// TODO get response modeled correctly
+	var response interface{}
+	err = json.Unmarshal(contents, &response)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
 func (bs *BitcouService) getVouchersList() ([]models.Voucher, error) {
 	url := os.Getenv("BITCOU_URL") + "voucher/availableVouchers/"
 	token := "Bearer " + os.Getenv("BITCOU_TOKEN")

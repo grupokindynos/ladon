@@ -59,10 +59,15 @@ func GetApp() *gin.Engine {
 }
 
 func ApplyRoutes(r *gin.Engine) {
+	bitcouAuthUsername := os.Getenv("LADON_AUTH_USERNAME")
+	bitcouAuthPassword := os.Getenv("LADON_AUTH_PASSWORD")
+	bitcouService := services.InitService()
+	vouchersCtrl := controllers.VouchersController{BitcouService: bitcouService}
+	bitcou := r.Group("/", gin.BasicAuth(gin.Accounts{
+		bitcouAuthUsername: bitcouAuthPassword,
+	}))
 	api := r.Group("/")
 	{
-		bitcouService := services.InitService()
-		vouchersCtrl := controllers.VouchersController{BitcouService: bitcouService}
 		// New voucher routes
 		api.POST("/prepare", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetToken) })
 		api.POST("/new", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.Store) })
@@ -72,6 +77,8 @@ func ApplyRoutes(r *gin.Engine) {
 		api.GET("/list", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetList) })
 		// Processing voucher information
 		api.GET("/info/:voucherid", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetInfo) })
+		// Bitcou endpoint for a voucher redeem
+		bitcou.POST("/redeem", vouchersCtrl.Update)
 	}
 	r.NoRoute(func(c *gin.Context) {
 		c.String(http.StatusNotFound, "Not Found")
@@ -101,8 +108,6 @@ func ValidateRequest(c *gin.Context, method func(payload []byte, uid string, vou
 	responses.GlobalResponseError(response, err, c)
 	return
 }
-
-
 
 func timer() {
 	for {

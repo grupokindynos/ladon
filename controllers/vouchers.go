@@ -2,7 +2,10 @@ package controllers
 
 import (
 	"errors"
+	"github.com/gin-gonic/gin"
 	"github.com/grupokindynos/common/jwt"
+	"github.com/grupokindynos/common/responses"
+	"github.com/grupokindynos/ladon/models"
 	"github.com/grupokindynos/ladon/services"
 )
 
@@ -45,6 +48,12 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherid string
 	return jwt.EncryptJWE(uid, nil)
 }
 
-func (vc *VouchersController) Update(payload []byte, uid string, voucherid string) (interface{}, error) {
-	return jwt.EncryptJWE(uid, nil)
+func (vc *VouchersController) Update(c *gin.Context) {
+	var voucherInfo models.RedeemCodeVoucher
+	err := c.BindJSON(&voucherInfo)
+	if err != nil {
+		responses.GlobalResponseError(nil, err, c)
+		return
+	}
+	return
 }
