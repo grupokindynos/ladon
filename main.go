@@ -7,9 +7,11 @@ import (
 	"github.com/grupokindynos/common/responses"
 	"github.com/grupokindynos/common/tokens/ppat"
 	"github.com/grupokindynos/ladon/controllers"
+	"github.com/grupokindynos/ladon/models"
 	"github.com/grupokindynos/ladon/processor"
 	"github.com/grupokindynos/ladon/services"
 	"github.com/joho/godotenv"
+	"log"
 	"net/http"
 	"os"
 	"sync"
@@ -23,7 +25,12 @@ type CurrentTime struct {
 	Second int
 }
 
-var currTime CurrentTime
+var (
+	currTime           CurrentTime
+	prepareVouchersMap = make(map[string]models.PrepareVoucher)
+)
+
+const prepareVoucherTimeframe = 60 * 5 // 5 minutes
 
 func init() {
 	_ = godotenv.Load()
@@ -59,13 +66,9 @@ func GetApp() *gin.Engine {
 }
 
 func ApplyRoutes(r *gin.Engine) {
-	bitcouAuthUsername := os.Getenv("LADON_AUTH_USERNAME")
-	bitcouAuthPassword := os.Getenv("LADON_AUTH_PASSWORD")
 	bitcouService := services.InitService()
-	vouchersCtrl := controllers.VouchersController{BitcouService: bitcouService}
-	bitcou := r.Group("/", gin.BasicAuth(gin.Accounts{
-		bitcouAuthUsername: bitcouAuthPassword,
-	}))
+	go checkAndRemoveVouchers()
+	vouchersCtrl := controllers.VouchersController{BitcouService: bitcouService, PreparesVouchers: &prepareVouchersMap}
 	api := r.Group("/")
 	{
 		// New voucher routes
@@ -76,7 +79,7 @@ func ApplyRoutes(r *gin.Engine) {
 		// Available vouchers
 		api.GET("/list", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetList) })
 		// Bitcou endpoint for a voucher redeem
-		bitcou.POST("/redeem", vouchersCtrl.Update)
+		api.POST("/redeem", vouchersCtrl.Update)
 	}
 	r.NoRoute(func(c *gin.Context) {
 		c.String(http.StatusNotFound, "Not Found")
@@ -147,4 +150,19 @@ func runCronMinutes(schedule int, function func(), wg *sync.WaitGroup) {
 		return
 	}()
 
+}
+
+func checkAndRemoveVouchers() {
+	for {
+		time.Sleep(time.Second * 60)
+		log.Print("Removing obsolete vouchers request")
+		var count int
+		for k, v := range prepareVouchersMap {
+			if time.Now().Unix() < v.Timestamp+prepareVoucherTimeframe {
+				count += 1
+				delete(prepareVouchersMap, k)
+			}
+		}
+		log.Printf("Removed %v vouchers", count)
+	}
 }
