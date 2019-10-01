@@ -59,7 +59,7 @@ func GetApp() *gin.Engine {
 	App := gin.Default()
 	corsConf := cors.DefaultConfig()
 	corsConf.AllowAllOrigins = true
-	corsConf.AllowHeaders = []string{"token", "service"}
+	corsConf.AllowHeaders = []string{"token", "service", "content-type"}
 	App.Use(cors.New(corsConf))
 	ApplyRoutes(App)
 	return App
