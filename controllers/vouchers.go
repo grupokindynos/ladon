@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/grupokindynos/common/jwt"
 	"github.com/grupokindynos/common/responses"
@@ -27,17 +26,6 @@ func (vc *VouchersController) GetList(payload []byte, uid string, voucherid stri
 		return nil, err
 	}
 	return jwt.EncryptJWE(uid, vouchersList)
-}
-
-func (vc *VouchersController) GetInfo(payload []byte, uid string, voucherid string) (interface{}, error) {
-	if voucherid == "" {
-		return nil, errors.New("no voucher id provided")
-	}
-	voucher, err := services.GetVoucherInfo(voucherid)
-	if err != nil {
-		return nil, err
-	}
-	return jwt.EncryptJWE(uid, voucher)
 }
 
 func (vc *VouchersController) GetToken(payload []byte, uid string, voucherid string) (interface{}, error) {

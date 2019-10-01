@@ -44,10 +44,19 @@ type Shipping struct {
 	Print bool `json:"print"`
 }
 
+type Benefits struct {
+	Data           bool `json:"Data"`
+	DigitalProduct bool `json:"DigitalProduct"`
+	Minutes        bool `json:"Minutes"`
+	Mobile         bool `json:"Mobile"`
+	TV             bool `json:"TV"`
+	Utility        bool `json:"Utility"`
+}
+
 type Variants struct {
-	Ean       string `json:"ean"`
-	Price     int    `json:"price"`
-	VariantID string `json:"variant_id"`
+	Ean       string  `json:"ean"`
+	Price     float64 `json:"price"`
+	VariantID string  `json:"variant_id"`
 }
 
 type Voucher struct {
@@ -59,6 +68,7 @@ type Voucher struct {
 	Shipping    Shipping    `json:"shipping"`
 	TraderID    int         `json:"trader_id"`
 	Variants    []Variants  `json:"variants"`
+	Benefits    Benefits    `json:"benefits"`
 }
 
 type MetaData struct {

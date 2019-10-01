@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	UpdateVouchersTimeFrame = 60 * 10
+	UpdateVouchersTimeFrame = 60 * 60 * 24 // 1 day
 )
 
 type BitcouService struct {
@@ -71,7 +71,7 @@ func (bs *BitcouService) getVouchersList() ([]models.Voucher, error) {
 		return nil, err
 	}
 	req.Header.Add("Authorization", token)
-	client := &http.Client{Timeout: 5 * time.Second}
+	client := &http.Client{Timeout: 15 * time.Second}
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err

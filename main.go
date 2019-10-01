@@ -75,8 +75,6 @@ func ApplyRoutes(r *gin.Engine) {
 		api.GET("/status", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetServiceStatus) })
 		// Available vouchers
 		api.GET("/list", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetList) })
-		// Processing voucher information
-		api.GET("/info/:voucherid", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetInfo) })
 		// Bitcou endpoint for a voucher redeem
 		bitcou.POST("/redeem", vouchersCtrl.Update)
 	}
