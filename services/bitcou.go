@@ -20,11 +20,11 @@ type BitcouService struct {
 }
 
 type VouchersData struct {
-	List        []models.Voucher
+	List        map[string][]models.Voucher
 	LastUpdated time.Time
 }
 
-func (bs *BitcouService) GetVouchersList() ([]models.Voucher, error) {
+func (bs *BitcouService) GetVouchersList() (map[string][]models.Voucher, error) {
 	if time.Now().Unix() < bs.VouchersList.LastUpdated.Unix()+UpdateVouchersTimeFrame {
 		return bs.VouchersList.List, nil
 	}
@@ -32,7 +32,100 @@ func (bs *BitcouService) GetVouchersList() ([]models.Voucher, error) {
 	if err != nil {
 		return nil, err
 	}
-	bs.VouchersList.List = list
+	VouchersList := make(map[string][]models.Voucher)
+	for _, v := range list {
+		if v.Countries.Austria {
+			VouchersList["austria"] = append(VouchersList["austria"], v)
+		}
+		if v.Countries.Belgium {
+			VouchersList["belgium"] = append(VouchersList["belgium"], v)
+		}
+		if v.Countries.Canada {
+			VouchersList["canada"] = append(VouchersList["canada"], v)
+		}
+		if v.Countries.Croatia {
+			VouchersList["croatia"] = append(VouchersList["croatia"], v)
+		}
+		if v.Countries.Cyprus {
+			VouchersList["cyprus"] = append(VouchersList["cyprus"], v)
+		}
+		if v.Countries.Czechia {
+			VouchersList["czechia"] = append(VouchersList["czechia"], v)
+		}
+		if v.Countries.Denmark {
+			VouchersList["denmark"] = append(VouchersList["denmark"], v)
+		}
+		if v.Countries.Estonia {
+			VouchersList["estonia"] = append(VouchersList["estonia"], v)
+		}
+		if v.Countries.Finland {
+			VouchersList["finland"] = append(VouchersList["finland"], v)
+		}
+		if v.Countries.France {
+			VouchersList["france"] = append(VouchersList["france"], v)
+		}
+		if v.Countries.Germany {
+			VouchersList["germany"] = append(VouchersList["germany"], v)
+		}
+		if v.Countries.GreatBritain {
+			VouchersList["great_britain"] = append(VouchersList["great_britain"], v)
+		}
+		if v.Countries.Greece {
+			VouchersList["greece"] = append(VouchersList["greece"], v)
+		}
+		if v.Countries.Hungary {
+			VouchersList["hungary"] = append(VouchersList["hungary"], v)
+		}
+		if v.Countries.Ireland {
+			VouchersList["ireland"] = append(VouchersList["ireland"], v)
+		}
+		if v.Countries.Italy {
+			VouchersList["italy"] = append(VouchersList["italy"], v)
+		}
+		if v.Countries.Lichtenstein {
+			VouchersList["lichtenstein"] = append(VouchersList["lichtenstein"], v)
+		}
+		if v.Countries.Luxembourg {
+			VouchersList["luxembourg"] = append(VouchersList["luxembourg"], v)
+		}
+		if v.Countries.Malta {
+			VouchersList["malta"] = append(VouchersList["malta"], v)
+		}
+		if v.Countries.Netherland {
+			VouchersList["netherland"] = append(VouchersList["netherland"], v)
+		}
+		if v.Countries.Norway {
+			VouchersList["norway"] = append(VouchersList["norway"], v)
+		}
+		if v.Countries.Poland {
+			VouchersList["poland"] = append(VouchersList["poland"], v)
+		}
+		if v.Countries.Portugal {
+			VouchersList["portugal"] = append(VouchersList["portugal"], v)
+		}
+		if v.Countries.Slovakia {
+			VouchersList["slovakia"] = append(VouchersList["slovakia"], v)
+		}
+		if v.Countries.Slovenia {
+			VouchersList["slovenia"] = append(VouchersList["slovenia"], v)
+		}
+		if v.Countries.Spain {
+			VouchersList["spain"] = append(VouchersList["spain"], v)
+		}
+		if v.Countries.Sweden {
+			VouchersList["sweden"] = append(VouchersList["sweden"], v)
+		}
+		if v.Countries.Switzerland {
+			VouchersList["switzerland"] = append(VouchersList["switzerland"], v)
+		}
+		if v.Countries.Turkey {
+			VouchersList["turkey"] = append(VouchersList["turkey"], v)
+		}
+		if v.Countries.Usa {
+			VouchersList["usa"] = append(VouchersList["usa"], v)
+		}
+	}
+	bs.VouchersList.List = VouchersList
 	bs.VouchersList.LastUpdated = time.Now()
 	return bs.VouchersList.List, nil
 }
@@ -93,7 +186,7 @@ func InitService() *BitcouService {
 		BitcouURL:   os.Getenv("BITCOU_URL"),
 		BitcouToken: os.Getenv("BITCOU_TOKEN"),
 		VouchersList: VouchersData{
-			List:        []models.Voucher{},
+			List:        make(map[string][]models.Voucher),
 			LastUpdated: time.Time{},
 		},
 	}

@@ -49,7 +49,7 @@ func (vc *VouchersController) GetToken(payload []byte, uid string, voucherid str
 	}
 	vouchers, err := vc.BitcouService.GetVouchersList()
 	var selectedVoucher models.Voucher
-	for _, voucher := range vouchers {
+	for _, voucher := range vouchers[PrepareVoucher.Country] {
 		if voucher.ProductID == PrepareVoucher.VoucherType {
 			selectedVoucher = voucher
 			break
