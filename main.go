@@ -27,7 +27,7 @@ type CurrentTime struct {
 
 var (
 	currTime           CurrentTime
-	prepareVouchersMap = make(map[string]models.PrepareVoucher)
+	prepareVouchersMap = make(map[string]models.PrepareVoucherInfo)
 )
 
 const prepareVoucherTimeframe = 60 * 5 // 5 minutes
@@ -68,7 +68,7 @@ func GetApp() *gin.Engine {
 func ApplyRoutes(r *gin.Engine) {
 	bitcouService := services.InitService()
 	go checkAndRemoveVouchers()
-	vouchersCtrl := controllers.VouchersController{BitcouService: bitcouService, PreparesVouchers: &prepareVouchersMap}
+	vouchersCtrl := controllers.VouchersController{BitcouService: bitcouService, PreparesVouchers: prepareVouchersMap}
 	api := r.Group("/")
 	{
 		// New voucher routes

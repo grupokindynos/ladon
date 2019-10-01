@@ -3,6 +3,7 @@ package controllers
 import (
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/grupokindynos/common/hestia"
 	"github.com/grupokindynos/common/jwt"
@@ -127,7 +128,7 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherid string
 func (vc *VouchersController) Update(c *gin.Context) {
 	authToken := c.GetHeader("Authorization")
 	bearerToken := strings.Split(authToken, "Bearer ")
-	if bearerToken[0] != os.Getenv("BITCOU_TOKEN") {
+	if bearerToken[1] != os.Getenv("BITCOU_TOKEN") {
 		responses.GlobalResponseNoAuth(c)
 		return
 	}
@@ -139,7 +140,7 @@ func (vc *VouchersController) Update(c *gin.Context) {
 	}
 	storedVoucherInfo, err := services.GetVoucherInfo(voucherInfo.VoucherID)
 	if err != nil {
-		responses.GlobalResponseError(nil, err, c)
+		responses.GlobalResponseError(nil, errors.New("voucher not found"), c)
 		return
 	}
 	storedVoucherInfo.Status = "COMPLETE"
