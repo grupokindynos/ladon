@@ -69,14 +69,14 @@ func GetVoucherInfo(voucherid string) (hestia.Voucher, error) {
 	if err != nil {
 		return hestia.Voucher{}, err
 	}
+	headerSignature := res.Header.Get("service")
+	if headerSignature == "" {
+		return hestia.Voucher{}, errors.New("no header signature")
+	}
 	var tokenString string
 	err = json.Unmarshal(tokenResponse, &tokenString)
 	if err != nil {
 		return hestia.Voucher{}, err
-	}
-	headerSignature := res.Header.Get("service")
-	if headerSignature == "" {
-		return hestia.Voucher{}, errors.New("no header signature")
 	}
 	valid, payload := mrt.VerifyMRTToken(headerSignature, tokenString, os.Getenv("HESTIA_PUBLIC_KEY"), os.Getenv("MASTER_PASSWORD"))
 	if !valid {
