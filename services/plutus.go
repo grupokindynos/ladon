@@ -10,11 +10,10 @@ import (
 	"time"
 )
 
-// TODO use common module
 var PlutusURL = "https://plutus.polispay.com"
 
 func GetNewPaymentAddress(coin string) (addr string, err error) {
-	req, err := mvt.CreateMVTToken("GET", "http://localhost:8082/address/"+coin, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+	req, err := mvt.CreateMVTToken("GET", PlutusURL+"/"+coin, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return addr, err
 	}

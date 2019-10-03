@@ -8,19 +8,19 @@ type PrepareVoucher struct {
 }
 
 type PrepareVoucherResponse struct {
-	Address string  `json:"address"`
-	Amount  int32 `json:"amount"`
+	Address string `json:"address"`
+	Amount  int32  `json:"amount"`
 }
 
 type PrepareVoucherInfo struct {
-	Coin           string  `json:"coin"`
-	VoucherType    int     `json:"voucher_type"`
-	VoucherVariant string  `json:"voucher_variant"`
-	Address        string  `json:"address"`
-	Amount         int32 `json:"amount"`
-	Timestamp      int64   `json:"timestamp"`
-	FiatAmount     int32 `json:"fiat_amount"`
-	VoucherName    string  `json:"voucher_name"`
+	Coin           string `json:"coin"`
+	VoucherType    int    `json:"voucher_type"`
+	VoucherVariant string `json:"voucher_variant"`
+	Address        string `json:"address"`
+	Amount         int32  `json:"amount"`
+	Timestamp      int64  `json:"timestamp"`
+	FiatAmount     int32  `json:"fiat_amount"`
+	VoucherName    string `json:"voucher_name"`
 }
 
 type RedeemCodeVoucher struct {

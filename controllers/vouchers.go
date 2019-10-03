@@ -74,7 +74,7 @@ func (vc *VouchersController) GetToken(payload []byte, uid string, voucherid str
 		}
 	}
 	voucherPrice := voucherVariant.Price / 100
-	amount := int32(( float64(voucherPrice) / eurRate ) * 1e8 + 1)
+	amount := int32((float64(voucherPrice)/eurRate)*1e8 + 1)
 	res := models.PrepareVoucherResponse{
 		Address: addr,
 		Amount:  amount,

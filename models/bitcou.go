@@ -54,9 +54,9 @@ type Benefits struct {
 }
 
 type Variants struct {
-	Ean       string  `json:"ean"`
-	Price     int32 `json:"price"`
-	VariantID string  `json:"variant_id"`
+	Ean       string `json:"ean"`
+	Price     int32  `json:"price"`
+	VariantID string `json:"variant_id"`
 }
 
 type Voucher struct {
