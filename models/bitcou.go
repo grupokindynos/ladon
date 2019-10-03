@@ -54,9 +54,9 @@ type Benefits struct {
 }
 
 type Variants struct {
-	Ean       string `json:"ean"`
-	Price     int32  `json:"price"`
-	VariantID string `json:"variant_id"`
+	Ean       string  `json:"ean"`
+	Price     float64 `json:"price"`
+	VariantID string  `json:"variant_id"`
 }
 
 type Voucher struct {
@@ -75,7 +75,22 @@ type MetaData struct {
 	Datetime string `json:"datetime"`
 }
 
-type BitcouVouchers struct {
-	Data []Voucher `json:"data"`
-	Meta MetaData  `json:"meta"`
+type PurchaseInfo struct {
+	TransactionID string `json:"transaction_id"`
+	ProductID     int32  `json:"product_id"`
+	VariantID     int32  `json:"variant_id"`
+	PhoneNB       int32  `json:"phone_nb"`
+}
+
+type BitcouBaseResponse struct {
+	Data []interface{} `json:"data"`
+	Meta MetaData      `json:"meta"`
+}
+
+type PurchaseInfoResponse struct {
+	Amount              float64 `json:"amount"`
+	BitcouTransactionID string  `json:"txn_id"`
+	Address             string  `json:"address"`
+	Timeout             int64   `json:"timeout"`
+	QRCode              string  `json:"qr_code"`
 }

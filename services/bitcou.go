@@ -1,6 +1,7 @@
 package services
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/grupokindynos/ladon/models"
 	"io/ioutil"
@@ -156,6 +157,42 @@ func (bs *BitcouService) GetPhoneTopUpList(countryCode string) (interface{}, err
 	return response, nil
 }
 
+func (bs *BitcouService) GetTransactionInformation(purchaseInfo models.PurchaseInfo) (models.PurchaseInfoResponse, error) {
+	url := os.Getenv("BITCOU_URL") + "voucher/transaction"
+	token := "Bearer " + os.Getenv("BITCOU_TOKEN")
+	byteBody, err := json.Marshal(purchaseInfo)
+	postBody := bytes.NewBuffer(byteBody)
+	req, err := http.NewRequest("POST", url, postBody)
+	if err != nil {
+		return models.PurchaseInfoResponse{}, err
+	}
+	req.Header.Add("Authorization", token)
+	client := &http.Client{Timeout: 15 * time.Second}
+	res, err := client.Do(req)
+	if err != nil {
+		return models.PurchaseInfoResponse{}, err
+	}
+	defer func() {
+		_ = res.Body.Close()
+	}()
+	contents, _ := ioutil.ReadAll(res.Body)
+	var response models.BitcouBaseResponse
+	err = json.Unmarshal(contents, &response)
+	if err != nil {
+		return models.PurchaseInfoResponse{}, err
+	}
+	var purchaseData models.PurchaseInfoResponse
+	dataBytes, err := json.Marshal(response.Data[0])
+	if err != nil {
+		return models.PurchaseInfoResponse{}, err
+	}
+	err = json.Unmarshal(dataBytes, &purchaseData)
+	if err != nil {
+		return models.PurchaseInfoResponse{}, err
+	}
+	return purchaseData, nil
+}
+
 func (bs *BitcouService) getVouchersList() ([]models.Voucher, error) {
 	url := os.Getenv("BITCOU_URL") + "voucher/availableVouchers/"
 	token := "Bearer " + os.Getenv("BITCOU_TOKEN")
@@ -173,12 +210,21 @@ func (bs *BitcouService) getVouchersList() ([]models.Voucher, error) {
 		_ = res.Body.Close()
 	}()
 	contents, _ := ioutil.ReadAll(res.Body)
-	var response models.BitcouVouchers
+	var response models.BitcouBaseResponse
 	err = json.Unmarshal(contents, &response)
 	if err != nil {
 		return nil, err
 	}
-	return response.Data, nil
+	var vouchersList []models.Voucher
+	dataBytes, err := json.Marshal(response.Data)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(dataBytes, &vouchersList)
+	if err != nil {
+		return nil, err
+	}
+	return vouchersList, nil
 }
 
 func InitService() *BitcouService {

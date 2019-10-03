@@ -8,19 +8,31 @@ type PrepareVoucher struct {
 }
 
 type PrepareVoucherResponse struct {
+	Payment PaymentInfo `json:"payment"`
+	Fee     PaymentInfo `json:"fee"`
+}
+
+type PaymentInfo struct {
 	Address string `json:"address"`
-	Amount  int32  `json:"amount"`
+	Amount  int64  `json:"amount"`
 }
 
 type PrepareVoucherInfo struct {
-	Coin           string `json:"coin"`
-	VoucherType    int    `json:"voucher_type"`
-	VoucherVariant string `json:"voucher_variant"`
-	Address        string `json:"address"`
-	Amount         int32  `json:"amount"`
-	Timestamp      int64  `json:"timestamp"`
-	FiatAmount     int32  `json:"fiat_amount"`
-	VoucherName    string `json:"voucher_name"`
+	ID             string      `json:"id"`
+	Coin           string      `json:"coin"`
+	VoucherType    int         `json:"voucher_type"`
+	VoucherVariant string      `json:"voucher_variant"`
+	Payment        PaymentInfo `json:"payment"`
+	FeePayment     PaymentInfo `json:"fee_payment"`
+	BitcouPayment  PaymentInfo `json:"bitcou_payment"`
+	Timestamp      int64       `json:"timestamp"`
+	FiatAmount     int32       `json:"fiat_amount"`
+	VoucherName    string      `json:"voucher_name"`
+}
+
+type StoreVoucher struct {
+	RawTxPayment string `json:"raw_tx_payment"`
+	RawTxFee     string `json:"raw_tx_fee"`
 }
 
 type RedeemCodeVoucher struct {
