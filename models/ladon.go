@@ -9,7 +9,7 @@ type PrepareVoucher struct {
 
 type PrepareVoucherResponse struct {
 	Address string  `json:"address"`
-	Amount  float64 `json:"amount"`
+	Amount  int32 `json:"amount"`
 }
 
 type PrepareVoucherInfo struct {
@@ -17,9 +17,9 @@ type PrepareVoucherInfo struct {
 	VoucherType    int     `json:"voucher_type"`
 	VoucherVariant string  `json:"voucher_variant"`
 	Address        string  `json:"address"`
-	Amount         float64 `json:"amount"`
+	Amount         int32 `json:"amount"`
 	Timestamp      int64   `json:"timestamp"`
-	FiatAmount     float64 `json:"fiat_amount"`
+	FiatAmount     int32 `json:"fiat_amount"`
 	VoucherName    string  `json:"voucher_name"`
 }
 

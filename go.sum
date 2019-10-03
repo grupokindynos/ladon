@@ -14,8 +14,8 @@ github.com/golang/protobuf v1.3.1/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5y
 github.com/google/go-querystring v1.0.0/go.mod h1:odCYkC5MyYFN7vkCjXpyrEuKhc/BUO6wN/zVPAxq5ck=
 github.com/google/uuid v1.0.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/grupokindynos/common v0.0.0-20191001031702-780da16d0f64 h1:8Sx9yw7XiabEJTxnpnLLd1zHYlp6PoiJBL4RVdKWX+s=
-github.com/grupokindynos/common v0.0.0-20191001031702-780da16d0f64/go.mod h1:LWwa+FAKwMTYMlmxqB+BFH2VyKth9j2Lkk0l1mLd6XU=
+github.com/grupokindynos/common v0.0.0-20191003031716-04c6d042630a h1:q1hog2+Oi8QRmwvJ/59VhGTIaUiHBN5qksPiBVGil9s=
+github.com/grupokindynos/common v0.0.0-20191003031716-04c6d042630a/go.mod h1:LWwa+FAKwMTYMlmxqB+BFH2VyKth9j2Lkk0l1mLd6XU=
 github.com/heroku/heroku-go/v5 v5.1.0/go.mod h1:d+1QrZyjbnQJG1f8xIoVvMQRFLt3XRVZOdlm26Sr73U=
 github.com/interagent/schematic v0.0.0-20180830170528-b5e8ba7aa570/go.mod h1:4X9u5iNUePRrRDdwjok6skjlQBXTcNfWa4C3uS1+5SQ=
 github.com/joho/godotenv v1.3.0 h1:Zjp+RcGpHhGlrMbJzXTrZZPrWj+1vfm90La1wgB6Bhc=

@@ -14,12 +14,12 @@ import (
 var PlutusURL = "https://plutus.polispay.com"
 
 func GetNewPaymentAddress(coin string) (addr string, err error) {
-	req, err := mvt.CreateMVTToken("GET", PlutusURL+"/address/"+coin, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+	req, err := mvt.CreateMVTToken("GET", "http://localhost:8082/address/"+coin, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return addr, err
 	}
 	client := http.Client{
-		Timeout: 5 * time.Second,
+		Timeout: 10 * time.Second,
 	}
 	res, err := client.Do(req)
 	if err != nil {

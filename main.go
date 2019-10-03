@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/grupokindynos/common/hestia"
 	"github.com/grupokindynos/common/responses"
 	"github.com/grupokindynos/common/tokens/ppat"
 	"github.com/grupokindynos/ladon/controllers"
@@ -94,13 +95,15 @@ func ValidateRequest(c *gin.Context, method func(payload []byte, uid string, vou
 		return
 	}
 	tokenBytes, _ := c.GetRawData()
-	var tokenStr string
+	var ReqBody hestia.BodyReq
 	if len(tokenBytes) > 0 {
-		err := json.Unmarshal(tokenBytes, &tokenStr)
-		responses.GlobalResponseError(nil, err, c)
-		return
+		err := json.Unmarshal(tokenBytes, &ReqBody)
+		if err != nil {
+			responses.GlobalResponseError(nil, err, c)
+			return
+		}
 	}
-	valid, payload, uid, err := ppat.VerifyPPATToken("ladon", os.Getenv("MASTER_PASSWORD"), fbToken, tokenStr, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"), os.Getenv("HESTIA_PUBLIC_KEY"))
+	valid, payload, uid, err := ppat.VerifyPPATToken("https://hestia.polispay.com", "ladon", os.Getenv("MASTER_PASSWORD"), fbToken, ReqBody.Payload, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"), os.Getenv("HESTIA_PUBLIC_KEY"))
 	if !valid {
 		responses.GlobalResponseNoAuth(c)
 		return
@@ -156,9 +159,9 @@ func checkAndRemoveVouchers() {
 	for {
 		time.Sleep(time.Second * 60)
 		log.Print("Removing obsolete vouchers request")
-		var count int
+		count := 0
 		for k, v := range prepareVouchersMap {
-			if time.Now().Unix() < v.Timestamp+prepareVoucherTimeframe {
+			if time.Now().Unix() > v.Timestamp+prepareVoucherTimeframe {
 				count += 1
 				delete(prepareVouchersMap, k)
 			}
