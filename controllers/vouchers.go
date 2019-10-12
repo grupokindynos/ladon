@@ -209,8 +209,7 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherid string
 		},
 		RedeemCode: "",
 		Status:     "PENDING",
-		// TODO change to int64
-		Timestamp: string(time.Now().Unix()),
+		Timestamp: time.Now().Unix(),
 	}
 	voucherid, err = services.UpdateVoucher(voucher)
 	if err != nil {
@@ -239,6 +238,7 @@ func (vc *VouchersController) Update(c *gin.Context) {
 	}
 	storedVoucherInfo.Status = "COMPLETE"
 	storedVoucherInfo.RedeemCode = voucherInfo.RedeemCode
+	storedVoucherInfo.RedeemTimestamp = time.Now().Unix()
 	_, err = services.UpdateVoucher(storedVoucherInfo)
 	if err != nil {
 		responses.GlobalResponseError(nil, err, c)
