@@ -56,7 +56,7 @@ func handlePendingVouchers(wg *sync.WaitGroup) {
 			fmt.Println("Unable to get payment coin configuration: " + err.Error())
 			continue
 		}
-		feeCoinConfig, err := coinfactory.GetCoin(v.PaymentData.Coin)
+		feeCoinConfig, err := coinfactory.GetCoin(v.FeePayment.Coin)
 		if err != nil {
 			fmt.Println("Unable to get fee coin configuration: " + err.Error())
 			continue
@@ -66,6 +66,7 @@ func handlePendingVouchers(wg *sync.WaitGroup) {
 			fmt.Println("Unable to broadcast fee rawTx: " + err.Error())
 			continue
 		}
+		v.FeePayment.RawTx = ""
 		v.FeePayment.Txid = txidFee
 		txidPayment, err := broadCastTx(paymentCoinConfig, v.PaymentData.RawTx)
 		if err != nil {
@@ -73,6 +74,7 @@ func handlePendingVouchers(wg *sync.WaitGroup) {
 			// TODO if this happens, we need to refund fee payment.
 			continue
 		}
+		v.PaymentData.RawTx = ""
 		v.PaymentData.Txid = txidPayment
 		v.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusConfirming)
 		_, err = services.UpdateVoucher(v)
@@ -98,6 +100,7 @@ func handleConfirmedVouchers(wg *sync.WaitGroup) {
 			continue
 		}
 		v.BitcouPaymentData.Txid = txid
+		v.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusAwaitingProvider)
 		_, err = services.UpdateVoucher(v)
 		if err != nil {
 			fmt.Println("Unable to update voucher bitcou payment: " + err.Error())
@@ -128,6 +131,11 @@ func handleConfirmingVouchers(wg *sync.WaitGroup) {
 		// Check if voucher has enough confirmations
 		if v.PaymentData.Confirmations >= int32(paymentCoinConfig.BlockchainInfo.MinConfirmations) && v.FeePayment.Confirmations >= int32(feeCoinConfig.BlockchainInfo.MinConfirmations) {
 			v.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusConfirmed)
+			_, err = services.UpdateVoucher(v)
+			if err != nil {
+				fmt.Println("Unable to update voucher confirmations: " + err.Error())
+				continue
+			}
 			continue
 		}
 		paymentConfirmations, err := getConfirmations(paymentCoinConfig, v.PaymentData.Txid)
@@ -282,11 +290,11 @@ func getConfirmations(coinConfig *coins.Coin, txid string) (int, error) {
 }
 
 func submitBitcouPayment(coin string, address string, amount int64) (txid string, err error) {
-	floatAmount := float64(amount * 1 / 1e8)
+	floatAmount := float64(amount)
 	payment := plutus.SendAddressBodyReq{
 		Address: address,
 		Coin:    coin,
-		Amount:  floatAmount,
+		Amount:  floatAmount / 1e8,
 	}
 	return services.SubmitPayment(payment)
 }

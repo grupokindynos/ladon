@@ -50,7 +50,6 @@ func (vc *VouchersController) GetToken(payload []byte, uid string, voucherid str
 	if err != nil {
 		return nil, err
 	}
-
 	// Create a VoucherID
 	newVoucherID := utils.RandomString()
 	// Get a payment address from the hot-wallets
@@ -81,13 +80,9 @@ func (vc *VouchersController) GetToken(payload []byte, uid string, voucherid str
 	if err != nil {
 		return nil, err
 	}
+
 	// If the user is paying with another coin that is not Polis we will need the Polis rates.
 	polisRates, err := obol.GetCoinRates(obol.ProductionURL, "POLIS")
-	if err != nil {
-		return nil, err
-	}
-	// Get the Dash rates to calculate Bitcou payment
-	dashRates, err := obol.GetCoinRates(obol.ProductionURL, "DASH")
 	if err != nil {
 		return nil, err
 	}
@@ -105,14 +100,6 @@ func (vc *VouchersController) GetToken(payload []byte, uid string, voucherid str
 	if err != nil {
 		return nil, err
 	}
-	// Get DASH EUR rate
-	var dashEurRate float64
-	for _, rate := range dashRates {
-		if rate.Code == "EUR" {
-			dashEurRate = rate.Rate
-			break
-		}
-	}
 	// Get POLIS EUR rate
 	var polisEurRate float64
 	for _, rate := range polisRates {
@@ -129,24 +116,20 @@ func (vc *VouchersController) GetToken(payload []byte, uid string, voucherid str
 			break
 		}
 	}
-	// Sanitize Bitcou float response
-	voucherPriceSats := int32(purchaseRes.Amount*1e8) + 1
-	voucherPriceTrunk := float64(voucherPriceSats) / 1e8
-
-	// Get the price of the voucher on EUR
-	voucherEurPrice := float64(int((dashEurRate*voucherPriceTrunk)*100)) / 100
-
+	amountEuro, _ := strconv.Atoi(purchaseRes.AmountEuro)
+	eurAmount := float64(amountEuro / 100)
+	// TODO check rates
 	// Prepare the payments amount
 	var paymentAmount int64
 	var feeAmount int64
 	if PrepareVoucher.Coin == "POLIS" {
-		paymentAmount = int64(((voucherEurPrice/polisEurRate)*1e8)+1) * int64(1+(config.Vouchers.FeePercentage/100))
+		paymentAmount = int64(((eurAmount/polisEurRate)*1e8)+1) * int64(1+(config.Vouchers.FeePercentage/100))
 	} else {
-		paymentAmount = int64(((voucherEurPrice / paymentCoinEurRates) * 1e8) + 1)
-		feeAmount = int64((voucherEurPrice*float64(config.Vouchers.FeePercentage)/100)/polisEurRate*1e8 + 1)
+		paymentAmount = int64(((eurAmount / paymentCoinEurRates) * 1e8) + 1)
+		feeAmount = int64((eurAmount*float64(config.Vouchers.FeePercentage)/100)/polisEurRate*1e8 + 1)
 	}
 	paymentInfo := models.PaymentInfo{Address: paymentAddr, Amount: paymentAmount}
-	bitcouPaymentInfo := models.PaymentInfo{Address: paymentAddr, Amount: paymentAmount}
+	bitcouPaymentInfo := models.PaymentInfo{Address: purchaseRes.Address, Amount: int64(purchaseRes.Amount * 1e8)}
 	feeInfo := models.PaymentInfo{Address: feePaymentAddr, Amount: feeAmount}
 	// Build the response
 	res := models.PrepareVoucherResponse{
@@ -158,12 +141,13 @@ func (vc *VouchersController) GetToken(payload []byte, uid string, voucherid str
 		ID:             newVoucherID,
 		Coin:           PrepareVoucher.Coin,
 		Timestamp:      time.Now().Unix(),
+		BitcouID:       purchaseRes.BitcouTransactionID,
 		VoucherType:    PrepareVoucher.VoucherType,
 		VoucherVariant: PrepareVoucher.VoucherVariant,
 		Payment:        paymentInfo,
 		FeePayment:     feeInfo,
 		BitcouPayment:  bitcouPaymentInfo,
-		FiatAmount:     int32(voucherEurPrice),
+		FiatAmount:     int32(eurAmount),
 		VoucherName:    selectedVoucher.Name,
 	}
 	return jwt.EncryptJWE(uid, res)
@@ -207,6 +191,7 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherid string
 			Txid:          "",
 			Confirmations: 0,
 		},
+		BitcouID:   storedVoucher.BitcouID,
 		RedeemCode: "",
 		Status:     hestia.GetVoucherStatusString(hestia.VoucherStatusPending),
 		Timestamp:  time.Now().Unix(),

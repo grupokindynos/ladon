@@ -167,7 +167,7 @@ func (bs *BitcouService) GetTransactionInformation(purchaseInfo models.PurchaseI
 		return models.PurchaseInfoResponse{}, err
 	}
 	req.Header.Add("Authorization", token)
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := &http.Client{Timeout: 60 * time.Second}
 	res, err := client.Do(req)
 	if err != nil {
 		return models.PurchaseInfoResponse{}, err

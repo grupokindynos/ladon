@@ -25,6 +25,7 @@ type PrepareVoucherInfo struct {
 	Payment        PaymentInfo `json:"payment"`
 	FeePayment     PaymentInfo `json:"fee_payment"`
 	BitcouPayment  PaymentInfo `json:"bitcou_payment"`
+	BitcouID       string      `json:"bitcou_id"`
 	Timestamp      int64       `json:"timestamp"`
 	FiatAmount     int32       `json:"fiat_amount"`
 	VoucherName    string      `json:"voucher_name"`

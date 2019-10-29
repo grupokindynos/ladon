@@ -89,6 +89,7 @@ type BitcouBaseResponse struct {
 
 type PurchaseInfoResponse struct {
 	Amount              float64 `json:"amount"`
+	AmountEuro          string  `json:"amount_euro"`
 	BitcouTransactionID string  `json:"txn_id"`
 	Address             string  `json:"address"`
 	Timeout             int64   `json:"timeout"`

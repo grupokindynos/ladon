@@ -11,10 +11,8 @@ import (
 	"time"
 )
 
-var PlutusURL = "https://plutus.polispay.com"
-
 func GetNewPaymentAddress(coin string) (addr string, err error) {
-	req, err := mvt.CreateMVTToken("GET", PlutusURL+"/address/"+coin, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+	req, err := mvt.CreateMVTToken("GET", plutus.ProductionURL+"/address/"+coin, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return addr, err
 	}
@@ -52,7 +50,7 @@ func GetNewPaymentAddress(coin string) (addr string, err error) {
 }
 
 func SubmitPayment(body plutus.SendAddressBodyReq) (txid string, err error) {
-	req, err := mvt.CreateMVTToken("POST", PlutusURL+"/send/address/", "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+	req, err := mvt.CreateMVTToken("POST", plutus.ProductionURL+"/send/address", "ladon", os.Getenv("MASTER_PASSWORD"), body, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return txid, err
 	}
