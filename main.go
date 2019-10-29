@@ -46,8 +46,8 @@ func main() {
 		Second: time.Now().Second(),
 	}
 
-	go timer()
-
+	//go timer()
+	processor.Start()
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -136,7 +136,7 @@ func runCrons(mainWg *sync.WaitGroup) {
 		mainWg.Done()
 	}()
 	var wg sync.WaitGroup
-	wg.Add(8)
+	wg.Add(1)
 	go runCronMinutes(1, processor.Start, &wg) // 1 minute
 	wg.Wait()
 }

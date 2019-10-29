@@ -77,17 +77,17 @@ func (vc *VouchersController) GetToken(payload []byte, uid string, voucherid str
 		}
 	}
 	// Get the paying coin rates
-	rates, err := obol.GetCoinRates(PrepareVoucher.Coin)
+	rates, err := obol.GetCoinRates(obol.ProductionURL, PrepareVoucher.Coin)
 	if err != nil {
 		return nil, err
 	}
 	// If the user is paying with another coin that is not Polis we will need the Polis rates.
-	polisRates, err := obol.GetCoinRates("POLIS")
+	polisRates, err := obol.GetCoinRates(obol.ProductionURL, "POLIS")
 	if err != nil {
 		return nil, err
 	}
 	// Get the Dash rates to calculate Bitcou payment
-	dashRates, err := obol.GetCoinRates("DASH")
+	dashRates, err := obol.GetCoinRates(obol.ProductionURL, "DASH")
 	if err != nil {
 		return nil, err
 	}
@@ -192,8 +192,8 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherid string
 			Confirmations: 0,
 		},
 		FeePayment: hestia.Payment{
-			Address:       storedVoucher.Payment.Address,
-			Amount:        storedVoucher.Payment.Amount,
+			Address:       storedVoucher.FeePayment.Address,
+			Amount:        storedVoucher.FeePayment.Amount,
 			Coin:          "polis",
 			RawTx:         voucherPayments.RawTxFee,
 			Txid:          "",
@@ -208,8 +208,8 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherid string
 			Confirmations: 0,
 		},
 		RedeemCode: "",
-		Status:     "PENDING",
-		Timestamp: time.Now().Unix(),
+		Status:     hestia.GetVoucherStatusString(hestia.VoucherStatusPending),
+		Timestamp:  time.Now().Unix(),
 	}
 	voucherid, err = services.UpdateVoucher(voucher)
 	if err != nil {
@@ -236,7 +236,7 @@ func (vc *VouchersController) Update(c *gin.Context) {
 		responses.GlobalResponseError(nil, errors.New("voucher not found"), c)
 		return
 	}
-	storedVoucherInfo.Status = "COMPLETE"
+	storedVoucherInfo.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusComplete)
 	storedVoucherInfo.RedeemCode = voucherInfo.RedeemCode
 	storedVoucherInfo.RedeemTimestamp = time.Now().Unix()
 	_, err = services.UpdateVoucher(storedVoucherInfo)
