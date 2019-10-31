@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/grupokindynos/common/hestia"
 	"github.com/grupokindynos/common/jwt"
@@ -22,7 +23,7 @@ type VouchersController struct {
 	PreparesVouchers map[string]models.PrepareVoucherInfo
 }
 
-func (vc *VouchersController) GetServiceStatus(payload []byte, uid string, voucherid string) (interface{}, error) {
+func (vc *VouchersController) GetServiceStatus(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
 	status, err := services.GetVouchersStatus()
 	if err != nil {
 		return nil, err
@@ -30,7 +31,7 @@ func (vc *VouchersController) GetServiceStatus(payload []byte, uid string, vouch
 	return jwt.EncryptJWE(uid, status.Vouchers)
 }
 
-func (vc *VouchersController) GetList(payload []byte, uid string, voucherid string) (interface{}, error) {
+func (vc *VouchersController) GetList(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
 	vouchersList, err := vc.BitcouService.GetVouchersList()
 	if err != nil {
 		return nil, err
@@ -38,7 +39,29 @@ func (vc *VouchersController) GetList(payload []byte, uid string, voucherid stri
 	return jwt.EncryptJWE(uid, vouchersList)
 }
 
-func (vc *VouchersController) GetToken(payload []byte, uid string, voucherid string) (interface{}, error) {
+func (vc *VouchersController) GetListForPhone(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
+	vouchersList, err := vc.BitcouService.GetVouchersList()
+	if err != nil {
+		return nil, err
+	}
+	vouchersAvailable, err := vc.BitcouService.GetPhoneTopUpList(phoneNb)
+	if err != nil {
+		return nil, err
+	}
+	var VouchersList []models.Voucher
+	for _, availableVoucher := range vouchersAvailable {
+		for _, v := range vouchersList {
+			for _, voucher := range v {
+				if availableVoucher == voucher.ProductID {
+					VouchersList = append(VouchersList, voucher)
+				}
+			}
+		}
+	}
+	return jwt.EncryptJWE(uid, VouchersList)
+}
+
+func (vc *VouchersController) GetToken(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
 	// Get the vouchers percentage fee for PolisPay
 	config, err := services.GetVouchersStatus()
 	if err != nil {
@@ -153,7 +176,7 @@ func (vc *VouchersController) GetToken(payload []byte, uid string, voucherid str
 	return jwt.EncryptJWE(uid, res)
 }
 
-func (vc *VouchersController) Store(payload []byte, uid string, voucherid string) (interface{}, error) {
+func (vc *VouchersController) Store(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
 	var voucherPayments models.StoreVoucher
 	err := json.Unmarshal(payload, &voucherPayments)
 	if err != nil {

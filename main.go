@@ -79,6 +79,8 @@ func ApplyRoutes(r *gin.Engine) {
 		api.GET("/status", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetServiceStatus) })
 		// Available vouchers
 		api.GET("/list", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetList) })
+		api.GET("/phone/:phone", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetListForPhone) })
+
 		// Bitcou endpoint for a voucher redeem
 		api.POST("/redeem", vouchersCtrl.Update)
 	}
@@ -87,9 +89,10 @@ func ApplyRoutes(r *gin.Engine) {
 	})
 }
 
-func ValidateRequest(c *gin.Context, method func(payload []byte, uid string, voucherid string) (interface{}, error)) {
+func ValidateRequest(c *gin.Context, method func(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error)) {
 	fbToken := c.GetHeader("token")
 	voucherid := c.Param("voucherid")
+	phoneNb := c.Param("phone")
 	if fbToken == "" {
 		responses.GlobalResponseNoAuth(c)
 		return
@@ -108,7 +111,7 @@ func ValidateRequest(c *gin.Context, method func(payload []byte, uid string, vou
 		responses.GlobalResponseNoAuth(c)
 		return
 	}
-	response, err := method(payload, uid, voucherid)
+	response, err := method(payload, uid, voucherid, phoneNb)
 	responses.GlobalResponseError(response, err, c)
 	return
 }

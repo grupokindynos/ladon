@@ -95,3 +95,16 @@ type PurchaseInfoResponse struct {
 	Timeout             int64   `json:"timeout"`
 	QRCode              string  `json:"qr_code"`
 }
+
+type BitcouPhoneResponseList struct {
+	Meta struct {
+		Datetime string `json:"datetime"`
+	} `json:"meta"`
+	Data []struct {
+		ProductID int `json:"product_id"`
+	} `json:"data"`
+}
+
+type BitcouPhoneBodyReq struct {
+	PhoneNumber string `json:"phone_number"`
+}

@@ -131,10 +131,13 @@ func (bs *BitcouService) GetVouchersList() (map[string][]models.Voucher, error) 
 	return bs.VouchersList.List, nil
 }
 
-func (bs *BitcouService) GetPhoneTopUpList(countryCode string) (interface{}, error) {
-	url := os.Getenv("BITCOU_URL") + "voucher/availableVouchersByPhoneNb?phone_number=" + countryCode
+func (bs *BitcouService) GetPhoneTopUpList(phoneNb string) ([]int, error) {
+	url := os.Getenv("BITCOU_URL") + "voucher/availableVouchersByPhoneNb"
 	token := "Bearer " + os.Getenv("BITCOU_TOKEN")
-	req, err := http.NewRequest("GET", url, nil)
+	body := models.BitcouPhoneBodyReq{PhoneNumber: phoneNb}
+	byteBody, err := json.Marshal(body)
+	postBody := bytes.NewBuffer(byteBody)
+	req, err := http.NewRequest("POST", url, postBody)
 	if err != nil {
 		return nil, err
 	}
@@ -148,13 +151,16 @@ func (bs *BitcouService) GetPhoneTopUpList(countryCode string) (interface{}, err
 		_ = res.Body.Close()
 	}()
 	contents, _ := ioutil.ReadAll(res.Body)
-	// TODO get response modeled correctly
-	var response interface{}
+	var response models.BitcouPhoneResponseList
 	err = json.Unmarshal(contents, &response)
 	if err != nil {
 		return nil, err
 	}
-	return response, nil
+	var productIDs []int
+	for _, product := range response.Data {
+		productIDs = append(productIDs, product.ProductID)
+	}
+	return productIDs, nil
 }
 
 func (bs *BitcouService) GetTransactionInformation(purchaseInfo models.PurchaseInfo) (models.PurchaseInfoResponse, error) {
