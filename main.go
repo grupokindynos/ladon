@@ -73,10 +73,10 @@ func ApplyRoutes(r *gin.Engine) {
 	api := r.Group("/")
 	{
 		// New voucher routes
-		api.POST("/prepare", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetToken) })
+		api.POST("/prepare", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.Prepare) })
 		api.POST("/new", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.Store) })
 		// Service status
-		api.GET("/status", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetServiceStatus) })
+		api.GET("/status", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.Status) })
 		// Available vouchers
 		api.GET("/list", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetList) })
 		api.GET("/phone/:phone", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetListForPhone) })

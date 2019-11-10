@@ -24,7 +24,7 @@ type VouchersController struct {
 	mapLock sync.RWMutex
 }
 
-func (vc *VouchersController) GetServiceStatus(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
+func (vc *VouchersController) Status(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
 	status, err := services.GetVouchersStatus()
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func (vc *VouchersController) GetListForPhone(payload []byte, uid string, vouche
 	return VouchersList, nil
 }
 
-func (vc *VouchersController) GetToken(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
+func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
 	// Get the vouchers percentage fee for PolisPay
 	config, err := services.GetVouchersStatus()
 	if err != nil {
