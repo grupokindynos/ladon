@@ -5,6 +5,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/grupokindynos/common/hestia"
+	"github.com/grupokindynos/common/jwt"
 	"github.com/grupokindynos/common/responses"
 	"github.com/grupokindynos/common/tokens/ppat"
 	"github.com/grupokindynos/ladon/controllers"
@@ -67,8 +68,8 @@ func GetApp() *gin.Engine {
 
 func ApplyRoutes(r *gin.Engine) {
 	bitcouService := services.InitService()
-	go checkAndRemoveVouchers()
-	vouchersCtrl := controllers.VouchersController{BitcouService: bitcouService, PreparesVouchers: prepareVouchersMap}
+	vouchersCtrl := &controllers.VouchersController{BitcouService: bitcouService, PreparesVouchers: prepareVouchersMap}
+	go checkAndRemoveVouchers(vouchersCtrl)
 	api := r.Group("/")
 	{
 		// New voucher routes
@@ -111,7 +112,12 @@ func ValidateRequest(c *gin.Context, method func(payload []byte, uid string, vou
 		return
 	}
 	response, err := method(payload, uid, voucherid, phoneNb)
-	responses.GlobalResponseError(response, err, c)
+	if err != nil {
+		responses.GlobalResponseError(nil, err, c)
+		return
+	}
+	encrypted, err := jwt.EncryptJWE(uid, response)
+	responses.GlobalResponseError(encrypted, err, c)
 	return
 }
 
@@ -157,15 +163,15 @@ func runCronMinutes(schedule int, function func(), wg *sync.WaitGroup) {
 
 }
 
-func checkAndRemoveVouchers() {
+func checkAndRemoveVouchers(ctrl *controllers.VouchersController) {
 	for {
 		time.Sleep(time.Second * 60)
 		log.Print("Removing obsolete vouchers request")
 		count := 0
-		for k, v := range prepareVouchersMap {
+		for k, v := range ctrl.PreparesVouchers {
 			if time.Now().Unix() > v.Timestamp+prepareVoucherTimeframe {
 				count += 1
-				delete(prepareVouchersMap, k)
+				ctrl.RemoveVoucherFromMap(k)
 			}
 		}
 		log.Printf("Removed %v vouchers", count)

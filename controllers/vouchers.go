@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/grupokindynos/common/hestia"
-	"github.com/grupokindynos/common/jwt"
 	"github.com/grupokindynos/common/obol"
 	"github.com/grupokindynos/common/responses"
 	"github.com/grupokindynos/common/utils"
@@ -14,12 +13,15 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
+
 
 type VouchersController struct {
 	BitcouService    *services.BitcouService
 	PreparesVouchers map[string]models.PrepareVoucherInfo
+	mapLock sync.RWMutex
 }
 
 func (vc *VouchersController) GetServiceStatus(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
@@ -27,7 +29,7 @@ func (vc *VouchersController) GetServiceStatus(payload []byte, uid string, vouch
 	if err != nil {
 		return nil, err
 	}
-	return jwt.EncryptJWE(uid, status.Vouchers)
+	return status.Vouchers, nil
 }
 
 func (vc *VouchersController) GetList(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
@@ -35,7 +37,7 @@ func (vc *VouchersController) GetList(payload []byte, uid string, voucherid stri
 	if err != nil {
 		return nil, err
 	}
-	return jwt.EncryptJWE(uid, vouchersList)
+	return vouchersList, nil
 }
 
 func (vc *VouchersController) GetListForPhone(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
@@ -57,7 +59,7 @@ func (vc *VouchersController) GetListForPhone(payload []byte, uid string, vouche
 			}
 		}
 	}
-	return jwt.EncryptJWE(uid, VouchersList)
+	return VouchersList, nil
 }
 
 func (vc *VouchersController) GetToken(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
@@ -159,7 +161,7 @@ func (vc *VouchersController) GetToken(payload []byte, uid string, voucherid str
 		Fee:     feeInfo,
 	}
 	// Store on local cache
-	vc.PreparesVouchers[uid] = models.PrepareVoucherInfo{
+	prepareVoucher := models.PrepareVoucherInfo{
 		ID:             newVoucherID,
 		Coin:           PrepareVoucher.Coin,
 		Timestamp:      time.Now().Unix(),
@@ -172,7 +174,20 @@ func (vc *VouchersController) GetToken(payload []byte, uid string, voucherid str
 		FiatAmount:     int32(eurAmount),
 		VoucherName:    selectedVoucher.Name,
 	}
-	return jwt.EncryptJWE(uid, res)
+	vc.AddVoucherToMap(uid, prepareVoucher)
+	return res, nil
+}
+
+func (vc *VouchersController) AddVoucherToMap(uid string, voucherPrepare models.PrepareVoucherInfo) {
+	vc.mapLock.Lock()
+	vc.PreparesVouchers[uid] = voucherPrepare
+	vc.mapLock.Unlock()
+}
+
+func (vc *VouchersController) RemoveVoucherFromMap(uid string) {
+	vc.mapLock.Lock()
+	delete(vc.PreparesVouchers, uid)
+	vc.mapLock.Unlock()
 }
 
 func (vc *VouchersController) Store(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
@@ -222,7 +237,7 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherid string
 	if err != nil {
 		return nil, err
 	}
-	return jwt.EncryptJWE(uid, voucherid)
+	return voucherid, nil
 }
 
 func (vc *VouchersController) Update(c *gin.Context) {
