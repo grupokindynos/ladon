@@ -178,25 +178,16 @@ func (vc *VouchersController) GetToken(payload []byte, uid string, voucherid str
 	return res, nil
 }
 
-func (vc *VouchersController) AddVoucherToMap(uid string, voucherPrepare models.PrepareVoucherInfo) {
-	vc.mapLock.Lock()
-	vc.PreparesVouchers[uid] = voucherPrepare
-	vc.mapLock.Unlock()
-}
-
-func (vc *VouchersController) RemoveVoucherFromMap(uid string) {
-	vc.mapLock.Lock()
-	delete(vc.PreparesVouchers, uid)
-	vc.mapLock.Unlock()
-}
-
 func (vc *VouchersController) Store(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
 	var voucherPayments models.StoreVoucher
 	err := json.Unmarshal(payload, &voucherPayments)
 	if err != nil {
 		return nil, err
 	}
-	storedVoucher := vc.PreparesVouchers[uid]
+	storedVoucher, err := vc.GetVoucherFromMap(uid)
+	if err != nil {
+		return nil, err
+	}
 	voucher := hestia.Voucher{
 		ID:         storedVoucher.ID,
 		UID:        uid,
@@ -268,4 +259,26 @@ func (vc *VouchersController) Update(c *gin.Context) {
 	}
 	responses.GlobalResponseError("success", nil, c)
 	return
+}
+
+func (vc *VouchersController) AddVoucherToMap(uid string, voucherPrepare models.PrepareVoucherInfo) {
+	vc.mapLock.Lock()
+	vc.PreparesVouchers[uid] = voucherPrepare
+	vc.mapLock.Unlock()
+}
+
+func (vc *VouchersController) RemoveVoucherFromMap(uid string) {
+	vc.mapLock.Lock()
+	delete(vc.PreparesVouchers, uid)
+	vc.mapLock.Unlock()
+}
+
+func (vc *VouchersController) GetVoucherFromMap(uid string) (models.PrepareVoucherInfo, error) {
+	vc.mapLock.Lock()
+	voucher, ok := vc.PreparesVouchers[uid]
+	vc.mapLock.Unlock()
+	if !ok {
+		return models.PrepareVoucherInfo{}, errors.New("voucher not found in cache map")
+	}
+	return voucher, nil
 }
