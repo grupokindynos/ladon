@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/grupokindynos/common/hestia"
 	"github.com/grupokindynos/common/obol"
@@ -10,6 +11,7 @@ import (
 	"github.com/grupokindynos/common/utils"
 	"github.com/grupokindynos/ladon/models"
 	"github.com/grupokindynos/ladon/services"
+	"github.com/grupokindynos/olympus-utils/amount"
 	"os"
 	"strconv"
 	"strings"
@@ -17,11 +19,10 @@ import (
 	"time"
 )
 
-
 type VouchersController struct {
 	BitcouService    *services.BitcouService
 	PreparesVouchers map[string]models.PrepareVoucherInfo
-	mapLock sync.RWMutex
+	mapLock          sync.RWMutex
 }
 
 func (vc *VouchersController) Status(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
@@ -68,12 +69,31 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	if err != nil {
 		return nil, err
 	}
+	if !config.Vouchers.Available {
+		return nil, err
+	}
 	// Grab information on the payload
 	var PrepareVoucher models.PrepareVoucher
 	err = json.Unmarshal(payload, &PrepareVoucher)
 	if err != nil {
 		return nil, err
 	}
+
+	coinsConfig, err := services.GetCoinsConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	var paymentCoinConfig hestia.Coin
+	for _, coin := range coinsConfig {
+		if coin.Ticker == PrepareVoucher.Coin {
+			paymentCoinConfig = coin
+		}
+	}
+	if paymentCoinConfig.Ticker == "" || !paymentCoinConfig.Vouchers.Available {
+		return nil, err
+	}
+
 	// Create a VoucherID
 	newVoucherID := utils.RandomString()
 	// Get a payment address from the hot-wallets
@@ -99,6 +119,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 			break
 		}
 	}
+
 	// Get the paying coin rates
 	rates, err := obol.GetCoinRates(obol.ProductionURL, PrepareVoucher.Coin)
 	if err != nil {
@@ -110,20 +131,36 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	if err != nil {
 		return nil, err
 	}
+
 	// Convert the variand id to int
 	voucherVariantInt, _ := strconv.Atoi(PrepareVoucher.VoucherVariant)
 	// Prepare Tx for Bitcou
+	if phoneNb == "" {
+		phoneNb = "0"
+	}
+	phoneNumber, err := strconv.Atoi(phoneNb)
+	if err != nil {
+		return nil, err
+	}
 	bitcouPrepareTx := models.PurchaseInfo{
 		TransactionID: newVoucherID,
 		ProductID:     int32(PrepareVoucher.VoucherType),
 		VariantID:     int32(voucherVariantInt),
-		PhoneNB:       0,
+		PhoneNB:       int32(phoneNumber),
 	}
+	fmt.Println(bitcouPrepareTx)
 	// Ask bitcou to send amount and address for a specific voucher and add the VoucherID
 	purchaseRes, err := vc.BitcouService.GetTransactionInformation(bitcouPrepareTx)
+	fmt.Println(err)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(purchaseRes)
+	purchaseAmount, err := amount.NewAmount(purchaseRes.Amount)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(purchaseAmount.ToUnit(amount.AmountSats))
 	// Get POLIS EUR rate
 	var polisEurRate float64
 	for _, rate := range polisRates {
@@ -132,6 +169,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 			break
 		}
 	}
+	fmt.Println(polisEurRate)
 	// Get the coin they are paying to EUR rate
 	var paymentCoinEurRates float64
 	for _, rate := range rates {
@@ -140,6 +178,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 			break
 		}
 	}
+	fmt.Println(paymentCoinEurRates)
 	amountEuro, _ := strconv.Atoi(purchaseRes.AmountEuro)
 	eurAmount := float64(amountEuro / 100)
 	// TODO check rates
@@ -147,13 +186,13 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	var paymentAmount int64
 	var feeAmount int64
 	if PrepareVoucher.Coin == "POLIS" {
-		paymentAmount = int64(((eurAmount/polisEurRate)*1e8)+1) * int64(1+(config.Vouchers.FeePercentage/100))
+		paymentAmount = int64(((eurAmount/polisEurRate)*1e8)+1) * int64(1+(paymentCoinConfig.Vouchers.FeePercentage/100))
 	} else {
 		paymentAmount = int64(((eurAmount / paymentCoinEurRates) * 1e8) + 1)
-		feeAmount = int64((eurAmount*float64(config.Vouchers.FeePercentage)/100)/polisEurRate*1e8 + 1)
+		feeAmount = int64((eurAmount*float64(paymentCoinConfig.Vouchers.FeePercentage)/100)/polisEurRate*1e8 + 1)
 	}
 	paymentInfo := models.PaymentInfo{Address: paymentAddr, Amount: paymentAmount}
-	bitcouPaymentInfo := models.PaymentInfo{Address: purchaseRes.Address, Amount: int64(purchaseRes.Amount * 1e8)}
+	bitcouPaymentInfo := models.PaymentInfo{Address: purchaseRes.Address, Amount: int64(purchaseAmount.ToUnit(amount.AmountSats))}
 	feeInfo := models.PaymentInfo{Address: feePaymentAddr, Amount: feeAmount}
 	// Build the response
 	res := models.PrepareVoucherResponse{

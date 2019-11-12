@@ -3,6 +3,7 @@ package models
 type Countries struct {
 	Austria      bool `json:"austria"`
 	Belgium      bool `json:"belgium"`
+	Bulgaria     bool `json:"bulgaria"`
 	Canada       bool `json:"canada"`
 	Croatia      bool `json:"croatia"`
 	Cyprus       bool `json:"cyprus"`
@@ -14,16 +15,22 @@ type Countries struct {
 	Germany      bool `json:"germany"`
 	GreatBritain bool `json:"great_britain"`
 	Greece       bool `json:"greece"`
+	Hongkong     bool `json:"hongkong"`
 	Hungary      bool `json:"hungary"`
+	Indonesia    bool `json:"indonesia"`
 	Ireland      bool `json:"ireland"`
 	Italy        bool `json:"italy"`
 	Lichtenstein bool `json:"lichtenstein"`
 	Luxembourg   bool `json:"luxembourg"`
+	Malaysia     bool `json:"malaysia"`
 	Malta        bool `json:"malta"`
+	Mexico       bool `json:"mexico"`
 	Netherland   bool `json:"netherland"`
 	Norway       bool `json:"norway"`
 	Poland       bool `json:"poland"`
 	Portugal     bool `json:"portugal"`
+	Russia       bool `json:"russia"`
+	Singapore    bool `json:"singapore"`
 	Slovakia     bool `json:"slovakia"`
 	Slovenia     bool `json:"slovenia"`
 	Spain        bool `json:"spain"`
@@ -47,15 +54,20 @@ type Shipping struct {
 type Benefits struct {
 	Data           bool `json:"Data"`
 	DigitalProduct bool `json:"DigitalProduct"`
+	Gaming         bool `json:"Gaming"`
+	Giftcards      bool `json:"Giftcards"`
 	Minutes        bool `json:"Minutes"`
 	Mobile         bool `json:"Mobile"`
+	Phone          bool `json:"Phone"`
 	TV             bool `json:"TV"`
 	Utility        bool `json:"Utility"`
 }
 
 type Variants struct {
+	Currency  string  `json:"currency"`
 	Ean       string  `json:"ean"`
 	Price     float64 `json:"price"`
+	Value     float64 `json:"value"`
 	VariantID string  `json:"variant_id"`
 }
 

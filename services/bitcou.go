@@ -41,6 +41,9 @@ func (bs *BitcouService) GetVouchersList() (map[string][]models.Voucher, error) 
 		if v.Countries.Belgium {
 			VouchersList["belgium"] = append(VouchersList["belgium"], v)
 		}
+		if v.Countries.Bulgaria {
+			VouchersList["bulgaria"] = append(VouchersList["bulgaria"], v)
+		}
 		if v.Countries.Canada {
 			VouchersList["canada"] = append(VouchersList["canada"], v)
 		}
@@ -74,8 +77,14 @@ func (bs *BitcouService) GetVouchersList() (map[string][]models.Voucher, error) 
 		if v.Countries.Greece {
 			VouchersList["greece"] = append(VouchersList["greece"], v)
 		}
+		if v.Countries.Hongkong {
+			VouchersList["hongkond"] = append(VouchersList["hongkond"], v)
+		}
 		if v.Countries.Hungary {
 			VouchersList["hungary"] = append(VouchersList["hungary"], v)
+		}
+		if v.Countries.Indonesia {
+			VouchersList["indonesia"] = append(VouchersList["indonesia"], v)
 		}
 		if v.Countries.Ireland {
 			VouchersList["ireland"] = append(VouchersList["ireland"], v)
@@ -89,8 +98,14 @@ func (bs *BitcouService) GetVouchersList() (map[string][]models.Voucher, error) 
 		if v.Countries.Luxembourg {
 			VouchersList["luxembourg"] = append(VouchersList["luxembourg"], v)
 		}
+		if v.Countries.Malaysia {
+			VouchersList["malaysia"] = append(VouchersList["malaysia"], v)
+		}
 		if v.Countries.Malta {
 			VouchersList["malta"] = append(VouchersList["malta"], v)
+		}
+		if v.Countries.Mexico {
+			VouchersList["mexico"] = append(VouchersList["mexico"], v)
 		}
 		if v.Countries.Netherland {
 			VouchersList["netherland"] = append(VouchersList["netherland"], v)
@@ -103,6 +118,12 @@ func (bs *BitcouService) GetVouchersList() (map[string][]models.Voucher, error) 
 		}
 		if v.Countries.Portugal {
 			VouchersList["portugal"] = append(VouchersList["portugal"], v)
+		}
+		if v.Countries.Russia {
+			VouchersList["russia"] = append(VouchersList["russia"], v)
+		}
+		if v.Countries.Singapore {
+			VouchersList["singapore"] = append(VouchersList["singapore"], v)
 		}
 		if v.Countries.Slovakia {
 			VouchersList["slovakia"] = append(VouchersList["slovakia"], v)

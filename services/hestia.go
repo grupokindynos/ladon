@@ -50,6 +50,44 @@ func GetVouchersStatus() (hestia.Config, error) {
 	return response, nil
 }
 
+func GetCoinsConfig() ([]hestia.Coin, error) {
+	req, err := mvt.CreateMVTToken("GET", hestia.ProductionURL+"/coins", "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+	if err != nil {
+		return nil, err
+	}
+	client := http.Client{
+		Timeout: 5 * time.Second,
+	}
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	tokenResponse, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	var tokenString string
+	err = json.Unmarshal(tokenResponse, &tokenString)
+	if err != nil {
+		return nil, err
+	}
+	headerSignature := res.Header.Get("service")
+	if headerSignature == "" {
+		return nil, errors.New("no header signature")
+	}
+	valid, payload := mrt.VerifyMRTToken(headerSignature, tokenString, os.Getenv("HESTIA_PUBLIC_KEY"), os.Getenv("MASTER_PASSWORD"))
+	if !valid {
+		return nil, err
+	}
+	var response []hestia.Coin
+	err = json.Unmarshal(payload, &response)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
 func GetVoucherInfo(voucherid string) (hestia.Voucher, error) {
 	req, err := mvt.CreateMVTToken("GET", hestia.ProductionURL+"/voucher/single/"+voucherid, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
