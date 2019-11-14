@@ -3,7 +3,6 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/grupokindynos/common/hestia"
 	"github.com/grupokindynos/common/obol"
@@ -78,12 +77,10 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	if err != nil {
 		return nil, err
 	}
-
 	coinsConfig, err := services.GetCoinsConfig()
 	if err != nil {
 		return nil, err
 	}
-
 	var paymentCoinConfig hestia.Coin
 	for _, coin := range coinsConfig {
 		if coin.Ticker == PrepareVoucher.Coin {
@@ -93,7 +90,6 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	if paymentCoinConfig.Ticker == "" || !paymentCoinConfig.Vouchers.Available {
 		return nil, err
 	}
-
 	// Create a VoucherID
 	newVoucherID := utils.RandomString()
 	// Get a payment address from the hot-wallets
@@ -109,7 +105,6 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 			return nil, err
 		}
 	}
-
 	// Get the voucher list to grab the name of the voucher.
 	vouchers, err := vc.BitcouService.GetVouchersList()
 	var selectedVoucher models.Voucher
@@ -119,19 +114,18 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 			break
 		}
 	}
-
-	// Get the paying coin rates
-	rates, err := obol.GetCoinRates(obol.ProductionURL, PrepareVoucher.Coin)
-	if err != nil {
+	if selectedVoucher.ProductID == 0 {
 		return nil, err
 	}
-
-	// If the user is paying with another coin that is not Polis we will need the Polis rates.
-	polisRates, err := obol.GetCoinRates(obol.ProductionURL, "POLIS")
-	if err != nil {
+	var selectedVariant models.Variants
+	for _, variant := range selectedVoucher.Variants {
+		if variant.VariantID == PrepareVoucher.VoucherVariant {
+			selectedVariant = variant
+		}
+	}
+	if selectedVariant.VariantID == "" {
 		return nil, err
 	}
-
 	// Convert the variand id to int
 	voucherVariantInt, _ := strconv.Atoi(PrepareVoucher.VoucherVariant)
 	// Prepare Tx for Bitcou
@@ -148,52 +142,61 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		VariantID:     int32(voucherVariantInt),
 		PhoneNB:       int32(phoneNumber),
 	}
-	fmt.Println(bitcouPrepareTx)
 	// Ask bitcou to send amount and address for a specific voucher and add the VoucherID
 	purchaseRes, err := vc.BitcouService.GetTransactionInformation(bitcouPrepareTx)
-	fmt.Println(err)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(purchaseRes)
 	purchaseAmount, err := amount.NewAmount(purchaseRes.Amount)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(purchaseAmount.ToUnit(amount.AmountSats))
-	// Get POLIS EUR rate
-	var polisEurRate float64
-	for _, rate := range polisRates {
-		if rate.Code == "EUR" {
-			polisEurRate = rate.Rate
-			break
-		}
+	// Get the paying coin rates
+	paymentCoinRate, err := obol.GetCoin2CoinRates(obol.ProductionURL, "DASH", PrepareVoucher.Coin)
+	if err != nil {
+		return nil, err
 	}
-	fmt.Println(polisEurRate)
-	// Get the coin they are paying to EUR rate
-	var paymentCoinEurRates float64
-	for _, rate := range rates {
-		if rate.Code == "EUR" {
-			paymentCoinEurRates = rate.Rate
-			break
-		}
+	paymentCoinRateAmount, err := amount.NewAmount(paymentCoinRate)
+	if err != nil {
+		return nil, err
 	}
-	fmt.Println(paymentCoinEurRates)
-	amountEuro, _ := strconv.Atoi(purchaseRes.AmountEuro)
-	eurAmount := float64(amountEuro / 100)
-	// TODO check rates
-	// Prepare the payments amount
-	var paymentAmount int64
-	var feeAmount int64
-	if PrepareVoucher.Coin == "POLIS" {
-		paymentAmount = int64(((eurAmount/polisEurRate)*1e8)+1) * int64(1+(paymentCoinConfig.Vouchers.FeePercentage/100))
-	} else {
-		paymentAmount = int64(((eurAmount / paymentCoinEurRates) * 1e8) + 1)
-		feeAmount = int64((eurAmount*float64(paymentCoinConfig.Vouchers.FeePercentage)/100)/polisEurRate*1e8 + 1)
-	}
-	paymentInfo := models.PaymentInfo{Address: paymentAddr, Amount: paymentAmount}
+	// Converted amount of the total payed amount on dash to the other crypto.
+	// For user usage.
+	paymentInfo := models.PaymentInfo{Address: paymentAddr, Amount: int64((purchaseAmount / paymentCoinRateAmount).ToUnit(amount.AmountSats))}
+	// DASH amount on sats to pay Bitcou.
+	// For internal usage
 	bitcouPaymentInfo := models.PaymentInfo{Address: purchaseRes.Address, Amount: int64(purchaseAmount.ToUnit(amount.AmountSats))}
-	feeInfo := models.PaymentInfo{Address: feePaymentAddr, Amount: feeAmount}
+
+	var feeInfo, bitcouFeePaymentInfo models.PaymentInfo
+	if PrepareVoucher.Coin != "POLIS" {
+		// Get the polis rates
+		polisRate, err := obol.GetCoin2CoinRates(obol.ProductionURL, "DASH", "POLIS")
+		if err != nil {
+			return nil, err
+		}
+		polisRateAmount, err := amount.NewAmount(polisRate)
+		if err != nil {
+			return nil, err
+		}
+		feePercentage := float64(paymentCoinConfig.Vouchers.FeePercentage) / float64(100)
+		feeAmount, err := amount.NewAmount((purchaseAmount / polisRateAmount).ToNormalUnit() * feePercentage)
+		if err != nil {
+			return nil, err
+		}
+
+		// POLIS amount on sats to pay the total fee, this must be at least 4% of the purchased amount for all coins except for Polis.
+		// For user usage.
+		feeInfo = models.PaymentInfo{Address: feePaymentAddr, Amount: int64(feeAmount.ToUnit(amount.AmountSats))}
+		// POLIS amount on sats to pay for the voucher, this must be 4% of the purchased amount for all coins except for Polis.
+		// For internal usage
+		bitcouFeePercentageOfTotalFee := float64(4) / float64(paymentCoinConfig.Vouchers.FeePercentage)
+		bitcouFeePaymentInfo = models.PaymentInfo{Address: "PNTh62FHi2hnSuFwQyjL3ofiVLvrZ9Gzph", Amount: int64(feeAmount.ToUnit(amount.AmountSats) * bitcouFeePercentageOfTotalFee)}
+	} else {
+		// No Fee if user is paying with POLIS
+		feeInfo = models.PaymentInfo{Address: "", Amount: 0}
+		bitcouFeePaymentInfo = models.PaymentInfo{Address: "", Amount: 0}
+	}
+
 	// Build the response
 	res := models.PrepareVoucherResponse{
 		Payment: paymentInfo,
@@ -201,17 +204,17 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	}
 	// Store on local cache
 	prepareVoucher := models.PrepareVoucherInfo{
-		ID:             newVoucherID,
-		Coin:           PrepareVoucher.Coin,
-		Timestamp:      time.Now().Unix(),
-		BitcouID:       purchaseRes.BitcouTransactionID,
-		VoucherType:    PrepareVoucher.VoucherType,
-		VoucherVariant: PrepareVoucher.VoucherVariant,
-		Payment:        paymentInfo,
-		FeePayment:     feeInfo,
-		BitcouPayment:  bitcouPaymentInfo,
-		FiatAmount:     int32(eurAmount),
-		VoucherName:    selectedVoucher.Name,
+		ID:               newVoucherID,
+		Coin:             PrepareVoucher.Coin,
+		Timestamp:        time.Now().Unix(),
+		BitcouID:         purchaseRes.BitcouTransactionID,
+		VoucherType:      PrepareVoucher.VoucherType,
+		VoucherVariant:   PrepareVoucher.VoucherVariant,
+		Payment:          paymentInfo,
+		FeePayment:       feeInfo,
+		BitcouPayment:    bitcouPaymentInfo,
+		BitcouFeePayment: bitcouFeePaymentInfo,
+		VoucherName:      selectedVoucher.Name,
 	}
 	vc.AddVoucherToMap(uid, prepareVoucher)
 	return res, nil
@@ -228,12 +231,11 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherid string
 		return nil, err
 	}
 	voucher := hestia.Voucher{
-		ID:         storedVoucher.ID,
-		UID:        uid,
-		VoucherID:  storedVoucher.VoucherType,
-		VariantID:  storedVoucher.VoucherVariant,
-		FiatAmount: storedVoucher.FiatAmount,
-		Name:       storedVoucher.VoucherName,
+		ID:        storedVoucher.ID,
+		UID:       uid,
+		VoucherID: storedVoucher.VoucherType,
+		VariantID: storedVoucher.VoucherVariant,
+		Name:      storedVoucher.VoucherName,
 		PaymentData: hestia.Payment{
 			Address:       storedVoucher.Payment.Address,
 			Amount:        storedVoucher.Payment.Amount,

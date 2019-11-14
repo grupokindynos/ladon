@@ -78,7 +78,7 @@ func (bs *BitcouService) GetVouchersList() (map[string][]models.Voucher, error) 
 			VouchersList["greece"] = append(VouchersList["greece"], v)
 		}
 		if v.Countries.Hongkong {
-			VouchersList["hongkond"] = append(VouchersList["hongkond"], v)
+			VouchersList["hongkong"] = append(VouchersList["hongkong"], v)
 		}
 		if v.Countries.Hungary {
 			VouchersList["hungary"] = append(VouchersList["hungary"], v)
@@ -93,7 +93,7 @@ func (bs *BitcouService) GetVouchersList() (map[string][]models.Voucher, error) 
 			VouchersList["italy"] = append(VouchersList["italy"], v)
 		}
 		if v.Countries.Lichtenstein {
-			VouchersList["lichtenstein"] = append(VouchersList["lichtenstein"], v)
+			VouchersList["liechtenstein"] = append(VouchersList["liechtenstein"], v)
 		}
 		if v.Countries.Luxembourg {
 			VouchersList["luxembourg"] = append(VouchersList["luxembourg"], v)

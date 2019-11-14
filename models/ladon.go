@@ -18,17 +18,17 @@ type PaymentInfo struct {
 }
 
 type PrepareVoucherInfo struct {
-	ID             string      `json:"id"`
-	Coin           string      `json:"coin"`
-	VoucherType    int         `json:"voucher_type"`
-	VoucherVariant string      `json:"voucher_variant"`
-	Payment        PaymentInfo `json:"payment"`
-	FeePayment     PaymentInfo `json:"fee_payment"`
-	BitcouPayment  PaymentInfo `json:"bitcou_payment"`
-	BitcouID       string      `json:"bitcou_id"`
-	Timestamp      int64       `json:"timestamp"`
-	FiatAmount     int32       `json:"fiat_amount"`
-	VoucherName    string      `json:"voucher_name"`
+	ID               string      `json:"id"`
+	Coin             string      `json:"coin"`
+	VoucherType      int         `json:"voucher_type"`
+	VoucherVariant   string      `json:"voucher_variant"`
+	Payment          PaymentInfo `json:"payment"`
+	FeePayment       PaymentInfo `json:"fee_payment"`
+	BitcouPayment    PaymentInfo `json:"bitcou_payment"`
+	BitcouFeePayment PaymentInfo `json:"bitcou_fee_payment"`
+	BitcouID         string      `json:"bitcou_id"`
+	Timestamp        int64       `json:"timestamp"`
+	VoucherName      string      `json:"voucher_name"`
 }
 
 type StoreVoucher struct {
