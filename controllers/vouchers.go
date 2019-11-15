@@ -8,6 +8,7 @@ import (
 	"github.com/grupokindynos/common/coin-factory/coins"
 	"github.com/grupokindynos/common/hestia"
 	"github.com/grupokindynos/common/obol"
+	"github.com/grupokindynos/common/plutus"
 	"github.com/grupokindynos/common/responses"
 	"github.com/grupokindynos/common/utils"
 	"github.com/grupokindynos/ladon/models"
@@ -539,6 +540,18 @@ func (vc *VouchersController) Update(c *gin.Context) {
 	if err != nil {
 		responses.GlobalResponseError(nil, err, c)
 		return
+	}
+	// Submit Bitcou Fee
+	if storedVoucherInfo.PaymentData.Coin != "POLIS" {
+		amountHand := amount.AmountType(storedVoucherInfo.BitcouFeePaymentData.Amount)
+		bitcouPayment := plutus.SendAddressBodyReq{
+			Address: storedVoucherInfo.BitcouFeePaymentData.Address,
+			Coin:    "POLIS",
+			Amount:  amountHand.ToNormalUnit(),
+		}
+		// TODO make sure error is handled
+		txid, _ := services.SubmitPayment(bitcouPayment)
+		storedVoucherInfo.BitcouFeePaymentData.Txid = txid
 	}
 	responses.GlobalResponseError("success", nil, c)
 	return
