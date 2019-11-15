@@ -283,6 +283,7 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherid string
 		Status:     hestia.GetVoucherStatusString(hestia.VoucherStatusPending),
 		Timestamp:  time.Now().Unix(),
 	}
+	vc.RemoveVoucherFromMap(uid)
 	voucherid, err = services.UpdateVoucher(voucher)
 	if err != nil {
 		return nil, err
