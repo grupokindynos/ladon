@@ -296,48 +296,52 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherid string
 }
 
 func (vc *VouchersController) decodeAndCheckTx(voucherData hestia.Voucher, storedVoucherData models.PrepareVoucherInfo, rawTx string, feeTx string) {
-	// Decode fee rawTx and verify
-	feeOutputs, err := getRawTx("POLIS", rawTx)
-	if err != nil {
-		// If outputs fail, we should mark error, no spent anything.
-		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
-		_, err = services.UpdateVoucher(voucherData)
+
+	var FeeTxId string
+	if voucherData.PaymentData.Coin != "POLIS" {
+		// Decode fee rawTx and verify
+		feeOutputs, err := getRawTx("POLIS", rawTx)
 		if err != nil {
+			// If outputs fail, we should mark error, no spent anything.
+			voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
+			_, err = services.UpdateVoucher(voucherData)
+			if err != nil {
+				return
+			}
 			return
 		}
-		return
-	}
-	feeAmount := amount.AmountType(voucherData.FeePayment.Amount)
-	err = verifyTransaction(feeOutputs, voucherData.FeePayment.Address, feeAmount)
-	if err != nil {
-		// If verify fail, we should mark error, no spent anything.
-		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
-		_, err = services.UpdateVoucher(voucherData)
+		feeAmount := amount.AmountType(voucherData.FeePayment.Amount)
+		err = verifyTransaction(feeOutputs, voucherData.FeePayment.Address, feeAmount)
 		if err != nil {
+			// If verify fail, we should mark error, no spent anything.
+			voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
+			_, err = services.UpdateVoucher(voucherData)
+			if err != nil {
+				return
+			}
 			return
 		}
-		return
-	}
-	// Broadcast fee rawTx
-	polisCoinConfig, err := coinfactory.GetCoin("POLIS")
-	if err != nil {
-		// If get coin fail, we should mark error, no spent anything.
-		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
-		_, err = services.UpdateVoucher(voucherData)
+		// Broadcast fee rawTx
+		polisCoinConfig, err := coinfactory.GetCoin("POLIS")
 		if err != nil {
+			// If get coin fail, we should mark error, no spent anything.
+			voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
+			_, err = services.UpdateVoucher(voucherData)
+			if err != nil {
+				return
+			}
 			return
 		}
-		return
-	}
-	feeTxid, err := broadCastTx(polisCoinConfig, feeTx)
-	if err != nil {
-		// If broadcast fail, we should mark error, no spent anything.
-		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
-		_, err = services.UpdateVoucher(voucherData)
+		FeeTxId, err = broadCastTx(polisCoinConfig, feeTx)
 		if err != nil {
+			// If broadcast fail, we should mark error, no spent anything.
+			voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
+			_, err = services.UpdateVoucher(voucherData)
+			if err != nil {
+				return
+			}
 			return
 		}
-		return
 	}
 
 	// Decode payment rawTx and verify
@@ -385,7 +389,7 @@ func (vc *VouchersController) decodeAndCheckTx(voucherData hestia.Voucher, store
 	}
 	// Update voucher model include txid.
 	voucherData.PaymentData.Txid = paymentTxid
-	voucherData.FeePayment.Txid = feeTxid
+	voucherData.FeePayment.Txid = FeeTxId
 	_, err = services.UpdateVoucher(voucherData)
 	if err != nil {
 		return
