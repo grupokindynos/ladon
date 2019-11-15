@@ -152,17 +152,27 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		return nil, err
 	}
 	// Get the paying coin rates
-	paymentCoinRate, err := obol.GetCoin2CoinRates(obol.ProductionURL, "DASH", PrepareVoucher.Coin)
-	if err != nil {
-		return nil, err
+	var paymentCoinRate float64
+	if PrepareVoucher.Coin == "DASH" {
+		paymentCoinRate = 1
+	} else {
+		paymentCoinRate, err = obol.GetCoin2CoinRates(obol.ProductionURL, "DASH", PrepareVoucher.Coin)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	paymentCoinRateAmount, err := amount.NewAmount(paymentCoinRate)
 	if err != nil {
 		return nil, err
 	}
 	// Converted amount of the total payed amount on dash to the other crypto.
 	// For user usage.
-	paymentInfo := models.PaymentInfo{Address: paymentAddr, Amount: int64((purchaseAmount / paymentCoinRateAmount).ToUnit(amount.AmountSats))}
+	paymentAmount, err := amount.NewAmount(purchaseAmount.ToNormalUnit() / paymentCoinRateAmount.ToNormalUnit())
+	if err != nil {
+		return nil, err
+	}
+	paymentInfo := models.PaymentInfo{Address: paymentAddr, Amount: int64(paymentAmount.ToUnit(amount.AmountSats))}
 	// DASH amount on sats to pay Bitcou.
 	// For internal usage
 	bitcouPaymentInfo := models.PaymentInfo{Address: purchaseRes.Address, Amount: int64(purchaseAmount.ToUnit(amount.AmountSats))}
@@ -179,7 +189,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 			return nil, err
 		}
 		feePercentage := float64(paymentCoinConfig.Vouchers.FeePercentage) / float64(100)
-		feeAmount, err := amount.NewAmount((purchaseAmount / polisRateAmount).ToNormalUnit() * feePercentage)
+		feeAmount, err := amount.NewAmount((purchaseAmount.ToNormalUnit() / polisRateAmount.ToNormalUnit()) * feePercentage)
 		if err != nil {
 			return nil, err
 		}
@@ -240,7 +250,7 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherid string
 			Address:       storedVoucher.Payment.Address,
 			Amount:        storedVoucher.Payment.Amount,
 			Coin:          storedVoucher.Coin,
-			RawTx:         voucherPayments.RawTxPayment,
+			RawTx:         voucherPayments.RawTx,
 			Txid:          "",
 			Confirmations: 0,
 		},
@@ -248,7 +258,7 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherid string
 			Address:       storedVoucher.FeePayment.Address,
 			Amount:        storedVoucher.FeePayment.Amount,
 			Coin:          "polis",
-			RawTx:         voucherPayments.RawTxFee,
+			RawTx:         voucherPayments.FeeTx,
 			Txid:          "",
 			Confirmations: 0,
 		},
@@ -256,6 +266,14 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherid string
 			Address:       storedVoucher.BitcouPayment.Address,
 			Amount:        storedVoucher.BitcouPayment.Amount,
 			Coin:          "dash",
+			RawTx:         "",
+			Txid:          "",
+			Confirmations: 0,
+		},
+		BitcouFeePaymentData: hestia.Payment{
+			Address:       storedVoucher.BitcouFeePayment.Address,
+			Amount:        storedVoucher.BitcouFeePayment.Amount,
+			Coin:          "",
 			RawTx:         "",
 			Txid:          "",
 			Confirmations: 0,
