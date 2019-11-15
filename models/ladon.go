@@ -32,9 +32,10 @@ type PrepareVoucherInfo struct {
 }
 
 type StoreVoucher struct {
-	RawTx      string `json:"raw_tx"`
-	FeeTx      string `json:"fee_tx"`
-	RefundAddr string `json:"refund_addr"`
+	RawTx         string `json:"raw_tx"`
+	FeeTx         string `json:"fee_tx"`
+	RefundAddr    string `json:"refund_addr"`
+	RefundFeeAddr string `json:"refund_fee_addr"`
 }
 
 type RedeemCodeVoucher struct {

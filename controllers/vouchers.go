@@ -279,11 +279,12 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherid string
 			Txid:          "",
 			Confirmations: 0,
 		},
-		BitcouID:   storedVoucher.BitcouID,
-		RedeemCode: "",
-		RefundAddr: voucherPayments.RefundAddr,
-		Status:     hestia.GetVoucherStatusString(hestia.VoucherStatusPending),
-		Timestamp:  time.Now().Unix(),
+		BitcouID:      storedVoucher.BitcouID,
+		RedeemCode:    "",
+		RefundAddr:    voucherPayments.RefundAddr,
+		RefundFeeAddr: voucherPayments.RefundFeeAddr,
+		Status:        hestia.GetVoucherStatusString(hestia.VoucherStatusPending),
+		Timestamp:     time.Now().Unix(),
 	}
 	vc.RemoveVoucherFromMap(uid)
 	voucherid, err = services.UpdateVoucher(voucher)
@@ -343,7 +344,7 @@ func (vc *VouchersController) decodeAndCheckTx(voucherData hestia.Voucher, store
 	paymentOutputs, err := getRawTx(voucherData.PaymentData.Coin, rawTx)
 	if err != nil {
 		// If decode fail, we should mark error, mark refund, fees are already spent.
-		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefund)
+		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundFee)
 		_, err = services.UpdateVoucher(voucherData)
 		if err != nil {
 			return
@@ -354,7 +355,7 @@ func (vc *VouchersController) decodeAndCheckTx(voucherData hestia.Voucher, store
 	err = verifyTransaction(paymentOutputs, voucherData.PaymentData.Address, paymentAmount)
 	if err != nil {
 		// If verify fail, we should mark error, mark refund, fees are already spent.
-		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefund)
+		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundFee)
 		_, err = services.UpdateVoucher(voucherData)
 		if err != nil {
 			return
@@ -365,7 +366,7 @@ func (vc *VouchersController) decodeAndCheckTx(voucherData hestia.Voucher, store
 	coinConfig, err := coinfactory.GetCoin(voucherData.PaymentData.Coin)
 	if err != nil {
 		// If get coin fail, we should mark error, mark refund, fees are already spent.
-		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefund)
+		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundFee)
 		_, err = services.UpdateVoucher(voucherData)
 		if err != nil {
 			return
@@ -375,7 +376,7 @@ func (vc *VouchersController) decodeAndCheckTx(voucherData hestia.Voucher, store
 	paymentTxid, err := broadCastTx(coinConfig, rawTx)
 	if err != nil {
 		// If broadcast fail, we should mark error, mark refund, fees are already spent.
-		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefund)
+		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundFee)
 		_, err = services.UpdateVoucher(voucherData)
 		if err != nil {
 			return

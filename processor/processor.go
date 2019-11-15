@@ -32,11 +32,12 @@ func Start() {
 		return
 	}
 	var wg sync.WaitGroup
-	wg.Add(4)
+	wg.Add(5)
 	go handlePendingVouchers(&wg)
 	go handleConfirmingVouchers(&wg)
 	go handleConfirmedVouchers(&wg)
-	go handleRefundVouchers(&wg)
+	go handleRefundFeeVouchers(&wg)
+	go handleRefundTotalVouchers(&wg)
 	wg.Wait()
 	fmt.Println("Voucher Processor Finished")
 }
@@ -77,7 +78,12 @@ func handleConfirmedVouchers(wg *sync.WaitGroup) {
 	for _, v := range vouchers {
 		txid, err := submitBitcouPayment(v.BitcouPaymentData.Coin, v.BitcouPaymentData.Address, v.BitcouPaymentData.Amount)
 		if err != nil {
-			// TODO handle refund
+			v.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundTotal)
+			_, err = services.UpdateVoucher(v)
+			if err != nil {
+				fmt.Println("Unable to update voucher bitcou payment: " + err.Error())
+				continue
+			}
 			fmt.Println("Unable to submit bitcou payment, should refund the user: " + err.Error())
 			continue
 		}
@@ -105,33 +111,45 @@ func handleConfirmingVouchers(wg *sync.WaitGroup) {
 			fmt.Println("Unable to get payment coin configuration: " + err.Error())
 			continue
 		}
-		feeCoinConfig, err := coinfactory.GetCoin(v.FeePayment.Coin)
-		if err != nil {
-			fmt.Println("Unable to get fee coin configuration: " + err.Error())
-			continue
-		}
-		// Check if voucher has enough confirmations
-		if v.PaymentData.Confirmations >= int32(paymentCoinConfig.BlockchainInfo.MinConfirmations) && v.FeePayment.Confirmations >= int32(feeCoinConfig.BlockchainInfo.MinConfirmations) {
-			v.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusConfirmed)
-			_, err = services.UpdateVoucher(v)
+		if v.PaymentData.Coin != "POLIS" {
+			feeCoinConfig, err := coinfactory.GetCoin(v.FeePayment.Coin)
 			if err != nil {
-				fmt.Println("Unable to update voucher confirmations: " + err.Error())
+				fmt.Println("Unable to get fee coin configuration: " + err.Error())
 				continue
 			}
-			continue
+			// Check if voucher has enough confirmations
+			if v.PaymentData.Confirmations >= int32(paymentCoinConfig.BlockchainInfo.MinConfirmations) && v.FeePayment.Confirmations >= int32(feeCoinConfig.BlockchainInfo.MinConfirmations) {
+				v.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusConfirmed)
+				_, err = services.UpdateVoucher(v)
+				if err != nil {
+					fmt.Println("Unable to update voucher confirmations: " + err.Error())
+					continue
+				}
+				continue
+			}
+			feeConfirmations, err := getConfirmations(feeCoinConfig, v.FeePayment.Txid)
+			if err != nil {
+				fmt.Println("Unable to get fee coin confirmations: " + err.Error())
+				continue
+			}
+			v.FeePayment.Confirmations = int32(feeConfirmations)
+		} else {
+			if v.PaymentData.Confirmations >= int32(paymentCoinConfig.BlockchainInfo.MinConfirmations) {
+				v.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusConfirmed)
+				_, err = services.UpdateVoucher(v)
+				if err != nil {
+					fmt.Println("Unable to update voucher confirmations: " + err.Error())
+					continue
+				}
+				continue
+			}
 		}
 		paymentConfirmations, err := getConfirmations(paymentCoinConfig, v.PaymentData.Txid)
 		if err != nil {
 			fmt.Println("Unable to get payment coin confirmations: " + err.Error())
 			continue
 		}
-		feeConfirmations, err := getConfirmations(feeCoinConfig, v.FeePayment.Txid)
-		if err != nil {
-			fmt.Println("Unable to get fee coin confirmations: " + err.Error())
-			continue
-		}
 		v.PaymentData.Confirmations = int32(paymentConfirmations)
-		v.FeePayment.Confirmations = int32(feeConfirmations)
 		_, err = services.UpdateVoucher(v)
 		if err != nil {
 			fmt.Println("Unable to update voucher confirmations: " + err.Error())
@@ -140,17 +158,16 @@ func handleConfirmingVouchers(wg *sync.WaitGroup) {
 	}
 }
 
-func handleRefundVouchers(wg *sync.WaitGroup) {
+func handleRefundFeeVouchers(wg *sync.WaitGroup) {
 	defer wg.Done()
-	vouchers, err := getRefundVouchers()
+	vouchers, err := getRefundFeeVouchers()
 	if err != nil {
-		fmt.Println("Refund vouchers processor finished with errors: " + err.Error())
+		fmt.Println("Refund Fee vouchers processor finished with errors: " + err.Error())
 		return
 	}
-	// Check confirmations and return
 	for _, voucher := range vouchers {
 		paymentBody := plutus.SendAddressBodyReq{
-			Address: voucher.RefundAddr,
+			Address: voucher.RefundFeeAddr,
 			Coin:    "POLIS",
 			Amount:  amount.AmountType(voucher.FeePayment.Amount).ToNormalUnit(),
 		}
@@ -159,10 +176,53 @@ func handleRefundVouchers(wg *sync.WaitGroup) {
 			fmt.Println("unable to submit refund payment")
 			continue
 		}
-		voucher.Status = hestia.GetShiftStatusString(hestia.ShiftStatusRefunded)
+		voucher.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefunded)
 		_, err = services.UpdateVoucher(voucher)
 		if err != nil {
-			fmt.Println("unable to update shift")
+			fmt.Println("unable to update voucher")
+			continue
+		}
+	}
+}
+
+func handleRefundTotalVouchers(wg *sync.WaitGroup) {
+	defer wg.Done()
+	vouchers, err := getRefundTotalVouchers()
+	if err != nil {
+		fmt.Println("Refund Total vouchers processor finished with errors: " + err.Error())
+		return
+	}
+	for _, voucher := range vouchers {
+		feePaymentBody := plutus.SendAddressBodyReq{
+			Address: voucher.RefundFeeAddr,
+			Coin:    "POLIS",
+			Amount:  amount.AmountType(voucher.FeePayment.Amount).ToNormalUnit(),
+		}
+		_, err := services.SubmitPayment(feePaymentBody)
+		if err != nil {
+			fmt.Println("unable to submit refund payment")
+			continue
+		}
+		voucher.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundedPartially)
+		_, err = services.UpdateVoucher(voucher)
+		if err != nil {
+			fmt.Println("unable to update voucher")
+			continue
+		}
+		paymentBody := plutus.SendAddressBodyReq{
+			Address: voucher.RefundAddr,
+			Coin:    voucher.PaymentData.Coin,
+			Amount:  amount.AmountType(voucher.PaymentData.Amount).ToNormalUnit(),
+		}
+		_, err = services.SubmitPayment(paymentBody)
+		if err != nil {
+			fmt.Println("unable to submit refund payment")
+			continue
+		}
+		voucher.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefunded)
+		_, err = services.UpdateVoucher(voucher)
+		if err != nil {
+			fmt.Println("unable to update voucher")
 			continue
 		}
 	}
@@ -180,8 +240,12 @@ func getConfirmedVouchers() ([]hestia.Voucher, error) {
 	return getVouchers(hestia.VoucherStatusConfirmed)
 }
 
-func getRefundVouchers() ([]hestia.Voucher, error) {
-	return getVouchers(hestia.VoucherStatusRefund)
+func getRefundTotalVouchers() ([]hestia.Voucher, error) {
+	return getVouchers(hestia.VoucherStatusRefundTotal)
+}
+
+func getRefundFeeVouchers() ([]hestia.Voucher, error) {
+	return getVouchers(hestia.VoucherStatusRefundFee)
 }
 
 func getVouchers(status hestia.VoucherStatus) ([]hestia.Voucher, error) {
