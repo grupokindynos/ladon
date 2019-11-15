@@ -12,6 +12,7 @@ import (
 	"github.com/grupokindynos/common/tokens/mvt"
 	"github.com/grupokindynos/ladon/models"
 	"github.com/grupokindynos/ladon/services"
+	"github.com/grupokindynos/olympus-utils/amount"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -31,10 +32,11 @@ func Start() {
 		return
 	}
 	var wg sync.WaitGroup
-	wg.Add(3)
+	wg.Add(4)
 	go handlePendingVouchers(&wg)
 	go handleConfirmingVouchers(&wg)
 	go handleConfirmedVouchers(&wg)
+	go handleRefundVouchers(&wg)
 	wg.Wait()
 	fmt.Println("Voucher Processor Finished")
 }
@@ -56,7 +58,6 @@ func handlePendingVouchers(wg *sync.WaitGroup) {
 			}
 			continue
 		}
-		// TODO validate txs
 		v.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusConfirming)
 		_, err = services.UpdateVoucher(v)
 		if err != nil {
@@ -139,84 +140,52 @@ func handleConfirmingVouchers(wg *sync.WaitGroup) {
 	}
 }
 
+func handleRefundVouchers(wg *sync.WaitGroup) {
+	defer wg.Done()
+	vouchers, err := getRefundVouchers()
+	if err != nil {
+		fmt.Println("Refund vouchers processor finished with errors: " + err.Error())
+		return
+	}
+	// Check confirmations and return
+	for _, voucher := range vouchers {
+		paymentBody := plutus.SendAddressBodyReq{
+			Address: voucher.RefundAddr,
+			Coin:    "POLIS",
+			Amount:  amount.AmountType(voucher.FeePayment.Amount).ToNormalUnit(),
+		}
+		_, err := services.SubmitPayment(paymentBody)
+		if err != nil {
+			fmt.Println("unable to submit refund payment")
+			continue
+		}
+		voucher.Status = hestia.GetShiftStatusString(hestia.ShiftStatusRefunded)
+		_, err = services.UpdateVoucher(voucher)
+		if err != nil {
+			fmt.Println("unable to update shift")
+			continue
+		}
+	}
+}
+
 func getPendingVouchers() ([]hestia.Voucher, error) {
-	req, err := mvt.CreateMVTToken("GET", hestia.ProductionURL+"/voucher/all?filter="+hestia.GetVoucherStatusString(hestia.VoucherStatusPending), "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
-	if err != nil {
-		return nil, err
-	}
-	client := http.Client{
-		Timeout: 5 * time.Second,
-	}
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	tokenResponse, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	var tokenString string
-	err = json.Unmarshal(tokenResponse, &tokenString)
-	if err != nil {
-		return nil, err
-	}
-	headerSignature := res.Header.Get("service")
-	if headerSignature == "" {
-		return nil, errors.New("no header signature")
-	}
-	valid, payload := mrt.VerifyMRTToken(headerSignature, tokenString, os.Getenv("HESTIA_PUBLIC_KEY"), os.Getenv("MASTER_PASSWORD"))
-	if !valid {
-		return nil, err
-	}
-	var response []hestia.Voucher
-	err = json.Unmarshal(payload, &response)
-	if err != nil {
-		return nil, err
-	}
-	return response, nil
+	return getVouchers(hestia.VoucherStatusPending)
 }
 
 func getConfirmingVouchers() ([]hestia.Voucher, error) {
-	req, err := mvt.CreateMVTToken("GET", hestia.ProductionURL+"/voucher/all?filter="+hestia.GetVoucherStatusString(hestia.VoucherStatusConfirming), "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
-	if err != nil {
-		return nil, err
-	}
-	client := http.Client{
-		Timeout: 5 * time.Second,
-	}
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	tokenResponse, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	var tokenString string
-	err = json.Unmarshal(tokenResponse, &tokenString)
-	if err != nil {
-		return nil, err
-	}
-	headerSignature := res.Header.Get("service")
-	if headerSignature == "" {
-		return nil, errors.New("no header signature")
-	}
-	valid, payload := mrt.VerifyMRTToken(headerSignature, tokenString, os.Getenv("HESTIA_PUBLIC_KEY"), os.Getenv("MASTER_PASSWORD"))
-	if !valid {
-		return nil, err
-	}
-	var response []hestia.Voucher
-	err = json.Unmarshal(payload, &response)
-	if err != nil {
-		return nil, err
-	}
-	return response, nil
+	return getVouchers(hestia.VoucherStatusConfirming)
 }
 
 func getConfirmedVouchers() ([]hestia.Voucher, error) {
-	req, err := mvt.CreateMVTToken("GET", hestia.ProductionURL+"/voucher/all?filter="+hestia.GetVoucherStatusString(hestia.VoucherStatusConfirmed), "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+	return getVouchers(hestia.VoucherStatusConfirmed)
+}
+
+func getRefundVouchers() ([]hestia.Voucher, error) {
+	return getVouchers(hestia.VoucherStatusRefund)
+}
+
+func getVouchers(status hestia.VoucherStatus) ([]hestia.Voucher, error) {
+	req, err := mvt.CreateMVTToken("GET", hestia.ProductionURL+"/voucher/all?filter="+hestia.GetVoucherStatusString(status), "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return nil, err
 	}
