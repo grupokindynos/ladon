@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/grupokindynos/common/coin-factory/coins"
 	"github.com/grupokindynos/common/hestia"
 	"github.com/grupokindynos/common/obol"
 	"github.com/grupokindynos/common/responses"
@@ -11,6 +12,9 @@ import (
 	"github.com/grupokindynos/ladon/models"
 	"github.com/grupokindynos/ladon/services"
 	"github.com/grupokindynos/olympus-utils/amount"
+	"io/ioutil"
+	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -68,7 +72,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	if err != nil {
 		return nil, err
 	}
-	if !config.Vouchers.Available {
+	if !config.Vouchers.Service {
 		return nil, err
 	}
 	// Grab information on the payload
@@ -231,6 +235,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 }
 
 func (vc *VouchersController) Store(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
+	// TODO broadcast Tx
 	var voucherPayments models.StoreVoucher
 	err := json.Unmarshal(payload, &voucherPayments)
 	if err != nil {
@@ -250,7 +255,6 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherid string
 			Address:       storedVoucher.Payment.Address,
 			Amount:        storedVoucher.Payment.Amount,
 			Coin:          storedVoucher.Coin,
-			RawTx:         voucherPayments.RawTx,
 			Txid:          "",
 			Confirmations: 0,
 		},
@@ -258,7 +262,6 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherid string
 			Address:       storedVoucher.FeePayment.Address,
 			Amount:        storedVoucher.FeePayment.Amount,
 			Coin:          "polis",
-			RawTx:         voucherPayments.FeeTx,
 			Txid:          "",
 			Confirmations: 0,
 		},
@@ -266,7 +269,6 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherid string
 			Address:       storedVoucher.BitcouPayment.Address,
 			Amount:        storedVoucher.BitcouPayment.Amount,
 			Coin:          "dash",
-			RawTx:         "",
 			Txid:          "",
 			Confirmations: 0,
 		},
@@ -274,7 +276,6 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherid string
 			Address:       storedVoucher.BitcouFeePayment.Address,
 			Amount:        storedVoucher.BitcouFeePayment.Amount,
 			Coin:          "",
-			RawTx:         "",
 			Txid:          "",
 			Confirmations: 0,
 		},
@@ -341,4 +342,24 @@ func (vc *VouchersController) GetVoucherFromMap(uid string) (models.PrepareVouch
 		return models.PrepareVoucherInfo{}, errors.New("voucher not found in cache map")
 	}
 	return voucher, nil
+}
+
+func broadCastTx(coinConfig *coins.Coin, rawTx string) (txid string, err error) {
+	resp, err := http.Get(coinConfig.BlockExplorer + "/api/v2/sendtx/" + rawTx)
+	if err != nil {
+		return "", err
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	var response models.BlockbookBroadcastResponse
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return "", err
+	}
+	if response.Error != "" {
+		return "", errors.New(response.Error)
+	}
+	return response.Result, nil
 }

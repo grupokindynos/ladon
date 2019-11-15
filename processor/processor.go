@@ -22,6 +22,14 @@ import (
 
 func Start() {
 	fmt.Println("Starting Voucher Processor")
+	voucherStatus, err := services.GetVouchersStatus()
+	if err != nil {
+		panic(err)
+	}
+	if !voucherStatus.Vouchers.Processor {
+		fmt.Println("Voucher processor disabled")
+		return
+	}
 	var wg sync.WaitGroup
 	wg.Add(3)
 	go handlePendingVouchers(&wg)
@@ -49,33 +57,6 @@ func handlePendingVouchers(wg *sync.WaitGroup) {
 			continue
 		}
 		// TODO validate txs
-
-		// Once the tx are fully validated we broadcast the information and mark the voucher as confirming
-		paymentCoinConfig, err := coinfactory.GetCoin(v.PaymentData.Coin)
-		if err != nil {
-			fmt.Println("Unable to get payment coin configuration: " + err.Error())
-			continue
-		}
-		feeCoinConfig, err := coinfactory.GetCoin(v.FeePayment.Coin)
-		if err != nil {
-			fmt.Println("Unable to get fee coin configuration: " + err.Error())
-			continue
-		}
-		txidFee, err := broadCastTx(feeCoinConfig, v.FeePayment.RawTx)
-		if err != nil {
-			fmt.Println("Unable to broadcast fee rawTx: " + err.Error())
-			continue
-		}
-		v.FeePayment.RawTx = ""
-		v.FeePayment.Txid = txidFee
-		txidPayment, err := broadCastTx(paymentCoinConfig, v.PaymentData.RawTx)
-		if err != nil {
-			fmt.Println("Unable to broadcast payment rawTx: " + err.Error())
-			// TODO if this happens, we need to refund fee payment.
-			continue
-		}
-		v.PaymentData.RawTx = ""
-		v.PaymentData.Txid = txidPayment
 		v.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusConfirming)
 		_, err = services.UpdateVoucher(v)
 		if err != nil {
@@ -297,24 +278,4 @@ func submitBitcouPayment(coin string, address string, amount int64) (txid string
 		Amount:  floatAmount / 1e8,
 	}
 	return services.SubmitPayment(payment)
-}
-
-func broadCastTx(coinConfig *coins.Coin, rawTx string) (txid string, err error) {
-	resp, err := http.Get(coinConfig.BlockExplorer + "/api/v2/sendtx/" + rawTx)
-	if err != nil {
-		return "", err
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	var response models.BlockbookBroadcastResponse
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return "", err
-	}
-	if response.Error != "" {
-		return "", errors.New(response.Error)
-	}
-	return response.Result, nil
 }
