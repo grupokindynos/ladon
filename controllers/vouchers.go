@@ -348,8 +348,12 @@ func (vc *VouchersController) decodeAndCheckTx(voucherData hestia.Voucher, store
 	// Decode payment rawTx and verify
 	paymentOutputs, err := getRawTx(voucherData.PaymentData.Coin, rawTx)
 	if err != nil {
-		// If decode fail, we should mark error, mark refund, fees are already spent.
-		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundFee)
+		// If decode fail and coin is POLIS mark as error
+		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
+		if voucherData.PaymentData.Coin != "POLIS" {
+			// If decode fail and coin is different than POLIS we should mark refund fees.
+			voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundFee)
+		}
 		_, err = services.UpdateVoucher(voucherData)
 		if err != nil {
 			return
@@ -359,8 +363,12 @@ func (vc *VouchersController) decodeAndCheckTx(voucherData hestia.Voucher, store
 	paymentAmount := amount.AmountType(voucherData.PaymentData.Amount)
 	err = verifyTransaction(paymentOutputs, voucherData.PaymentData.Address, paymentAmount)
 	if err != nil {
-		// If verify fail, we should mark error, mark refund, fees are already spent.
-		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundFee)
+		// If verify fail and coin is POLIS mark as error
+		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
+		if voucherData.PaymentData.Coin != "POLIS" {
+			// If verify fail and coin is different than POLIS we should mark refund fees.
+			voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundFee)
+		}
 		_, err = services.UpdateVoucher(voucherData)
 		if err != nil {
 			return
@@ -370,8 +378,12 @@ func (vc *VouchersController) decodeAndCheckTx(voucherData hestia.Voucher, store
 	// Broadcast rawTx
 	coinConfig, err := coinfactory.GetCoin(voucherData.PaymentData.Coin)
 	if err != nil {
-		// If get coin fail, we should mark error, mark refund, fees are already spent.
-		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundFee)
+		// If get coin fail and coin is POLIS mark as error
+		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
+		if voucherData.PaymentData.Coin != "POLIS" {
+			// If get coin fail and coin is different than POLIS we should mark refund fees.
+			voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundFee)
+		}
 		_, err = services.UpdateVoucher(voucherData)
 		if err != nil {
 			return
@@ -380,8 +392,12 @@ func (vc *VouchersController) decodeAndCheckTx(voucherData hestia.Voucher, store
 	}
 	paymentTxid, err := broadCastTx(coinConfig, rawTx)
 	if err != nil {
-		// If broadcast fail, we should mark error, mark refund, fees are already spent.
-		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundFee)
+		// If broadcast fail and coin is POLIS mark as error
+		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
+		if voucherData.PaymentData.Coin != "POLIS" {
+			// If broadcast fail and coin is different than POLIS we should mark refund fees.
+			voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundFee)
+		}
 		_, err = services.UpdateVoucher(voucherData)
 		if err != nil {
 			return
