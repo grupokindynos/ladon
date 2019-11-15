@@ -236,7 +236,6 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 }
 
 func (vc *VouchersController) Store(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
-	// TODO broadcast Tx
 	var voucherPayments models.StoreVoucher
 	err := json.Unmarshal(payload, &voucherPayments)
 	if err != nil {
@@ -282,6 +281,7 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherid string
 		},
 		BitcouID:   storedVoucher.BitcouID,
 		RedeemCode: "",
+		RefundAddr: voucherPayments.RefundAddr,
 		Status:     hestia.GetVoucherStatusString(hestia.VoucherStatusPending),
 		Timestamp:  time.Now().Unix(),
 	}
