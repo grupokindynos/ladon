@@ -15,8 +15,8 @@ github.com/google/go-querystring v1.0.0/go.mod h1:odCYkC5MyYFN7vkCjXpyrEuKhc/BUO
 github.com/google/uuid v1.0.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/gorilla/websocket v1.4.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
-github.com/grupokindynos/common v0.0.0-20191115010024-90852774b537 h1:SKKgI2tYVBsfjbmyP265dlLDG0t//8SLrSXC04Bx+jg=
-github.com/grupokindynos/common v0.0.0-20191115010024-90852774b537/go.mod h1:GUdrFqqFWFaecQtHAuQQdS0elR2mqHJAClBW98GIFzI=
+github.com/grupokindynos/common v0.0.0-20191115021308-0344cef63d8c h1:Pd1AH0YH0wbBFJb7Ilh7p0HD6DKMLFy3FqbRXMDa5Gk=
+github.com/grupokindynos/common v0.0.0-20191115021308-0344cef63d8c/go.mod h1:GUdrFqqFWFaecQtHAuQQdS0elR2mqHJAClBW98GIFzI=
 github.com/grupokindynos/olympus-utils v0.0.0-20191110172227-b79e9f77dd1b h1:gc4d05aVmKqPAJI1Ah1Du42svDSOA83w0GiAja1jh8o=
 github.com/grupokindynos/olympus-utils v0.0.0-20191110172227-b79e9f77dd1b/go.mod h1:CO1mJJZwQrTgBTLXxhn5wJf00YNex3T7kAVy19RBun8=
 github.com/heroku/heroku-go/v5 v5.1.0/go.mod h1:d+1QrZyjbnQJG1f8xIoVvMQRFLt3XRVZOdlm26Sr73U=
