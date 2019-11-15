@@ -33,7 +33,7 @@ func (vc *VouchersController) Status(payload []byte, uid string, voucherid strin
 	if err != nil {
 		return nil, err
 	}
-	return status.Vouchers, nil
+	return status.Vouchers.Service, nil
 }
 
 func (vc *VouchersController) GetList(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
