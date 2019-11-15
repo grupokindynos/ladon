@@ -300,7 +300,7 @@ func (vc *VouchersController) decodeAndCheckTx(voucherData hestia.Voucher, store
 	var FeeTxId string
 	if voucherData.PaymentData.Coin != "POLIS" {
 		// Decode fee rawTx and verify
-		feeOutputs, err := getRawTx("POLIS", rawTx)
+		feeOutputs, err := getRawTx("POLIS", feeTx)
 		if err != nil {
 			// If outputs fail, we should mark error, no spent anything.
 			voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
