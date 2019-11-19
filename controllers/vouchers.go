@@ -38,34 +38,12 @@ func (vc *VouchersController) Status(payload []byte, uid string, voucherid strin
 	return status.Vouchers.Service, nil
 }
 
-func (vc *VouchersController) GetList(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
-	vouchersList, err := vc.BitcouService.GetVouchersList()
-	if err != nil {
-		return nil, err
-	}
-	return vouchersList, nil
-}
-
 func (vc *VouchersController) GetListForPhone(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
-	vouchersList, err := vc.BitcouService.GetVouchersList()
-	if err != nil {
-		return nil, err
-	}
 	vouchersAvailable, err := vc.BitcouService.GetPhoneTopUpList(phoneNb)
 	if err != nil {
 		return nil, err
 	}
-	var VouchersList []models.Voucher
-	for _, availableVoucher := range vouchersAvailable {
-		for _, v := range vouchersList {
-			for _, voucher := range v {
-				if availableVoucher == voucher.ProductID {
-					VouchersList = append(VouchersList, voucher)
-				}
-			}
-		}
-	}
-	return VouchersList, nil
+	return vouchersAvailable, nil
 }
 
 func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
@@ -111,27 +89,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 			return nil, err
 		}
 	}
-	// Get the voucher list to grab the name of the voucher.
-	vouchers, err := vc.BitcouService.GetVouchersList()
-	var selectedVoucher models.Voucher
-	for _, voucher := range vouchers[PrepareVoucher.Country] {
-		if voucher.ProductID == PrepareVoucher.VoucherType {
-			selectedVoucher = voucher
-			break
-		}
-	}
-	if selectedVoucher.ProductID == 0 {
-		return nil, err
-	}
-	var selectedVariant models.Variants
-	for _, variant := range selectedVoucher.Variants {
-		if variant.VariantID == PrepareVoucher.VoucherVariant {
-			selectedVariant = variant
-		}
-	}
-	if selectedVariant.VariantID == "" {
-		return nil, err
-	}
+
 	// Convert the variand id to int
 	voucherVariantInt, _ := strconv.Atoi(PrepareVoucher.VoucherVariant)
 	// Prepare Tx for Bitcou
@@ -230,7 +188,6 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		FeePayment:       feeInfo,
 		BitcouPayment:    bitcouPaymentInfo,
 		BitcouFeePayment: bitcouFeePaymentInfo,
-		VoucherName:      selectedVoucher.Name,
 	}
 	vc.AddVoucherToMap(uid, prepareVoucher)
 	return res, nil
@@ -251,7 +208,6 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherid string
 		UID:       uid,
 		VoucherID: storedVoucher.VoucherType,
 		VariantID: storedVoucher.VoucherVariant,
-		Name:      storedVoucher.VoucherName,
 		PaymentData: hestia.Payment{
 			Address:       storedVoucher.Payment.Address,
 			Amount:        storedVoucher.Payment.Amount,

@@ -28,7 +28,6 @@ type PrepareVoucherInfo struct {
 	BitcouFeePayment PaymentInfo `json:"bitcou_fee_payment"`
 	BitcouID         string      `json:"bitcou_id"`
 	Timestamp        int64       `json:"timestamp"`
-	VoucherName      string      `json:"voucher_name"`
 }
 
 type StoreVoucher struct {
