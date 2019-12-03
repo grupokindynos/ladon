@@ -46,8 +46,7 @@ func main() {
 		Minute: time.Now().Minute(),
 		Second: time.Now().Second(),
 	}
-	processor.Start()
-	//go timer()
+	go timer()
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8081"
