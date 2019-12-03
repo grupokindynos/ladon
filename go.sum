@@ -17,6 +17,10 @@ github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+
 github.com/gorilla/websocket v1.4.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
 github.com/grupokindynos/common v0.0.0-20191115202351-7a6a6d47b4a6 h1:+9cph1tifjfzZPxM0UFzs77QktqHnxDB9Pv+zYVmFB4=
 github.com/grupokindynos/common v0.0.0-20191115202351-7a6a6d47b4a6/go.mod h1:271qNb8e6iiAaLcuI9qLQCPrUE36/MGJpCOI2oq+LvA=
+github.com/grupokindynos/common v0.0.0-20191203173402-247b8ecd6f14 h1:TnCymk3PXaYfxOkzs+/PYFcvc7mcmv7y3A2eg4vJ9YU=
+github.com/grupokindynos/common v0.0.0-20191203173402-247b8ecd6f14/go.mod h1:271qNb8e6iiAaLcuI9qLQCPrUE36/MGJpCOI2oq+LvA=
+github.com/grupokindynos/common v0.0.0-20191203174058-340ead09e2ab h1:3orkWGPxfywSF84r0+9yUjk96ALPFjt7ocxtayZNhPA=
+github.com/grupokindynos/common v0.0.0-20191203174058-340ead09e2ab/go.mod h1:271qNb8e6iiAaLcuI9qLQCPrUE36/MGJpCOI2oq+LvA=
 github.com/grupokindynos/olympus-utils v0.0.0-20191114150906-5c358df85e5c h1:6CSFnEkKH1eAs9FqS2DNqksoSPNYfVE05riAx5cg6ME=
 github.com/grupokindynos/olympus-utils v0.0.0-20191114150906-5c358df85e5c/go.mod h1:CO1mJJZwQrTgBTLXxhn5wJf00YNex3T7kAVy19RBun8=
 github.com/heroku/heroku-go/v5 v5.1.0/go.mod h1:d+1QrZyjbnQJG1f8xIoVvMQRFLt3XRVZOdlm26Sr73U=

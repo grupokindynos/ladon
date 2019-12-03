@@ -21,6 +21,8 @@ import (
 	"time"
 )
 
+const timeoutAwaiting = 40 * 60 // 40 minutes
+
 func Start() {
 	fmt.Println("Starting Voucher Processor")
 	voucherStatus, err := services.GetVouchersStatus()
@@ -32,12 +34,13 @@ func Start() {
 		return
 	}
 	var wg sync.WaitGroup
-	wg.Add(5)
+	wg.Add(6)
 	go handlePendingVouchers(&wg)
 	go handleConfirmingVouchers(&wg)
 	go handleConfirmedVouchers(&wg)
 	go handleRefundFeeVouchers(&wg)
 	go handleRefundTotalVouchers(&wg)
+	go handleTimeoutAwaitingVouchers(&wg)
 	wg.Wait()
 	fmt.Println("Voucher Processor Finished")
 }
@@ -193,37 +196,69 @@ func handleRefundTotalVouchers(wg *sync.WaitGroup) {
 		return
 	}
 	for _, voucher := range vouchers {
-		feePaymentBody := plutus.SendAddressBodyReq{
-			Address: voucher.RefundFeeAddr,
-			Coin:    "POLIS",
-			Amount:  amount.AmountType(voucher.FeePayment.Amount).ToNormalUnit(),
+		if voucher.PaymentData.Coin == "POLIS" {
+			paymentBody := plutus.SendAddressBodyReq{
+				Address: voucher.RefundAddr,
+				Coin:    voucher.PaymentData.Coin,
+				Amount:  amount.AmountType(voucher.PaymentData.Amount).ToNormalUnit(),
+			}
+			_, err = services.SubmitPayment(paymentBody)
+			if err != nil {
+				fmt.Println("unable to submit refund payment")
+				continue
+			}
+			voucher.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefunded)
+			_, err = services.UpdateVoucher(voucher)
+			if err != nil {
+				fmt.Println("unable to update voucher")
+				continue
+			}
+		} else {
+			feePaymentBody := plutus.SendAddressBodyReq{
+				Address: voucher.RefundFeeAddr,
+				Coin:    "POLIS",
+				Amount:  amount.AmountType(voucher.FeePayment.Amount).ToNormalUnit(),
+			}
+			_, err := services.SubmitPayment(feePaymentBody)
+			if err != nil {
+				fmt.Println("unable to submit refund payment")
+				continue
+			}
+			paymentBody := plutus.SendAddressBodyReq{
+				Address: voucher.RefundAddr,
+				Coin:    voucher.PaymentData.Coin,
+				Amount:  amount.AmountType(voucher.PaymentData.Amount).ToNormalUnit(),
+			}
+			_, err = services.SubmitPayment(paymentBody)
+			if err != nil {
+				fmt.Println("unable to submit refund payment")
+				continue
+			}
+			voucher.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefunded)
+			_, err = services.UpdateVoucher(voucher)
+			if err != nil {
+				fmt.Println("unable to update voucher")
+				continue
+			}
 		}
-		_, err := services.SubmitPayment(feePaymentBody)
-		if err != nil {
-			fmt.Println("unable to submit refund payment")
-			continue
-		}
-		voucher.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundedPartially)
-		_, err = services.UpdateVoucher(voucher)
-		if err != nil {
-			fmt.Println("unable to update voucher")
-			continue
-		}
-		paymentBody := plutus.SendAddressBodyReq{
-			Address: voucher.RefundAddr,
-			Coin:    voucher.PaymentData.Coin,
-			Amount:  amount.AmountType(voucher.PaymentData.Amount).ToNormalUnit(),
-		}
-		_, err = services.SubmitPayment(paymentBody)
-		if err != nil {
-			fmt.Println("unable to submit refund payment")
-			continue
-		}
-		voucher.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefunded)
-		_, err = services.UpdateVoucher(voucher)
-		if err != nil {
-			fmt.Println("unable to update voucher")
-			continue
+	}
+}
+
+func handleTimeoutAwaitingVouchers(wg *sync.WaitGroup) {
+	defer wg.Done()
+	vouchers, err := getAwaitingProviderVouchers()
+	if err != nil {
+		fmt.Println("Await provider vouchers processor finished with errors: " + err.Error())
+		return
+	}
+	for _, voucher := range vouchers {
+		if voucher.Timestamp + timeoutAwaiting < time.Now().Unix() {
+			voucher.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundTotal)
+			_, err = services.UpdateVoucher(voucher)
+			if err != nil {
+				fmt.Println("unable to update voucher")
+				continue
+			}
 		}
 	}
 }
@@ -248,13 +283,17 @@ func getRefundFeeVouchers() ([]hestia.Voucher, error) {
 	return getVouchers(hestia.VoucherStatusRefundFee)
 }
 
+func getAwaitingProviderVouchers() ([]hestia.Voucher, error) {
+	return getVouchers(hestia.VoucherStatusAwaitingProvider)
+}
+
 func getVouchers(status hestia.VoucherStatus) ([]hestia.Voucher, error) {
-	req, err := mvt.CreateMVTToken("GET", hestia.ProductionURL+"/voucher/all?filter="+hestia.GetVoucherStatusString(status), "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+	req, err := mvt.CreateMVTToken("GET", "http://localhost:8080/voucher/all?filter="+hestia.GetVoucherStatusString(status), "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return nil, err
 	}
 	client := http.Client{
-		Timeout: 5 * time.Second,
+		Timeout: 40 * time.Second,
 	}
 	res, err := client.Do(req)
 	if err != nil {
