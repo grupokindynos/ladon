@@ -256,21 +256,16 @@ func (vc *VouchersController) decodeAndCheckTx(voucherData hestia.Voucher, store
 
 	var FeeTxId string
 	if voucherData.PaymentData.Coin != "POLIS" {
-		// Decode fee rawTx and verify
-		feeOutputs, err := getRawTx("POLIS", feeTx)
-		if err != nil {
-			// If outputs fail, we should mark error, no spent anything.
-			voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
-			_, err = services.UpdateVoucher(voucherData)
-			if err != nil {
-				return
-			}
-			return
+		// Validate feeRawTx
+		body := plutus.ValidateRawTxReq{
+			Coin:    voucherData.FeePayment.Coin,
+			RawTx:   feeTx,
+			Amount:  voucherData.FeePayment.Amount,
+			Address: voucherData.FeePayment.Address,
 		}
-		feeAmount := amount.AmountType(voucherData.FeePayment.Amount)
-		err = verifyTransaction(feeOutputs, voucherData.FeePayment.Address, feeAmount)
-		if err != nil {
-			// If verify fail, we should mark error, no spent anything.
+		valid, err := services.ValidateRawTx(body)
+		if err != nil || !valid {
+			// If fail, we should mark error, no spent anything.
 			voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
 			_, err = services.UpdateVoucher(voucherData)
 			if err != nil {
@@ -300,29 +295,19 @@ func (vc *VouchersController) decodeAndCheckTx(voucherData hestia.Voucher, store
 			return
 		}
 	}
-
-	// Decode payment rawTx and verify
-	paymentOutputs, err := getRawTx(voucherData.PaymentData.Coin, rawTx)
-	if err != nil {
-		// If decode fail and coin is POLIS mark as error
+	// Validate Payment RawTx
+	body := plutus.ValidateRawTxReq{
+		Coin:    voucherData.PaymentData.Coin,
+		RawTx:   rawTx,
+		Amount:  voucherData.PaymentData.Amount,
+		Address: voucherData.PaymentData.Address,
+	}
+	valid, err := services.ValidateRawTx(body)
+	if err != nil || !valid {
+		// If fail and coin is POLIS mark as error
 		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
 		if voucherData.PaymentData.Coin != "POLIS" {
 			// If decode fail and coin is different than POLIS we should mark refund fees.
-			voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundFee)
-		}
-		_, err = services.UpdateVoucher(voucherData)
-		if err != nil {
-			return
-		}
-		return
-	}
-	paymentAmount := amount.AmountType(voucherData.PaymentData.Amount)
-	err = verifyTransaction(paymentOutputs, voucherData.PaymentData.Address, paymentAmount)
-	if err != nil {
-		// If verify fail and coin is POLIS mark as error
-		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
-		if voucherData.PaymentData.Coin != "POLIS" {
-			// If verify fail and coin is different than POLIS we should mark refund fees.
 			voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundFee)
 		}
 		_, err = services.UpdateVoucher(voucherData)
@@ -369,85 +354,6 @@ func (vc *VouchersController) decodeAndCheckTx(voucherData hestia.Voucher, store
 	}
 }
 
-func getRawTx(coin string, rawTx string) ([]hestia.Outputs, error) {
-	rawData, err := services.DecodeRawTx(coin, rawTx)
-	if err != nil {
-		return nil, err
-	}
-	switch coin {
-	case "POLIS":
-		rawInfo, err := json.Marshal(rawData)
-		if err != nil {
-			return nil, err
-		}
-		var txInfo hestia.PolisTxInfo
-		err = json.Unmarshal(rawInfo, &txInfo)
-		if err != nil {
-			return nil, err
-		}
-		var outputs []hestia.Outputs
-		for _, out := range txInfo.Vout {
-			amountHandler, err := amount.NewAmount(out.Value)
-			if err != nil {
-				return nil, err
-			}
-			newOutput := hestia.Outputs{
-				Address: out.ScriptPubKey.Addresses[0],
-				Amount:  amountHandler,
-			}
-			outputs = append(outputs, newOutput)
-		}
-		return outputs, nil
-	case "BTC":
-		rawInfo, err := json.Marshal(rawData)
-		if err != nil {
-			return nil, err
-		}
-		var txInfo hestia.BitcoinTxInfo
-		err = json.Unmarshal(rawInfo, &txInfo)
-		if err != nil {
-			return nil, err
-		}
-		var outputs []hestia.Outputs
-		for _, out := range txInfo.Vout {
-			amountHandler, err := amount.NewAmount(out.Value)
-			if err != nil {
-				return nil, err
-			}
-			newOutput := hestia.Outputs{
-				Address: out.ScriptPubKey.Addresses[0],
-				Amount:  amountHandler,
-			}
-			outputs = append(outputs, newOutput)
-		}
-		return outputs, nil
-	case "DASH":
-		rawInfo, err := json.Marshal(rawData)
-		if err != nil {
-			return nil, err
-		}
-		var txInfo hestia.DashTxInfo
-		err = json.Unmarshal(rawInfo, &txInfo)
-		if err != nil {
-			return nil, err
-		}
-		var outputs []hestia.Outputs
-		for _, out := range txInfo.Vout {
-			amountHandler, err := amount.NewAmount(out.Value)
-			if err != nil {
-				return nil, err
-			}
-			newOutput := hestia.Outputs{
-				Address: out.ScriptPubKey.Addresses[0],
-				Amount:  amountHandler,
-			}
-			outputs = append(outputs, newOutput)
-		}
-		return outputs, nil
-	}
-	return nil, nil
-}
-
 func broadCastTx(coinConfig *coins.Coin, rawTx string) (txid string, err error) {
 	resp, err := http.Get(coinConfig.BlockExplorer + "/api/v2/sendtx/" + rawTx)
 	if err != nil {
@@ -466,25 +372,6 @@ func broadCastTx(coinConfig *coins.Coin, rawTx string) (txid string, err error) 
 		return "", errors.New(response.Error)
 	}
 	return response.Result, nil
-}
-
-func verifyTransaction(outputs []hestia.Outputs, address string, amount amount.AmountType) error {
-	var isAddressOnTx, isAmountCorrect = false, false
-	for _, output := range outputs {
-		if output.Address == address {
-			isAddressOnTx = true
-		}
-		if output.Amount == amount {
-			isAmountCorrect = true
-		}
-	}
-	if isAddressOnTx == false {
-		return errors.New("no matching address in raw tx")
-	}
-	if isAmountCorrect == false {
-		return errors.New("incorrect amount in raw tx")
-	}
-	return nil
 }
 
 func (vc *VouchersController) Update(c *gin.Context) {

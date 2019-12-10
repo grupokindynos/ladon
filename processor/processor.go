@@ -258,7 +258,7 @@ func handleTimeoutAwaitingVouchers(wg *sync.WaitGroup) {
 		return
 	}
 	for _, voucher := range vouchers {
-		if voucher.Timestamp + timeoutAwaiting < time.Now().Unix() {
+		if voucher.Timestamp+timeoutAwaiting < time.Now().Unix() {
 			voucher.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundTotal)
 			_, err = services.UpdateVoucher(voucher)
 			if err != nil {
@@ -294,7 +294,7 @@ func getAwaitingProviderVouchers() ([]hestia.Voucher, error) {
 }
 
 func getVouchers(status hestia.VoucherStatus) ([]hestia.Voucher, error) {
-	req, err := mvt.CreateMVTToken("GET", hestia.ProductionURL + "/voucher/all?filter="+hestia.GetVoucherStatusString(status), "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+	req, err := mvt.CreateMVTToken("GET", hestia.ProductionURL+"/voucher/all?filter="+hestia.GetVoucherStatusString(status), "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return nil, err
 	}

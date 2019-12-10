@@ -87,40 +87,40 @@ func SubmitPayment(body plutus.SendAddressBodyReq) (txid string, err error) {
 	return response, nil
 }
 
-func DecodeRawTx(coin string, rawTx string) (txInfo interface{}, err error) {
-	req, err := mvt.CreateMVTToken("POST", plutus.ProductionURL+"/decode/"+coin, "ladon", os.Getenv("MASTER_PASSWORD"), rawTx, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+func ValidateRawTx(body plutus.ValidateRawTxReq) (valid bool, err error) {
+	req, err := mvt.CreateMVTToken("POST", plutus.ProductionURL+"/validate/tx", "ladon", os.Getenv("MASTER_PASSWORD"), body, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
-		return nil, err
+		return false, err
 	}
 	client := http.Client{
 		Timeout: 10 * time.Second,
 	}
 	res, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return false, err
 	}
 	defer res.Body.Close()
 	tokenResponse, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return nil, err
+		return false, err
 	}
 	var tokenString string
 	err = json.Unmarshal(tokenResponse, &tokenString)
 	if err != nil {
-		return nil, err
+		return false, err
 	}
 	headerSignature := res.Header.Get("service")
 	if headerSignature == "" {
-		return nil, err
+		return false, err
 	}
 	valid, payload := mrt.VerifyMRTToken(headerSignature, tokenString, os.Getenv("PLUTUS_PUBLIC_KEY"), os.Getenv("MASTER_PASSWORD"))
 	if !valid {
-		return nil, err
+		return false, err
 	}
-	var response interface{}
+	var response bool
 	err = json.Unmarshal(payload, &response)
 	if err != nil {
-		return nil, err
+		return false, err
 	}
 	return response, nil
 }
