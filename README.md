@@ -16,8 +16,6 @@ To deploy to docker, simply pull the image
 ```
 docker pull kindynos/ladon:latest
 ```
-Create a new `.env` file with all the necessary environment variables defined on `app.json`
-
 Run the docker image
 ```
 docker run -p 8080:8080 --env-file .env kindynos/ladon:latest 
