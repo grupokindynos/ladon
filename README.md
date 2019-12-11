@@ -10,10 +10,6 @@ Ladon Microservice API to purchase vouchers from PolisPay
 
 ## Deploy
 
-#### Heroku
-
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/grupokindynos/ladon)
-
 #### Docker
 
 To deploy to docker, simply pull the image
