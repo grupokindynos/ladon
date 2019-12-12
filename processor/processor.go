@@ -21,7 +21,7 @@ import (
 	"time"
 )
 
-const timeoutAwaiting = 40 * 60 // 40 minutes
+const timeoutAwaiting = 60 * 60 * 2 // 2 hours.
 
 func Start() {
 	fmt.Println("Starting Voucher Processor")
