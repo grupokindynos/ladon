@@ -2,17 +2,23 @@ package services
 
 import (
 	"encoding/json"
-	"github.com/grupokindynos/common/plutus"
-	"github.com/grupokindynos/common/tokens/mrt"
-	"github.com/grupokindynos/common/tokens/mvt"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/grupokindynos/common/plutus"
+	"github.com/grupokindynos/common/tokens/mrt"
+	"github.com/grupokindynos/common/tokens/mvt"
 )
 
-func GetNewPaymentAddress(coin string) (addr string, err error) {
-	req, err := mvt.CreateMVTToken("GET", plutus.ProductionURL+"/address/"+coin, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+type PlutusRequests struct {
+	PlutusURL string
+}
+
+func (p *PlutusRequests) GetNewPaymentAddress(coin string) (addr string, err error) {
+	req, err := mvt.CreateMVTToken("GET", p.PlutusURL+"/address/"+coin, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return addr, err
 	}
@@ -49,8 +55,8 @@ func GetNewPaymentAddress(coin string) (addr string, err error) {
 	return response, nil
 }
 
-func SubmitPayment(body plutus.SendAddressBodyReq) (txid string, err error) {
-	req, err := mvt.CreateMVTToken("POST", plutus.ProductionURL+"/send/address", "ladon", os.Getenv("MASTER_PASSWORD"), body, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+func (p *PlutusRequests) SubmitPayment(body plutus.SendAddressBodyReq) (txid string, err error) {
+	req, err := mvt.CreateMVTToken("POST", p.PlutusURL+"/send/address", "ladon", os.Getenv("MASTER_PASSWORD"), body, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return txid, err
 	}
@@ -87,8 +93,8 @@ func SubmitPayment(body plutus.SendAddressBodyReq) (txid string, err error) {
 	return response, nil
 }
 
-func ValidateRawTx(body plutus.ValidateRawTxReq) (valid bool, err error) {
-	req, err := mvt.CreateMVTToken("POST", plutus.ProductionURL+"/validate/tx", "ladon", os.Getenv("MASTER_PASSWORD"), body, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+func (p *PlutusRequests) ValidateRawTx(body plutus.ValidateRawTxReq) (valid bool, err error) {
+	req, err := mvt.CreateMVTToken("POST", p.PlutusURL+"/validate/tx", "ladon", os.Getenv("MASTER_PASSWORD"), body, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return false, err
 	}
@@ -121,6 +127,47 @@ func ValidateRawTx(body plutus.ValidateRawTxReq) (valid bool, err error) {
 	err = json.Unmarshal(payload, &response)
 	if err != nil {
 		return false, err
+	}
+	return response, nil
+}
+
+func (p *PlutusRequests) GetWalletBalance(coin string) (plutus.Balance, error) {
+	req, err := mvt.CreateMVTToken("GET", p.PlutusURL+"/balance/"+coin, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIV_KEY"))
+	if err != nil {
+		return plutus.Balance{}, err
+	}
+	client := http.Client{
+		Transport:     nil,
+		CheckRedirect: nil,
+		Jar:           nil,
+		Timeout:       time.Second * 30,
+	}
+	res, err := client.Do(req)
+	if err != nil {
+		return plutus.Balance{}, err
+	}
+	defer res.Body.Close()
+	tokenResponse, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return plutus.Balance{}, err
+	}
+	var tokenString string
+	err = json.Unmarshal(tokenResponse, &tokenString)
+	if err != nil {
+		return plutus.Balance{}, err
+	}
+	headerSignature := res.Header.Get("service")
+	if headerSignature == "" {
+		return plutus.Balance{}, errors.New("no header signature")
+	}
+	valid, payload := mrt.VerifyMRTToken(headerSignature, tokenString, os.Getenv("PLUTUS_PUBLIC_KEY"), os.Getenv("MASTER_PASSWORD"))
+	if !valid {
+		return plutus.Balance{}, err
+	}
+	var response plutus.Balance
+	err = json.Unmarshal(payload, &response)
+	if err != nil {
+		return plutus.Balance{}, err
 	}
 	return response, nil
 }

@@ -30,6 +30,10 @@ type CurrentTime struct {
 var (
 	currTime           CurrentTime
 	prepareVouchersMap = make(map[string]models.PrepareVoucherInfo)
+	proc               = processor.Processor{
+		Hestia: &services.HestiaRequests{},
+		Plutus: &services.PlutusRequests{PlutusURL: os.Getenv("PLUTUS_PRODUCTION_URL")},
+	}
 )
 
 const prepareVoucherTimeframe = 60 * 5 // 5 minutes
@@ -66,8 +70,14 @@ func GetApp() *gin.Engine {
 }
 
 func ApplyRoutes(r *gin.Engine) {
-	bitcouService := services.InitService()
-	vouchersCtrl := &controllers.VouchersController{BitcouService: bitcouService, PreparesVouchers: prepareVouchersMap}
+	bitcouService := services.NewBitcouService()
+	vouchersCtrl := &controllers.VouchersController{
+		PreparesVouchers: prepareVouchersMap,
+		Plutus:           &services.PlutusRequests{PlutusURL: os.Getenv("PLUTUS_PRODUCTION_URL")},
+		Hestia:           &services.HestiaRequests{},
+		Bitcou:           bitcouService,
+	}
+
 	go checkAndRemoveVouchers(vouchersCtrl)
 	api := r.Group("/")
 	{
@@ -140,7 +150,7 @@ func runCrons(mainWg *sync.WaitGroup) {
 	}()
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go runCronMinutes(1, processor.Start, &wg) // 1 minute
+	go runCronMinutes(1, proc.Start, &wg) // 1 minute
 	wg.Wait()
 }
 
@@ -155,7 +165,6 @@ func runCronMinutes(schedule int, function func(), wg *sync.WaitGroup) {
 		}
 		return
 	}()
-
 }
 
 func checkAndRemoveVouchers(ctrl *controllers.VouchersController) {
