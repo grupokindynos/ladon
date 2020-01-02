@@ -24,7 +24,7 @@ import (
 const timeoutAwaiting = 60 * 60 * 2 // 2 hours.
 
 func Start() {
-	fmt.Println("Starting Voucher Processor")
+	/* fmt.Println("Starting Voucher Processor")
 	voucherStatus, err := services.GetVouchersStatus()
 	if err != nil {
 		panic(err)
@@ -42,7 +42,7 @@ func Start() {
 	go handleRefundTotalVouchers(&wg)
 	go handleTimeoutAwaitingVouchers(&wg)
 	wg.Wait()
-	fmt.Println("Voucher Processor Finished")
+	fmt.Println("Voucher Processor Finished") */
 }
 
 func handlePendingVouchers(wg *sync.WaitGroup) {

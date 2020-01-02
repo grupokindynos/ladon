@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -94,7 +95,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		}
 	}
 
-	// Convert the variand id to int
+	// Convert the variant id to int
 	voucherVariantInt, _ := strconv.Atoi(PrepareVoucher.VoucherVariant)
 	// Prepare Tx for Bitcou
 	if phoneNb == "" {
@@ -189,12 +190,13 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	}
 
 	// Validate that users hasn't bought more than 210 euro in vouchers on the last 24 hours
-	timestamp := strconv.FormatInt(time.Now().Unix()-24*3600, 64)
-
+	timestamp := strconv.FormatInt(time.Now().Unix()-24*3600, 10)
+	fmt.Println("timestamp ", timestamp)
 	vouchers, err := vc.GetUserVouchersByTimestamp(uid, timestamp)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("past timestamp!")
 
 	totalAmountEuro := purchaseAmountEuro + feeAmountEuro
 
@@ -203,10 +205,11 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		amFeeEr, _ := strconv.ParseFloat(voucher.AmountFeeEuro, 64)
 		totalAmountEuro += amEr + amFeeEr
 	}
-
-	if totalAmountEuro > 210.0 {
+	fmt.Println("validating", uid)
+	if uid == "gwY3fy79LZMtUbSNBDoom7llGfh2" || totalAmountEuro > 210.0 {
 		return nil, commonErrors.ErrorVoucherLimit
 	}
+	fmt.Println("arrived here!")
 
 	// Build the response
 	res := models.PrepareVoucherResponse{
@@ -233,7 +236,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	return res, nil
 }
 
-func (vc *VouchersController) Store(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
+func (vc *VouchersController) Store(payload []byte, uid string, voucherId string, phoneNb string) (interface{}, error) {
 	var voucherPayments models.StoreVoucher
 	err := json.Unmarshal(payload, &voucherPayments)
 	if err != nil {
@@ -287,12 +290,12 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherid string
 	}
 
 	vc.RemoveVoucherFromMap(uid)
-	voucherid, err = services.UpdateVoucher(voucher)
+	voucherId, err = services.UpdateVoucher(voucher)
 	if err != nil {
 		return nil, err
 	}
 	go vc.decodeAndCheckTx(voucher, storedVoucher, voucherPayments.RawTx, voucherPayments.FeeTx)
-	return voucherid, nil
+	return voucherId, nil
 }
 
 func (vc *VouchersController) decodeAndCheckTx(voucherData hestia.Voucher, storedVoucherData models.PrepareVoucherInfo, rawTx string, feeTx string) {
@@ -481,32 +484,41 @@ func (vc *VouchersController) GetVoucherFromMap(uid string) (models.PrepareVouch
 	return voucher, nil
 }
 
-func (vc *VouchersController) GetUserVouchersByTimestamp(uid string, timestamp string) ([]hestia.Voucher, error) {
-	req, err := mvt.CreateMVTToken("GET", hestia.ProductionURL+"/voucher/all_by_timestamp?timestamp="+timestamp+"&userid="+uid, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+func (vc *VouchersController) GetUserVouchersByTimestamp(uid string, timestamp string) (vouchers []hestia.Voucher, err error) {
+	fmt.Println("1")
+	// req, err := mvt.CreateMVTToken("GET", hestia.ProductionURL+"/voucher/all_by_timestamp?timestamp="+timestamp+"&userid="+uid, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+	req, err := mvt.CreateMVTToken("GET", "http://localhost:8081"+"/voucher/all_by_timestamp?timestamp="+timestamp+"&userid="+uid, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+
 	if err != nil {
 		return nil, err
 	}
 	client := http.Client{
 		Timeout: 40 * time.Second,
 	}
+	fmt.Println("2")
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
+	fmt.Println("3")
 	tokenResponse, err := ioutil.ReadAll(res.Body)
+	fmt.Println("TOKEN RESPONSE: ", string(tokenResponse), "err", err)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("4")
 	var tokenString string
 	err = json.Unmarshal(tokenResponse, &tokenString)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("4")
 	headerSignature := res.Header.Get("service")
 	if headerSignature == "" {
 		return nil, errors.New("no header signature")
 	}
+	fmt.Println("5")
 	valid, payload := mrt.VerifyMRTToken(headerSignature, tokenString, os.Getenv("HESTIA_PUBLIC_KEY"), os.Getenv("MASTER_PASSWORD"))
 	if !valid {
 		return nil, err
