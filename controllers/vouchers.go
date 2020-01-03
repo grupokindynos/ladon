@@ -117,10 +117,11 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	}
 	// Get the paying coin rates
 	var paymentCoinRate float64
+	obolReq := obol.ObolRequest{ObolURL:"https://obol.polispay.com"}
 	if PrepareVoucher.Coin == "DASH" {
 		paymentCoinRate = 1
 	} else {
-		paymentCoinRate, err = obol.GetCoin2CoinRates(obol.ProductionURL, "DASH", PrepareVoucher.Coin)
+		paymentCoinRate, err = obolReq.GetCoin2CoinRates("DASH", PrepareVoucher.Coin)
 		if err != nil {
 			return nil, err
 		}
@@ -144,7 +145,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	var feeInfo, bitcouFeePaymentInfo models.PaymentInfo
 	if PrepareVoucher.Coin != "POLIS" {
 		// Get the polis rates
-		polisRate, err := obol.GetCoin2CoinRates(obol.ProductionURL, "DASH", "POLIS")
+		polisRate, err := obolReq.GetCoin2CoinRates( "DASH", "POLIS")
 		if err != nil {
 			return nil, err
 		}
