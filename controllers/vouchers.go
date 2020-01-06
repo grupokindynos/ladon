@@ -189,10 +189,10 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		bitcouFeePaymentInfo = models.PaymentInfo{Address: "", Amount: 0}
 	}
 
-	// Validate that users hasn't bought more than 210 euro in vouchers on the last 24 hours
+	// Validate that users hasn't bought more than 210 euro in vouchers on the last 24 hours.
 	timestamp := strconv.FormatInt(time.Now().Unix()-24*3600, 10)
 	fmt.Println("timestamp ", timestamp)
-	vouchers, err := vc.GetUserVouchersByTimestamp(uid, timestamp)
+	vouchers, err := services.GetVouchersByTimestamp(uid, timestamp)
 	if err != nil {
 		return nil, err
 	}
@@ -484,7 +484,7 @@ func (vc *VouchersController) GetVoucherFromMap(uid string) (models.PrepareVouch
 	return voucher, nil
 }
 
-func (vc *VouchersController) GetUserVouchersByTimestamp(uid string, timestamp string) (vouchers []hestia.Voucher, err error) {
+func (vc *VouchersController) GetUserVouchersByTimestampOld(uid string, timestamp string) (vouchers []hestia.Voucher, err error) {
 	fmt.Println("1")
 	// req, err := mvt.CreateMVTToken("GET", hestia.ProductionURL+"/voucher/all_by_timestamp?timestamp="+timestamp+"&userid="+uid, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	req, err := mvt.CreateMVTToken("GET", "http://localhost:8081"+"/voucher/all_by_timestamp?timestamp="+timestamp+"&userid="+uid, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
@@ -509,8 +509,10 @@ func (vc *VouchersController) GetUserVouchersByTimestamp(uid string, timestamp s
 	}
 	fmt.Println("4")
 	var tokenString string
+	fmt.Println("TOKEN STRING: ", string(tokenResponse))
 	err = json.Unmarshal(tokenResponse, &tokenString)
 	if err != nil {
+		fmt.Println("TOKEN STRING err: ", err)
 		return nil, err
 	}
 	fmt.Println("4")
