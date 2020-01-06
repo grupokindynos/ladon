@@ -29,6 +29,7 @@ import (
 type VouchersController struct {
 	PreparesVouchers map[string]models.PrepareVoucherInfo
 	mapLock          sync.RWMutex
+	TxsAvailable     bool
 	Plutus           services.PlutusService
 	Hestia           services.HestiaService
 	Bitcou           services.BitcouService
@@ -308,7 +309,7 @@ func (vc *VouchersController) decodeAndCheckTx(voucherData hestia.Voucher, store
 			}
 			return
 		}
-		FeeTxId, err = broadCastTx(polisCoinConfig, feeTx)
+		FeeTxId, err = vc.broadCastTx(polisCoinConfig, feeTx)
 		if err != nil {
 			// If broadcast fail, we should mark error, no spent anything.
 			voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
@@ -355,7 +356,7 @@ func (vc *VouchersController) decodeAndCheckTx(voucherData hestia.Voucher, store
 		}
 		return
 	}
-	paymentTxid, err := broadCastTx(coinConfig, rawTx)
+	paymentTxid, err := vc.broadCastTx(coinConfig, rawTx)
 	if err != nil {
 		// If broadcast fail and coin is POLIS mark as error
 		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
@@ -378,7 +379,11 @@ func (vc *VouchersController) decodeAndCheckTx(voucherData hestia.Voucher, store
 	}
 }
 
-func broadCastTx(coinConfig *coins.Coin, rawTx string) (txid string, err error) {
+func (vc *VouchersController) broadCastTx(coinConfig *coins.Coin, rawTx string) (txid string, err error) {
+	if !vc.TxsAvailable {
+		return "not published due no-txs flag", nil
+	}
+
 	resp, err := http.Get(coinConfig.BlockExplorer + "/api/v2/sendtx/" + rawTx)
 	if err != nil {
 		return "", err

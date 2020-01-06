@@ -24,8 +24,9 @@ import (
 const timeoutAwaiting = 60 * 60 * 2 // 2 hours.
 
 type Processor struct {
-	Hestia services.HestiaService
-	Plutus services.PlutusService
+	SkipValidations bool
+	Hestia          services.HestiaService
+	Plutus          services.PlutusService
 }
 
 func (p *Processor) Start() {
@@ -126,7 +127,7 @@ func (p *Processor) handleConfirmingVouchers(wg *sync.WaitGroup) {
 				continue
 			}
 			// Check if voucher has enough confirmations
-			if v.PaymentData.Confirmations >= int32(paymentCoinConfig.BlockchainInfo.MinConfirmations) && v.FeePayment.Confirmations >= int32(feeCoinConfig.BlockchainInfo.MinConfirmations) {
+			if p.SkipValidations || (v.PaymentData.Confirmations >= int32(paymentCoinConfig.BlockchainInfo.MinConfirmations) && v.FeePayment.Confirmations >= int32(feeCoinConfig.BlockchainInfo.MinConfirmations)) {
 				v.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusConfirmed)
 				_, err = p.Hestia.UpdateVoucher(v)
 				if err != nil {
@@ -142,7 +143,7 @@ func (p *Processor) handleConfirmingVouchers(wg *sync.WaitGroup) {
 			}
 			v.FeePayment.Confirmations = int32(feeConfirmations)
 		} else {
-			if v.PaymentData.Confirmations >= int32(paymentCoinConfig.BlockchainInfo.MinConfirmations) {
+			if p.SkipValidations || v.PaymentData.Confirmations >= int32(paymentCoinConfig.BlockchainInfo.MinConfirmations) {
 				v.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusConfirmed)
 				_, err = p.Hestia.UpdateVoucher(v)
 				if err != nil {
