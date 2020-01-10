@@ -132,7 +132,7 @@ func (p *PlutusRequests) ValidateRawTx(body plutus.ValidateRawTxReq) (valid bool
 }
 
 func (p *PlutusRequests) GetWalletBalance(coin string) (plutus.Balance, error) {
-	req, err := mvt.CreateMVTToken("GET", p.PlutusURL+"/balance/"+coin, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIV_KEY"))
+	req, err := mvt.CreateMVTToken("GET", p.PlutusURL+"/balance/"+coin, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return plutus.Balance{}, err
 	}
