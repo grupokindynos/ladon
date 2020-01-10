@@ -2,9 +2,18 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"sync"
+	"time"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/grupokindynos/common/hestia"
+	"github.com/grupokindynos/common/obol"
 	"github.com/grupokindynos/common/jwt"
 	"github.com/grupokindynos/common/responses"
 	"github.com/grupokindynos/common/tokens/ppat"
@@ -13,11 +22,6 @@ import (
 	"github.com/grupokindynos/ladon/processor"
 	"github.com/grupokindynos/ladon/services"
 	"github.com/joho/godotenv"
-	"log"
-	"net/http"
-	"os"
-	"sync"
-	"time"
 )
 
 type CurrentTime struct {
@@ -28,6 +32,9 @@ type CurrentTime struct {
 }
 
 var (
+	hestiaEnv          string
+	noTxsAvailable     bool
+	skipValidations    bool
 	currTime           CurrentTime
 	prepareVouchersMap = make(map[string]models.PrepareVoucherInfo)
 )
@@ -39,6 +46,32 @@ func init() {
 }
 
 func main() {
+	// Read input flag
+	localRun := flag.Bool("local", false, "set this flag to run tyche with local requests")
+	noTxs := flag.Bool("no-txs", false, "set this flag to avoid txs being executed"+
+		"IMPORTANT: -local flag needs to be set in order to use this.")
+	skipVal := flag.Bool("skip-val", false, "set this flag to avoid validations on txs."+
+		"IMPORTANT: -local flag needs to be set in order to use this.")
+	stopProcessor := flag.Bool("stop-proc", false, "set this flag to stop the automatic run of processor")
+	port := flag.String("port", "8080", "set different port for local run")
+
+	flag.Parse()
+
+	// If flag was set, change the hestia request url to be local
+	if *localRun {
+		hestiaEnv = "HESTIA_LOCAL_URL"
+
+		// check if testing flags were set
+		noTxsAvailable = *noTxs
+		skipValidations = *skipVal
+
+	} else {
+		hestiaEnv = "HESTIA_PRODUCTION_URL"
+		if *noTxs || *skipVal {
+			fmt.Println("cannot set testing flags without -local flag")
+			os.Exit(1)
+		}
+	}
 
 	currTime = CurrentTime{
 		Hour:   time.Now().Hour(),
@@ -46,13 +79,13 @@ func main() {
 		Minute: time.Now().Minute(),
 		Second: time.Now().Second(),
 	}
-	go timer()
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
+
+	if !*stopProcessor {
+		go timer()
 	}
+
 	App := GetApp()
-	_ = App.Run(":" + port)
+	_ = App.Run(":" + *port)
 }
 
 func GetApp() *gin.Engine {
@@ -66,8 +99,16 @@ func GetApp() *gin.Engine {
 }
 
 func ApplyRoutes(r *gin.Engine) {
-	bitcouService := services.InitService()
-	vouchersCtrl := &controllers.VouchersController{BitcouService: bitcouService, PreparesVouchers: prepareVouchersMap}
+	bitcouService := services.NewBitcouService()
+	vouchersCtrl := &controllers.VouchersController{
+		TxsAvailable:     !noTxsAvailable,
+		PreparesVouchers: prepareVouchersMap,
+		Plutus:           &services.PlutusRequests{PlutusURL: os.Getenv("PLUTUS_PRODUCTION_URL")},
+		Hestia:           &services.HestiaRequests{HestiaURL: hestiaEnv},
+		Bitcou:           bitcouService,
+		Obol:	&obol.ObolRequest{ObolURL:os.Getenv("OBOL_PRODUCTION_URL")},
+	}
+
 	go checkAndRemoveVouchers(vouchersCtrl)
 	api := r.Group("/")
 	{
@@ -117,6 +158,12 @@ func ValidateRequest(c *gin.Context, method func(payload []byte, uid string, vou
 }
 
 func timer() {
+	proc := processor.Processor{
+		SkipValidations: skipValidations,
+		Hestia:          &services.HestiaRequests{HestiaURL: hestiaEnv},
+		Plutus:          &services.PlutusRequests{PlutusURL: os.Getenv("PLUTUS_PRODUCTION_URL")},
+	}
+
 	for {
 		time.Sleep(1 * time.Second)
 		currTime = CurrentTime{
@@ -128,19 +175,19 @@ func timer() {
 		if currTime.Second == 0 {
 			var wg sync.WaitGroup
 			wg.Add(1)
-			runCrons(&wg)
+			runCrons(&wg, proc)
 			wg.Wait()
 		}
 	}
 }
 
-func runCrons(mainWg *sync.WaitGroup) {
+func runCrons(mainWg *sync.WaitGroup, proc processor.Processor) {
 	defer func() {
 		mainWg.Done()
 	}()
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go runCronMinutes(1, processor.Start, &wg) // 1 minute
+	go runCronMinutes(1, proc.Start, &wg) // 1 minute
 	wg.Wait()
 }
 
@@ -155,7 +202,6 @@ func runCronMinutes(schedule int, function func(), wg *sync.WaitGroup) {
 		}
 		return
 	}()
-
 }
 
 func checkAndRemoveVouchers(ctrl *controllers.VouchersController) {
