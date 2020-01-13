@@ -166,43 +166,39 @@ func (h *HestiaRequests) UpdateVoucher(voucherData hestia.Voucher) (string, erro
 	return response, nil
 }
 
-func GetVouchersByTimestamp(uid string, timestamp string) (vouchers []hestia.Voucher, err error) {
-	req, err := mvt.CreateMVTToken("GET", "http://localhost:8081"+"/voucher/all_by_timestamp?timestamp="+timestamp+"&userid="+uid, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+func (h *HestiaRequests) GetVouchersByTimestamp(uid string, timestamp string) (vouchers []hestia.Voucher, err error) {
+	req, err := mvt.CreateMVTToken("GET", os.Getenv(h.HestiaURL)+"/voucher/all_by_timestamp?timestamp="+timestamp+"&userid="+uid, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return vouchers, err
 	}
 	client := http.Client{
 		Timeout: 5 * time.Second,
 	}
-	fmt.Println("1")
+
 	res, err := client.Do(req)
 	if err != nil {
 		return vouchers, err
 	}
 	defer res.Body.Close()
 	tokenResponse, err := ioutil.ReadAll(res.Body)
-	fmt.Println(tokenResponse, err)
-	fmt.Println("2")
+
 	if err != nil {
 		return vouchers, err
 	}
 	var tokenString string
 	err = json.Unmarshal(tokenResponse, &tokenString)
-	fmt.Println("3")
 	if err != nil {
 		return vouchers, err
 	}
-	fmt.Println("4")
 	headerSignature := res.Header.Get("service")
 	valid, payload := mrt.VerifyMRTToken(headerSignature, tokenString, os.Getenv("HESTIA_PUBLIC_KEY"), os.Getenv("MASTER_PASSWORD"))
 	if !valid {
 		return vouchers, err
 	}
-	fmt.Println("5")
 	err = json.Unmarshal(payload, &vouchers)
 	if err != nil {
 		return vouchers, err
 	}
-	fmt.Println("6")
+	fmt.Println("received vouchers", vouchers)
 	return vouchers, nil
 }

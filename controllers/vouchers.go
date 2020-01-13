@@ -115,6 +115,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		VariantID:     int32(voucherVariantInt),
 		PhoneNB:       int32(phoneNumber),
 	}
+
 	// Ask bitcou to send amount and address for a specific voucher and add the VoucherID
 	purchaseRes, err := vc.Bitcou.GetTransactionInformation(bitcouPrepareTx)
 	if err != nil {
@@ -162,6 +163,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	// Get our current dash balance
 	balance, err := vc.Plutus.GetWalletBalance("DASH")
 	if err != nil {
+		fmt.Println("err getting dash balance", err)
 		return nil, err
 	}
 
@@ -190,7 +192,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		if err != nil {
 			return nil, err
 		}
-		feePercentage := float64(paymentCoinConfig.Vouchers.FeePercentage) / float64(100)
+		feePercentage := paymentCoinConfig.Vouchers.FeePercentage / float64(100)
 		feeAmount, err := amount.NewAmount((purchaseAmount.ToNormalUnit() / polisRateAmount.ToNormalUnit()) * feePercentage)
 		if err != nil {
 			return nil, err
@@ -214,12 +216,11 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 
 	// Validate that users hasn't bought more than 210 euro in vouchers on the last 24 hours.
 	timestamp := strconv.FormatInt(time.Now().Unix()-24*3600, 10)
-	fmt.Println("timestamp ", timestamp)
-	vouchers, err := services.GetVouchersByTimestamp(uid, timestamp)
+
+	vouchers, err := vc.Hestia.GetVouchersByTimestamp(uid, timestamp)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("past timestamp!")
 
 	totalAmountEuro := purchaseAmountEuro + feeAmountEuro
 
@@ -228,11 +229,14 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		amFeeEr, _ := strconv.ParseFloat(voucher.AmountFeeEuro, 64)
 		totalAmountEuro += amEr + amFeeEr
 	}
-	fmt.Println("validating", uid)
-	if uid == "gwY3fy79LZMtUbSNBDoom7llGfh2" || totalAmountEuro > 210.0 {
+
+	/* if uid == "gwY3fy79LZMtUbSNBDoom7llGfh2" || totalAmountEuro > 210.0 {
+		return nil, commonErrors.ErrorVoucherLimit
+	} */
+	fmt.Println("spent amount", totalAmountEuro)
+	if totalAmountEuro > 210.0 {
 		return nil, commonErrors.ErrorVoucherLimit
 	}
-	fmt.Println("arrived here!")
 
 	// Build the response
 	res := models.PrepareVoucherResponse{
@@ -313,7 +317,7 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherId string
 	}
 
 	vc.RemoveVoucherFromMap(uid)
-	voucherid, err = vc.Hestia.UpdateVoucher(voucher)
+	voucherId, err = vc.Hestia.UpdateVoucher(voucher)
 	if err != nil {
 		return nil, err
 	}
