@@ -14,7 +14,7 @@ const (
 	UpdateVouchersTimeFrame = 60 * 60 * 24 // 1 day
 )
 
-type BitcouService struct {
+type BitcouRequests struct {
 	BitcouURL    string
 	BitcouToken  string
 	VouchersList VouchersData
@@ -25,7 +25,7 @@ type VouchersData struct {
 	LastUpdated time.Time
 }
 
-func (bs *BitcouService) GetPhoneTopUpList(phoneNb string) ([]int, error) {
+func (bs *BitcouRequests) GetPhoneTopUpList(phoneNb string) ([]int, error) {
 	url := os.Getenv("BITCOU_URL") + "voucher/availableVouchersByPhoneNb"
 	token := "Bearer " + os.Getenv("BITCOU_TOKEN")
 	body := models.BitcouPhoneBodyReq{PhoneNumber: phoneNb}
@@ -57,7 +57,7 @@ func (bs *BitcouService) GetPhoneTopUpList(phoneNb string) ([]int, error) {
 	return productIDs, nil
 }
 
-func (bs *BitcouService) GetTransactionInformation(purchaseInfo models.PurchaseInfo) (models.PurchaseInfoResponse, error) {
+func (bs *BitcouRequests) GetTransactionInformation(purchaseInfo models.PurchaseInfo) (models.PurchaseInfoResponse, error) {
 	url := os.Getenv("BITCOU_URL") + "voucher/transaction"
 	token := "Bearer " + os.Getenv("BITCOU_TOKEN")
 	byteBody, err := json.Marshal(purchaseInfo)
@@ -93,8 +93,8 @@ func (bs *BitcouService) GetTransactionInformation(purchaseInfo models.PurchaseI
 	return purchaseData, nil
 }
 
-func InitService() *BitcouService {
-	service := &BitcouService{
+func NewBitcouService() *BitcouRequests {
+	service := &BitcouRequests{
 		BitcouURL:   os.Getenv("BITCOU_URL"),
 		BitcouToken: os.Getenv("BITCOU_TOKEN"),
 		VouchersList: VouchersData{

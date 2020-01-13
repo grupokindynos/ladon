@@ -13,8 +13,12 @@ import (
 	"time"
 )
 
-func GetVouchersStatus() (hestia.Config, error) {
-	req, err := mvt.CreateMVTToken("GET", hestia.ProductionURL+"/config", "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+type HestiaRequests struct {
+	HestiaURL string
+}
+
+func (h *HestiaRequests) GetVouchersStatus() (hestia.Config, error) {
+	req, err := mvt.CreateMVTToken("GET", os.Getenv(h.HestiaURL)+"/config", "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return hestia.Config{}, err
 	}
@@ -51,8 +55,8 @@ func GetVouchersStatus() (hestia.Config, error) {
 	return response, nil
 }
 
-func GetCoinsConfig() ([]hestia.Coin, error) {
-	req, err := mvt.CreateMVTToken("GET", hestia.ProductionURL+"/coins", "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+func (h *HestiaRequests) GetCoinsConfig() ([]hestia.Coin, error) {
+	req, err := mvt.CreateMVTToken("GET", os.Getenv(h.HestiaURL)+"/coins", "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return nil, err
 	}
@@ -89,8 +93,8 @@ func GetCoinsConfig() ([]hestia.Coin, error) {
 	return response, nil
 }
 
-func GetVoucherInfo(voucherid string) (hestia.Voucher, error) {
-	req, err := mvt.CreateMVTToken("GET", hestia.ProductionURL+"/voucher/single/"+voucherid, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+func (h *HestiaRequests) GetVoucherInfo(voucherid string) (hestia.Voucher, error) {
+	req, err := mvt.CreateMVTToken("GET", os.Getenv(h.HestiaURL)+"/voucher/single/"+voucherid, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return hestia.Voucher{}, err
 	}
@@ -127,8 +131,8 @@ func GetVoucherInfo(voucherid string) (hestia.Voucher, error) {
 	return response, nil
 }
 
-func UpdateVoucher(voucherData hestia.Voucher) (string, error) {
-	req, err := mvt.CreateMVTToken("POST", hestia.ProductionURL+"/voucher", "ladon", os.Getenv("MASTER_PASSWORD"), voucherData, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+func (h *HestiaRequests) UpdateVoucher(voucherData hestia.Voucher) (string, error) {
+	req, err := mvt.CreateMVTToken("POST", os.Getenv(h.HestiaURL)+"/voucher", "ladon", os.Getenv("MASTER_PASSWORD"), voucherData, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return "", err
 	}
