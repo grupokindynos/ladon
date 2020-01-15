@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/grupokindynos/common/hestia"
 	"github.com/grupokindynos/common/tokens/mrt"
 	"github.com/grupokindynos/common/tokens/mvt"
@@ -163,4 +164,41 @@ func (h *HestiaRequests) UpdateVoucher(voucherData hestia.Voucher) (string, erro
 		return "", err
 	}
 	return response, nil
+}
+
+func (h *HestiaRequests) GetVouchersByTimestamp(uid string, timestamp string) (vouchers []hestia.Voucher, err error) {
+	req, err := mvt.CreateMVTToken("GET", os.Getenv(h.HestiaURL)+"/voucher/all_by_timestamp?timestamp="+timestamp+"&userid="+uid, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+	if err != nil {
+		return vouchers, err
+	}
+	client := http.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	res, err := client.Do(req)
+	if err != nil {
+		return vouchers, err
+	}
+	defer res.Body.Close()
+	tokenResponse, err := ioutil.ReadAll(res.Body)
+
+	if err != nil {
+		return vouchers, err
+	}
+	var tokenString string
+	err = json.Unmarshal(tokenResponse, &tokenString)
+	if err != nil {
+		return vouchers, err
+	}
+	headerSignature := res.Header.Get("service")
+	valid, payload := mrt.VerifyMRTToken(headerSignature, tokenString, os.Getenv("HESTIA_PUBLIC_KEY"), os.Getenv("MASTER_PASSWORD"))
+	if !valid {
+		return vouchers, err
+	}
+	err = json.Unmarshal(payload, &vouchers)
+	if err != nil {
+		return vouchers, err
+	}
+	fmt.Println("received vouchers", vouchers)
+	return vouchers, nil
 }

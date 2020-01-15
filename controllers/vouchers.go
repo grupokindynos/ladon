@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -20,6 +21,8 @@ import (
 	"github.com/grupokindynos/common/obol"
 	"github.com/grupokindynos/common/plutus"
 	"github.com/grupokindynos/common/responses"
+	"github.com/grupokindynos/common/tokens/mrt"
+	"github.com/grupokindynos/common/tokens/mvt"
 	"github.com/grupokindynos/common/utils"
 	"github.com/grupokindynos/ladon/models"
 	"github.com/grupokindynos/ladon/services"
@@ -96,7 +99,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		}
 	}
 
-	// Convert the variand id to int
+	// Convert the variant id to int
 	voucherVariantInt, _ := strconv.Atoi(PrepareVoucher.VoucherVariant)
 	// Prepare Tx for Bitcou
 	if phoneNb == "" {
@@ -112,6 +115,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		VariantID:     int32(voucherVariantInt),
 		PhoneNB:       int32(phoneNumber),
 	}
+
 	// Ask bitcou to send amount and address for a specific voucher and add the VoucherID
 	purchaseRes, err := vc.Bitcou.GetTransactionInformation(bitcouPrepareTx)
 	if err != nil {
@@ -122,6 +126,15 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	if err != nil {
 		return nil, err
 	}
+
+	purchaseAmountEuro, err := strconv.ParseFloat(purchaseRes.AmountEuro, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	purchaseAmountEuro = purchaseAmountEuro / 100
+	euroRate := purchaseAmountEuro / purchaseAmount.ToNormalUnit()
+
 	// Get the paying coin rates
 	var paymentCoinRate float64
 	if PrepareVoucher.Coin == "DASH" {
@@ -151,6 +164,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	// Get our current dash balance
 	balance, err := vc.Plutus.GetWalletBalance("DASH")
 	if err != nil {
+		fmt.Println("err getting dash balance", err)
 		return nil, err
 	}
 
@@ -167,6 +181,8 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	}
 
 	var feeInfo, bitcouFeePaymentInfo models.PaymentInfo
+	var feeAmountEuro float64
+
 	if PrepareVoucher.Coin != "POLIS" {
 		// Get the polis rates
 		polisRate, err := vc.Obol.GetCoin2CoinRates("DASH", "POLIS")
@@ -177,11 +193,12 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		if err != nil {
 			return nil, err
 		}
-		feePercentage := float64(paymentCoinConfig.Vouchers.FeePercentage) / float64(100)
-		feeAmount, err := amount.NewAmount((purchaseAmount.ToNormalUnit() / polisRateAmount.ToNormalUnit()) * feePercentage)
+		feePercentage := paymentCoinConfig.Vouchers.FeePercentage / float64(100)
+		feeAmount, err := amount.NewAmount((purchaseAmount.ToNormalUnit() / polisRateAmount.ToNormalUnit()) * feePercentage) // purchaseAmount in DASH gets converted to Polis. This is the fee payment in Polis.
 		if err != nil {
 			return nil, err
 		}
+		feeAmountEuro = feeAmount.ToNormalUnit() * polisRateAmount.ToNormalUnit() * euroRate
 
 		// POLIS amount on sats to pay the total fee, this must be at least 4% of the purchased amount for all coins except for Polis.
 		// For user usage.
@@ -193,7 +210,29 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	} else {
 		// No Fee if user is paying with POLIS
 		feeInfo = models.PaymentInfo{Address: "", Amount: 0}
+		feeAmountEuro = 0
 		bitcouFeePaymentInfo = models.PaymentInfo{Address: "", Amount: 0}
+	}
+
+	// Validate that users hasn't bought more than 210 euro in vouchers on the last 24 hours.
+	timestamp := strconv.FormatInt(time.Now().Unix()-24*3600, 10)
+
+	vouchers, err := vc.Hestia.GetVouchersByTimestamp(uid, timestamp)
+	if err != nil {
+		return nil, err
+	}
+
+	totalAmountEuro := purchaseAmountEuro + feeAmountEuro
+
+	for _, voucher := range vouchers {
+		amEr, _ := strconv.ParseFloat(voucher.AmountEuro, 64)
+		amEr /= 100
+		amFeeEr, _ := strconv.ParseFloat(voucher.AmountFeeEuro, 64)
+		totalAmountEuro += amEr + amFeeEr
+	}
+
+	if totalAmountEuro > 210.0 {
+		return nil, commonErrors.ErrorVoucherLimit
 	}
 
 	// Build the response
@@ -213,12 +252,15 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		FeePayment:       feeInfo,
 		BitcouPayment:    bitcouPaymentInfo,
 		BitcouFeePayment: bitcouFeePaymentInfo,
+		AmountEuro:       purchaseRes.AmountEuro,
+		AmountFeeEuro:    strconv.FormatFloat(feeAmountEuro, 'f', 6, 64),
 	}
+
 	vc.AddVoucherToMap(uid, prepareVoucher)
 	return res, nil
 }
 
-func (vc *VouchersController) Store(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
+func (vc *VouchersController) Store(payload []byte, uid string, voucherId string, phoneNb string) (interface{}, error) {
 	var voucherPayments models.StoreVoucher
 	err := json.Unmarshal(payload, &voucherPayments)
 	if err != nil {
@@ -267,14 +309,17 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherid string
 		RefundFeeAddr: voucherPayments.RefundFeeAddr,
 		Status:        hestia.GetVoucherStatusString(hestia.VoucherStatusPending),
 		Timestamp:     time.Now().Unix(),
+		AmountEuro:    storedVoucher.AmountEuro,
+		AmountFeeEuro: storedVoucher.AmountFeeEuro,
 	}
+
 	vc.RemoveVoucherFromMap(uid)
-	voucherid, err = vc.Hestia.UpdateVoucher(voucher)
+	voucherId, err = vc.Hestia.UpdateVoucher(voucher)
 	if err != nil {
 		return nil, err
 	}
 	go vc.decodeAndCheckTx(voucher, storedVoucher, voucherPayments.RawTx, voucherPayments.FeeTx)
-	return voucherid, nil
+	return voucherId, nil
 }
 
 func (vc *VouchersController) decodeAndCheckTx(voucherData hestia.Voucher, storedVoucherData models.PrepareVoucherInfo, rawTx string, feeTx string) {
@@ -465,4 +510,53 @@ func (vc *VouchersController) GetVoucherFromMap(uid string) (models.PrepareVouch
 		return models.PrepareVoucherInfo{}, errors.New("voucher not found in cache map")
 	}
 	return voucher, nil
+}
+
+func (vc *VouchersController) GetUserVouchersByTimestampOld(uid string, timestamp string) (vouchers []hestia.Voucher, err error) {
+	fmt.Println("1")
+	// req, err := mvt.CreateMVTToken("GET", hestia.ProductionURL+"/voucher/all_by_timestamp?timestamp="+timestamp+"&userid="+uid, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+	req, err := mvt.CreateMVTToken("GET", "http://localhost:8081"+"/voucher/all_by_timestamp?timestamp="+timestamp+"&userid="+uid, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+
+	if err != nil {
+		return nil, err
+	}
+	client := http.Client{
+		Timeout: 40 * time.Second,
+	}
+	fmt.Println("2")
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	fmt.Println("3")
+	tokenResponse, err := ioutil.ReadAll(res.Body)
+	fmt.Println("TOKEN RESPONSE: ", string(tokenResponse), "err", err)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println("4")
+	var tokenString string
+	fmt.Println("TOKEN STRING: ", string(tokenResponse))
+	err = json.Unmarshal(tokenResponse, &tokenString)
+	if err != nil {
+		fmt.Println("TOKEN STRING err: ", err)
+		return nil, err
+	}
+	fmt.Println("4")
+	headerSignature := res.Header.Get("service")
+	if headerSignature == "" {
+		return nil, errors.New("no header signature")
+	}
+	fmt.Println("5")
+	valid, payload := mrt.VerifyMRTToken(headerSignature, tokenString, os.Getenv("HESTIA_PUBLIC_KEY"), os.Getenv("MASTER_PASSWORD"))
+	if !valid {
+		return nil, err
+	}
+	var response []hestia.Voucher
+	err = json.Unmarshal(payload, &response)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
 }

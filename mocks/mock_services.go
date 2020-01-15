@@ -65,6 +65,21 @@ func (mr *MockHestiaServiceMockRecorder) GetVoucherInfo(arg0 interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVoucherInfo", reflect.TypeOf((*MockHestiaService)(nil).GetVoucherInfo), arg0)
 }
 
+// GetVouchersByTimestamp mocks base method
+func (m *MockHestiaService) GetVouchersByTimestamp(arg0, arg1 string) ([]hestia.Voucher, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVouchersByTimestamp", arg0, arg1)
+	ret0, _ := ret[0].([]hestia.Voucher)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVouchersByTimestamp indicates an expected call of GetVouchersByTimestamp
+func (mr *MockHestiaServiceMockRecorder) GetVouchersByTimestamp(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVouchersByTimestamp", reflect.TypeOf((*MockHestiaService)(nil).GetVouchersByTimestamp), arg0, arg1)
+}
+
 // GetVouchersStatus mocks base method
 func (m *MockHestiaService) GetVouchersStatus() (hestia.Config, error) {
 	m.ctrl.T.Helper()

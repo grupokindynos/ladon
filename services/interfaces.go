@@ -18,6 +18,7 @@ type HestiaService interface {
 	GetCoinsConfig() ([]hestia.Coin, error)
 	GetVoucherInfo(voucherid string) (hestia.Voucher, error)
 	UpdateVoucher(voucherData hestia.Voucher) (string, error)
+	GetVouchersByTimestamp(uid string, timestamp string) (vouchers []hestia.Voucher, err error)
 }
 
 type BitcouService interface {
