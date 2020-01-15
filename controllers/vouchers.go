@@ -132,6 +132,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		return nil, err
 	}
 
+	purchaseAmountEuro = purchaseAmountEuro / 100
 	euroRate := purchaseAmountEuro / purchaseAmount.ToNormalUnit()
 
 	// Get the paying coin rates
@@ -193,12 +194,11 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 			return nil, err
 		}
 		feePercentage := paymentCoinConfig.Vouchers.FeePercentage / float64(100)
-		feeAmount, err := amount.NewAmount((purchaseAmount.ToNormalUnit() / polisRateAmount.ToNormalUnit()) * feePercentage)
+		feeAmount, err := amount.NewAmount((purchaseAmount.ToNormalUnit() / polisRateAmount.ToNormalUnit()) * feePercentage) // purchaseAmount in DASH gets converted to Polis. This is the fee payment in Polis.
 		if err != nil {
 			return nil, err
 		}
-
-		feeAmountEuro = feeAmount.ToNormalUnit() * euroRate
+		feeAmountEuro = feeAmount.ToNormalUnit() * polisRateAmount.ToNormalUnit() * euroRate
 
 		// POLIS amount on sats to pay the total fee, this must be at least 4% of the purchased amount for all coins except for Polis.
 		// For user usage.
@@ -226,14 +226,11 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 
 	for _, voucher := range vouchers {
 		amEr, _ := strconv.ParseFloat(voucher.AmountEuro, 64)
+		amEr /= 100
 		amFeeEr, _ := strconv.ParseFloat(voucher.AmountFeeEuro, 64)
 		totalAmountEuro += amEr + amFeeEr
 	}
 
-	/* if uid == "gwY3fy79LZMtUbSNBDoom7llGfh2" || totalAmountEuro > 210.0 {
-		return nil, commonErrors.ErrorVoucherLimit
-	} */
-	fmt.Println("spent amount", totalAmountEuro)
 	if totalAmountEuro > 210.0 {
 		return nil, commonErrors.ErrorVoucherLimit
 	}
