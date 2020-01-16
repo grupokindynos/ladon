@@ -6,7 +6,7 @@ require (
 	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-gonic/gin v1.4.0
 	github.com/golang/mock v1.3.1
-	github.com/grupokindynos/common v0.0.0-20191223192206-334396c899a3
+	github.com/grupokindynos/common v0.0.0-20200116184137-b26142d1dccd
 	github.com/grupokindynos/olympus-utils v0.0.0-20191114150906-5c358df85e5c
 	github.com/joho/godotenv v1.3.0
 )
