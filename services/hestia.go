@@ -3,7 +3,6 @@ package services
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/grupokindynos/common/hestia"
 	"github.com/grupokindynos/common/tokens/mrt"
 	"github.com/grupokindynos/common/tokens/mvt"
@@ -199,6 +198,5 @@ func (h *HestiaRequests) GetVouchersByTimestamp(uid string, timestamp string) (v
 	if err != nil {
 		return vouchers, err
 	}
-	fmt.Println("received vouchers", vouchers)
 	return vouchers, nil
 }

@@ -3,9 +3,8 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
+	"github.com/grupokindynos/common/blockbook"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -164,7 +163,6 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	// Get our current dash balance
 	balance, err := vc.Plutus.GetWalletBalance("DASH")
 	if err != nil {
-		fmt.Println("err getting dash balance", err)
 		return nil, err
 	}
 
@@ -428,23 +426,8 @@ func (vc *VouchersController) broadCastTx(coinConfig *coins.Coin, rawTx string) 
 	if !vc.TxsAvailable {
 		return "not published due no-txs flag", nil
 	}
-	resp, err := http.Get(coinConfig.Info.Blockbook + "/api/v2/sendtx/" + rawTx)
-	if err != nil {
-		return "", err
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	var response models.BlockbookBroadcastResponse
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return "", err
-	}
-	if response.Error != "" {
-		return "", errors.New(response.Error)
-	}
-	return response.Result, nil
+	blockbookWrapper := blockbook.NewBlockBookWrapper(coinConfig.Info.Blockbook)
+	return blockbookWrapper.SendTx(rawTx)
 }
 
 func (vc *VouchersController) Update(c *gin.Context) {
@@ -512,42 +495,31 @@ func (vc *VouchersController) GetVoucherFromMap(uid string) (models.PrepareVouch
 }
 
 func (vc *VouchersController) GetUserVouchersByTimestampOld(uid string, timestamp string) (vouchers []hestia.Voucher, err error) {
-	fmt.Println("1")
-	// req, err := mvt.CreateMVTToken("GET", hestia.ProductionURL+"/voucher/all_by_timestamp?timestamp="+timestamp+"&userid="+uid, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
-	req, err := mvt.CreateMVTToken("GET", "http://localhost:8081"+"/voucher/all_by_timestamp?timestamp="+timestamp+"&userid="+uid, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
-
+	req, err := mvt.CreateMVTToken("GET", hestia.ProductionURL+"/voucher/all_by_timestamp?timestamp="+timestamp+"&userid="+uid, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return nil, err
 	}
 	client := http.Client{
 		Timeout: 40 * time.Second,
 	}
-	fmt.Println("2")
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
-	fmt.Println("3")
 	tokenResponse, err := ioutil.ReadAll(res.Body)
-	fmt.Println("TOKEN RESPONSE: ", string(tokenResponse), "err", err)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("4")
 	var tokenString string
-	fmt.Println("TOKEN STRING: ", string(tokenResponse))
 	err = json.Unmarshal(tokenResponse, &tokenString)
 	if err != nil {
-		fmt.Println("TOKEN STRING err: ", err)
 		return nil, err
 	}
-	fmt.Println("4")
 	headerSignature := res.Header.Get("service")
 	if headerSignature == "" {
 		return nil, errors.New("no header signature")
 	}
-	fmt.Println("5")
 	valid, payload := mrt.VerifyMRTToken(headerSignature, tokenString, os.Getenv("HESTIA_PUBLIC_KEY"), os.Getenv("MASTER_PASSWORD"))
 	if !valid {
 		return nil, err
