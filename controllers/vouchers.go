@@ -214,8 +214,8 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 
 	// Validate that users hasn't bought more than 210 euro in vouchers on the last 24 hours.
 	timestamp := strconv.FormatInt(time.Now().Unix()-24*3600, 10)
-	tempId := "Egc6XKdkmigtWzuyq0YordjWODq1"
-	vouchers, err := vc.Hestia.GetVouchersByTimestamp(tempId, timestamp)
+
+	vouchers, err := vc.Hestia.GetVouchersByTimestamp(uid, timestamp)
 	if err != nil {
 		return nil, err
 	}
@@ -223,10 +223,12 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	totalAmountEuro := purchaseAmountEuro + feeAmountEuro
 
 	for _, voucher := range vouchers {
-		amEr, _ := strconv.ParseFloat(voucher.AmountEuro, 64)
-		amEr /= 100
-		amFeeEr, _ := strconv.ParseFloat(voucher.AmountFeeEuro, 64)
-		totalAmountEuro += amEr + amFeeEr
+		if voucher.Status != hestia.GetVoucherStatusString(hestia.VoucherStatusError) && voucher.Status != hestia.GetVoucherStatusString(hestia.VoucherStatusRefunded) { // Excludes errored Vouchers from Spent Amount
+			amEr, _ := strconv.ParseFloat(voucher.AmountEuro, 64)
+			amEr /= 100
+			amFeeEr, _ := strconv.ParseFloat(voucher.AmountFeeEuro, 64)
+			totalAmountEuro += amEr + amFeeEr
+		}
 	}
 
 	if totalAmountEuro > 210.0 {

@@ -44,26 +44,26 @@ go mod download
 -local
 ```
 
-Set this flag to run ladon using the testing hestia database. Default is false (production mode).
+Set this flag to run Ladon using the testing Hestia database. Default is false (production mode).
 When using this flag you must be running hestia locally on port 8080.
 
 ```
 -port=xxxx
 ```
 
-Specifies the running port. Default is 8080 
+Specifies the running port. Default is 8080.
 
 ```
 -stop-proc
 ```
 
-Set this flag to run ladon without processor.
+Set this flag to run Ladon without the *processor*.
 
 ```
 -no-txs
 ```
 
-Set this flag to avoid publishing txs on the blockchain but store them on the database.
+Set this flag to avoid publishing txs on the Blockchain but store them on the database.
 WARNING: -local flag must be set in order to use this flag.
 
 ```
