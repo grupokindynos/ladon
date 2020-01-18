@@ -223,10 +223,12 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	totalAmountEuro := purchaseAmountEuro + feeAmountEuro
 
 	for _, voucher := range vouchers {
-		amEr, _ := strconv.ParseFloat(voucher.AmountEuro, 64)
-		amEr /= 100
-		amFeeEr, _ := strconv.ParseFloat(voucher.AmountFeeEuro, 64)
-		totalAmountEuro += amEr + amFeeEr
+		if voucher.Status == hestia.GetVoucherStatusString(hestia.VoucherStatusComplete) {
+			amEr, _ := strconv.ParseFloat(voucher.AmountEuro, 64)
+			amEr /= 100
+			amFeeEr, _ := strconv.ParseFloat(voucher.AmountFeeEuro, 64)
+			totalAmountEuro += amEr + amFeeEr
+		}
 	}
 
 	if totalAmountEuro > 210.0 {
