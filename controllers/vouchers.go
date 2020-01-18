@@ -216,8 +216,8 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 
 	// Validate that users hasn't bought more than 210 euro in vouchers on the last 24 hours.
 	timestamp := strconv.FormatInt(time.Now().Unix()-24*3600, 10)
-
-	vouchers, err := vc.Hestia.GetVouchersByTimestamp(uid, timestamp)
+	tempId := "Egc6XKdkmigtWzuyq0YordjWODq1"
+	vouchers, err := vc.Hestia.GetVouchersByTimestamp(tempId, timestamp)
 	if err != nil {
 		return nil, err
 	}
