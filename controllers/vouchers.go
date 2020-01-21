@@ -26,7 +26,7 @@ import (
 	"github.com/grupokindynos/common/utils"
 	"github.com/grupokindynos/ladon/models"
 	"github.com/grupokindynos/ladon/services"
-	"github.com/grupokindynos/olympus-utils/amount"
+	"github.com/grupokindynos/ogen-utils/amount"
 )
 
 type VouchersController struct {
