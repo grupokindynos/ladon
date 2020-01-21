@@ -40,8 +40,6 @@ github.com/google/pprof v0.0.0-20190309163659-77426154d546/go.mod h1:zfwlbNMJ+OI
 github.com/google/uuid v1.0.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/gorilla/websocket v1.4.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
-github.com/grupokindynos/common v0.0.0-20200117184806-0393efe5859e h1:Qf9lOrkGJe8+Y+nCgvldIVWnQcOk/LHOjhvUYFRjuMU=
-github.com/grupokindynos/common v0.0.0-20200117184806-0393efe5859e/go.mod h1:a07U9nSnk1IOH5FzDJKq+glpD08Az5RshbW3nIw+IlI=
 github.com/grupokindynos/common v0.0.0-20200121184421-1a58759f2b59 h1:JIx8yINVpSI3B9K67vwmw+WLaw6730mSh4SXYdHQ1wE=
 github.com/grupokindynos/common v0.0.0-20200121184421-1a58759f2b59/go.mod h1:a07U9nSnk1IOH5FzDJKq+glpD08Az5RshbW3nIw+IlI=
 github.com/grupokindynos/ogen-utils v0.0.0-20191231185057-013d602e50bd h1:jaa30PtdPBQ8KPkuxLTpJTzdOvgRdr2sZrClrErlfwo=
