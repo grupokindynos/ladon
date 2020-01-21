@@ -13,7 +13,7 @@ import (
 	"github.com/grupokindynos/ladon/controllers"
 	"github.com/grupokindynos/ladon/mocks"
 	"github.com/grupokindynos/ladon/models"
-	"github.com/grupokindynos/olympus-utils/amount"
+	"github.com/grupokindynos/ogen-utils/amount"
 )
 
 func TestStatus(t *testing.T) {
