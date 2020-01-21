@@ -37,6 +37,8 @@ github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+
 github.com/gorilla/websocket v1.4.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
 github.com/grupokindynos/common v0.0.0-20200117184806-0393efe5859e h1:Qf9lOrkGJe8+Y+nCgvldIVWnQcOk/LHOjhvUYFRjuMU=
 github.com/grupokindynos/common v0.0.0-20200117184806-0393efe5859e/go.mod h1:a07U9nSnk1IOH5FzDJKq+glpD08Az5RshbW3nIw+IlI=
+github.com/grupokindynos/common v0.0.0-20200121184421-1a58759f2b59 h1:JIx8yINVpSI3B9K67vwmw+WLaw6730mSh4SXYdHQ1wE=
+github.com/grupokindynos/common v0.0.0-20200121184421-1a58759f2b59/go.mod h1:a07U9nSnk1IOH5FzDJKq+glpD08Az5RshbW3nIw+IlI=
 github.com/grupokindynos/ogen-utils v0.0.0-20191231185057-013d602e50bd h1:jaa30PtdPBQ8KPkuxLTpJTzdOvgRdr2sZrClrErlfwo=
 github.com/grupokindynos/ogen-utils v0.0.0-20191231185057-013d602e50bd/go.mod h1:YRceCfzbrvndLCynQkYkHm6QXBAveskFuJx6rTo5e5I=
 github.com/grupokindynos/olympus-utils v0.0.0-20191114150906-5c358df85e5c h1:6CSFnEkKH1eAs9FqS2DNqksoSPNYfVE05riAx5cg6ME=
