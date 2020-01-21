@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/grupokindynos/common/blockbook"
 	"io/ioutil"
 	"net/http"
@@ -254,7 +255,10 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		BitcouFeePayment: bitcouFeePaymentInfo,
 		AmountEuro:       purchaseRes.AmountEuro,
 		AmountFeeEuro:    strconv.FormatFloat(feeAmountEuro, 'f', 6, 64),
+		Name: 			  PrepareVoucher.VoucherName,
+		Image:			  PrepareVoucher.VoucherImage,
 	}
+	fmt.Println(prepareVoucher)
 
 	vc.AddVoucherToMap(uid, prepareVoucher)
 	return res, nil
@@ -311,6 +315,8 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherId string
 		Timestamp:     time.Now().Unix(),
 		AmountEuro:    storedVoucher.AmountEuro,
 		AmountFeeEuro: storedVoucher.AmountFeeEuro,
+		Name: 		   storedVoucher.Name,
+		Image:		   storedVoucher.Image,
 	}
 
 	vc.RemoveVoucherFromMap(uid)
