@@ -13,8 +13,8 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/grupokindynos/common/hestia"
-	"github.com/grupokindynos/common/obol"
 	"github.com/grupokindynos/common/jwt"
+	"github.com/grupokindynos/common/obol"
 	"github.com/grupokindynos/common/responses"
 	"github.com/grupokindynos/common/tokens/ppat"
 	"github.com/grupokindynos/ladon/controllers"
@@ -106,7 +106,7 @@ func ApplyRoutes(r *gin.Engine) {
 		Plutus:           &services.PlutusRequests{PlutusURL: os.Getenv("PLUTUS_PRODUCTION_URL")},
 		Hestia:           &services.HestiaRequests{HestiaURL: hestiaEnv},
 		Bitcou:           bitcouService,
-		Obol:	&obol.ObolRequest{ObolURL:os.Getenv("OBOL_PRODUCTION_URL")},
+		Obol:             &obol.ObolRequest{ObolURL: os.Getenv("OBOL_PRODUCTION_URL")},
 	}
 
 	go checkAndRemoveVouchers(vouchersCtrl)

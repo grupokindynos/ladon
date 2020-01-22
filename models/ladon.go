@@ -5,8 +5,8 @@ type PrepareVoucher struct {
 	VoucherType    int    `json:"voucher_type"`
 	VoucherVariant string `json:"voucher_variant"`
 	Country        string `json:"country"`
-	VoucherName	   string `json:"name"`
-	VoucherImage	string `json:"image"`
+	VoucherName    string `json:"name"`
+	VoucherImage   string `json:"image"`
 }
 
 type PrepareVoucherResponse struct {
@@ -32,8 +32,8 @@ type PrepareVoucherInfo struct {
 	Timestamp        int64       `json:"timestamp"`
 	AmountEuro       string      `json:"amount_euro"`
 	AmountFeeEuro    string      `json:"amount_fee_euro"`
-	Name    		 string      `json:"name"`
-	Image    		 string      `json:"image"`
+	Name             string      `json:"name"`
+	Image            string      `json:"image"`
 }
 
 type StoreVoucher struct {

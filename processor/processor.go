@@ -12,7 +12,7 @@ import (
 	"github.com/grupokindynos/common/tokens/mrt"
 	"github.com/grupokindynos/common/tokens/mvt"
 	"github.com/grupokindynos/ladon/services"
-	"github.com/grupokindynos/ogen-utils/amount"
+	"github.com/olympus-protocol/ogen/utils/amount"
 	"io/ioutil"
 	"net/http"
 	"os"

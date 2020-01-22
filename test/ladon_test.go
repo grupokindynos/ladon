@@ -13,7 +13,7 @@ import (
 	"github.com/grupokindynos/ladon/controllers"
 	"github.com/grupokindynos/ladon/mocks"
 	"github.com/grupokindynos/ladon/models"
-	"github.com/grupokindynos/ogen-utils/amount"
+	"github.com/olympus-protocol/ogen/utils/amount"
 )
 
 func TestStatus(t *testing.T) {
@@ -149,7 +149,7 @@ func TestPrepare(t *testing.T) {
 		mockBitcouService.EXPECT().GetTransactionInformation(gomock.Any()).Return(purchaseInfo, nil),
 		mockPlutusService.EXPECT().GetWalletBalance(gomock.Eq("DASH")).Return(enoughBalance, nil),
 		mockObolService.EXPECT().GetCoin2CoinRates(gomock.Eq("DASH"), "POLIS").Return(dashPolisRate, nil),
-		mockHestiaService.EXPECT().GetVouchersByTimestamp(gomock.Any(), gomock.Any()).Return([]hestia.Voucher{},  nil),
+		mockHestiaService.EXPECT().GetVouchersByTimestamp(gomock.Any(), gomock.Any()).Return([]hestia.Voucher{}, nil),
 
 		// calls test returned response with not enough balance
 		mockHestiaService.EXPECT().GetVouchersStatus().Return(vouchersAvailable, nil),
@@ -159,7 +159,6 @@ func TestPrepare(t *testing.T) {
 		mockBitcouService.EXPECT().GetTransactionInformation(gomock.Any()).Return(purchaseInfo, nil),
 		mockObolService.EXPECT().GetCoin2CoinRates(gomock.Eq("DASH"), gomock.Eq("BTC")).Return(dashBTCRate, nil),
 		mockPlutusService.EXPECT().GetWalletBalance(gomock.Eq("DASH")).Return(notEnoughBalance, nil),
-
 	)
 
 	// test returned response with enough balance

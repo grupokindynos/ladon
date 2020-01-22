@@ -26,7 +26,7 @@ import (
 	"github.com/grupokindynos/common/utils"
 	"github.com/grupokindynos/ladon/models"
 	"github.com/grupokindynos/ladon/services"
-	"github.com/grupokindynos/ogen-utils/amount"
+	"github.com/olympus-protocol/ogen/utils/amount"
 )
 
 type VouchersController struct {
@@ -255,8 +255,8 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		BitcouFeePayment: bitcouFeePaymentInfo,
 		AmountEuro:       purchaseRes.AmountEuro,
 		AmountFeeEuro:    strconv.FormatFloat(feeAmountEuro, 'f', 6, 64),
-		Name: 			  PrepareVoucher.VoucherName,
-		Image:			  PrepareVoucher.VoucherImage,
+		Name:             PrepareVoucher.VoucherName,
+		Image:            PrepareVoucher.VoucherImage,
 	}
 	fmt.Println(prepareVoucher)
 
@@ -315,8 +315,8 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherId string
 		Timestamp:     time.Now().Unix(),
 		AmountEuro:    storedVoucher.AmountEuro,
 		AmountFeeEuro: storedVoucher.AmountFeeEuro,
-		Name: 		   storedVoucher.Name,
-		Image:		   storedVoucher.Image,
+		Name:          storedVoucher.Name,
+		Image:         storedVoucher.Image,
 	}
 
 	vc.RemoveVoucherFromMap(uid)
