@@ -91,7 +91,7 @@ type PurchaseInfo struct {
 	TransactionID string `json:"transaction_id"`
 	ProductID     int32  `json:"product_id"`
 	VariantID     int32  `json:"variant_id"`
-	PhoneNB       int32  `json:"phone_nb"`
+	PhoneNB       int64  `json:"phone_nb"`
 }
 
 type BitcouBaseResponse struct {

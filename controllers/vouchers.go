@@ -3,7 +3,6 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/grupokindynos/common/blockbook"
 	"io/ioutil"
 	"net/http"
@@ -102,10 +101,10 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	// Convert the variant id to int
 	voucherVariantInt, _ := strconv.Atoi(PrepareVoucher.VoucherVariant)
 	// Prepare Tx for Bitcou
-	if phoneNb == "" {
-		phoneNb = "0"
+	if PrepareVoucher.PhoneNumber == "" {
+		PrepareVoucher.PhoneNumber = "0"
 	}
-	phoneNumber, err := strconv.Atoi(phoneNb)
+	phoneNumber, err := strconv.Atoi(PrepareVoucher.PhoneNumber)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +112,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		TransactionID: newVoucherID,
 		ProductID:     int32(PrepareVoucher.VoucherType),
 		VariantID:     int32(voucherVariantInt),
-		PhoneNB:       int32(phoneNumber),
+		PhoneNB:       int64(phoneNumber),
 	}
 
 	// Ask bitcou to send amount and address for a specific voucher and add the VoucherID
@@ -257,8 +256,8 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		AmountFeeEuro:    strconv.FormatFloat(feeAmountEuro, 'f', 6, 64),
 		Name:             PrepareVoucher.VoucherName,
 		Image:            PrepareVoucher.VoucherImage,
+		PhoneNumber:      int64(phoneNumber),
 	}
-	fmt.Println(prepareVoucher)
 
 	vc.AddVoucherToMap(uid, prepareVoucher)
 	return res, nil
@@ -317,6 +316,7 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherId string
 		AmountFeeEuro: storedVoucher.AmountFeeEuro,
 		Name:          storedVoucher.Name,
 		Image:         storedVoucher.Image,
+		PhoneNumber:	storedVoucher.PhoneNumber,
 	}
 
 	vc.RemoveVoucherFromMap(uid)
