@@ -54,12 +54,8 @@ github.com/google/pprof v0.0.0-20190309163659-77426154d546/go.mod h1:zfwlbNMJ+OI
 github.com/google/uuid v1.0.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/gorilla/websocket v1.4.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
-github.com/grupokindynos/common v0.0.0-20200122020219-b6cfe6a3cbba h1:VzPXoMZTRjMvXvOkOIeaLg0DM8p/2ial9N9bci5jZD4=
-github.com/grupokindynos/common v0.0.0-20200122020219-b6cfe6a3cbba/go.mod h1:GuHK2gA5yF3hD5PjguSHuTf8f2xyEmdxoiFOFviyhng=
-github.com/grupokindynos/common v0.0.0-20200131054740-ac6203f435a3 h1:OUZV0SJ6Tsx5pHgjyL0i/8QF7QM2RdjGiBQM45QL4Gw=
-github.com/grupokindynos/common v0.0.0-20200131054740-ac6203f435a3/go.mod h1:GuHK2gA5yF3hD5PjguSHuTf8f2xyEmdxoiFOFviyhng=
-github.com/grupokindynos/common v0.0.0-20200131054916-78887ddbc759 h1:73yXvSMXb2awwZxNtPESeeAoSK2M/Yq2AvSMypb+giQ=
-github.com/grupokindynos/common v0.0.0-20200131054916-78887ddbc759/go.mod h1:GuHK2gA5yF3hD5PjguSHuTf8f2xyEmdxoiFOFviyhng=
+github.com/grupokindynos/common v0.0.0-20200131181444-d381a9d2fad7 h1:Re3M6goHEMpjc6+jWsHEKItErKTKUY5/BYAdt8ZebAM=
+github.com/grupokindynos/common v0.0.0-20200131181444-d381a9d2fad7/go.mod h1:GuHK2gA5yF3hD5PjguSHuTf8f2xyEmdxoiFOFviyhng=
 github.com/hashicorp/hcl v1.0.0/go.mod h1:E5yfLk+7swimpb2L/Alb/PJmXilQ/rhwaUYs4T20WEQ=
 github.com/heroku/heroku-go/v5 v5.1.0/go.mod h1:d+1QrZyjbnQJG1f8xIoVvMQRFLt3XRVZOdlm26Sr73U=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
