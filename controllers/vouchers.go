@@ -183,7 +183,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 
 	if PrepareVoucher.Coin != "POLIS" {
 		// Get the polis rates
-		polisRate, err := vc.Obol.GetCoin2CoinRates("DASH", "POLIS")
+		polisRate, err := vc.Obol.GetCoin2CoinRates("POLIS", "DASH")
 		if err != nil {
 			return nil, err
 		}

@@ -148,7 +148,7 @@ func TestPrepare(t *testing.T) {
 		mockPlutusService.EXPECT().GetNewPaymentAddress(gomock.Eq("POLIS")).Return(feePaymentAddress, nil),
 		mockBitcouService.EXPECT().GetTransactionInformation(gomock.Any()).Return(purchaseInfo, nil),
 		mockPlutusService.EXPECT().GetWalletBalance(gomock.Eq("DASH")).Return(enoughBalance, nil),
-		mockObolService.EXPECT().GetCoin2CoinRates(gomock.Eq("DASH"), "POLIS").Return(dashPolisRate, nil),
+		mockObolService.EXPECT().GetCoin2CoinRates(gomock.Eq("POLIS"), "DASH").Return(dashPolisRate, nil),
 		mockHestiaService.EXPECT().GetVouchersByTimestamp(gomock.Any(), gomock.Any()).Return([]hestia.Voucher{}, nil),
 
 		// calls test returned response with not enough balance
@@ -157,7 +157,7 @@ func TestPrepare(t *testing.T) {
 		mockPlutusService.EXPECT().GetNewPaymentAddress(gomock.Eq("BTC")).Return(paymentAddress, nil),
 		mockPlutusService.EXPECT().GetNewPaymentAddress(gomock.Eq("POLIS")).Return(feePaymentAddress, nil),
 		mockBitcouService.EXPECT().GetTransactionInformation(gomock.Any()).Return(purchaseInfo, nil),
-		mockObolService.EXPECT().GetCoin2CoinRates(gomock.Eq("DASH"), gomock.Eq("BTC")).Return(dashBTCRate, nil),
+		mockObolService.EXPECT().GetCoin2CoinRates(gomock.Eq("BTC"), gomock.Eq("DASH")).Return(dashBTCRate, nil),
 		mockPlutusService.EXPECT().GetWalletBalance(gomock.Eq("DASH")).Return(notEnoughBalance, nil),
 	)
 
