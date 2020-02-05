@@ -139,7 +139,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	if PrepareVoucher.Coin == "DASH" {
 		paymentCoinRate = 1
 	} else {
-		paymentCoinRate, err = vc.Obol.GetCoin2CoinRates("DASH", PrepareVoucher.Coin)
+		paymentCoinRate, err = vc.Obol.GetCoin2CoinRates(PrepareVoucher.Coin, "DASH")
 		if err != nil {
 			return nil, err
 		}
