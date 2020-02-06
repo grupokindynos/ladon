@@ -220,14 +220,14 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		return nil, err
 	}
 
-	totalAmountEuro := purchaseAmountEuro + feeAmountEuro
+	totalAmountEuro := purchaseAmountEuro
 
 	for _, voucher := range vouchers {
 		if voucher.Status != hestia.GetVoucherStatusString(hestia.VoucherStatusError) && voucher.Status != hestia.GetVoucherStatusString(hestia.VoucherStatusRefunded) { // Excludes errored Vouchers from Spent Amount
 			amEr, _ := strconv.ParseFloat(voucher.AmountEuro, 64)
 			amEr /= 100
-			amFeeEr, _ := strconv.ParseFloat(voucher.AmountFeeEuro, 64)
-			totalAmountEuro += amEr + amFeeEr
+			//amFeeEr, _ := strconv.ParseFloat(voucher.AmountFeeEuro, 64)
+			totalAmountEuro += amEr
 		}
 	}
 
