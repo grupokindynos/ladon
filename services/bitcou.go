@@ -18,6 +18,7 @@ type BitcouRequests struct {
 	BitcouURL    string
 	BitcouToken  string
 	VouchersList VouchersData
+	DevMode		 bool
 }
 
 type VouchersData struct {
@@ -26,7 +27,12 @@ type VouchersData struct {
 }
 
 func (bs *BitcouRequests) GetPhoneTopUpList(phoneNb string) ([]int, error) {
-	url := os.Getenv("BITCOU_URL") + "voucher/availableVouchersByPhoneNb"
+	url := ""
+	if bs.DevMode {
+		url = os.Getenv("BITCOU_DEV_URL") + "voucher/availableVouchersByPhoneNb"
+	} else {
+		url = os.Getenv("BITCOU_URL") + "voucher/availableVouchersByPhoneNb"
+	}
 	token := "Bearer " + os.Getenv("BITCOU_TOKEN")
 	body := models.BitcouPhoneBodyReq{PhoneNumber: phoneNb}
 	byteBody, err := json.Marshal(body)
@@ -58,7 +64,12 @@ func (bs *BitcouRequests) GetPhoneTopUpList(phoneNb string) ([]int, error) {
 }
 
 func (bs *BitcouRequests) GetTransactionInformation(purchaseInfo models.PurchaseInfo) (models.PurchaseInfoResponse, error) {
-	url := os.Getenv("BITCOU_URL") + "voucher/transaction"
+	url := ""
+	if bs.DevMode {
+		url = os.Getenv("BITCOU_DEV_URL") + "voucher/transaction"
+	} else {
+		url = os.Getenv("BITCOU_URL") + "voucher/transaction"
+	}
 	token := "Bearer " + os.Getenv("BITCOU_TOKEN")
 	byteBody, err := json.Marshal(purchaseInfo)
 	postBody := bytes.NewBuffer(byteBody)
@@ -93,7 +104,7 @@ func (bs *BitcouRequests) GetTransactionInformation(purchaseInfo models.Purchase
 	return purchaseData, nil
 }
 
-func NewBitcouService() *BitcouRequests {
+func NewBitcouService(devMode bool) *BitcouRequests {
 	service := &BitcouRequests{
 		BitcouURL:   os.Getenv("BITCOU_URL"),
 		BitcouToken: os.Getenv("BITCOU_TOKEN"),
@@ -101,6 +112,7 @@ func NewBitcouService() *BitcouRequests {
 			List:        make(map[string][]models.Voucher),
 			LastUpdated: time.Time{},
 		},
+		DevMode: devMode,
 	}
 	return service
 }
