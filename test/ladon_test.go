@@ -55,7 +55,7 @@ func TestStatus(t *testing.T) {
 	}
 
 	if available != nil {
-		t.Fatal("Test vouchers not available - avaialability not equal to nil")
+		t.Fatal("Test vouchers not available - availability not equal to nil")
 	}
 }
 
