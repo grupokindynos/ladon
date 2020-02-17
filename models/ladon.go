@@ -8,6 +8,8 @@ type PrepareVoucher struct {
 	VoucherName    string `json:"name"`
 	VoucherImage   string `json:"image"`
 	PhoneNumber	   string `json:"phone_nb"`
+	ProviderId     int32  `json:"provider_id"`
+	Valid          int32  `json:"valid"`
 }
 
 type PrepareVoucherResponse struct {
@@ -36,6 +38,8 @@ type PrepareVoucherInfo struct {
 	Name             string      `json:"name"`
 	Image            string      `json:"image"`
 	PhoneNumber		 int64		 `json:"phone_nb"`
+	ProviderId       int32       `json:"provider_id"`
+	Valid            int32       `json:"valid"`
 }
 
 type StoreVoucher struct {

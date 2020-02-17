@@ -257,6 +257,8 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		Name:             PrepareVoucher.VoucherName,
 		Image:            PrepareVoucher.VoucherImage,
 		PhoneNumber:      int64(phoneNumber),
+		ProviderId:       PrepareVoucher.ProviderId,
+		Valid:            PrepareVoucher.Valid,
 	}
 
 	vc.AddVoucherToMap(uid, prepareVoucher)
@@ -316,7 +318,9 @@ func (vc *VouchersController) Store(payload []byte, uid string, voucherId string
 		AmountFeeEuro: storedVoucher.AmountFeeEuro,
 		Name:          storedVoucher.Name,
 		Image:         storedVoucher.Image,
-		PhoneNumber:	storedVoucher.PhoneNumber,
+		PhoneNumber:   storedVoucher.PhoneNumber,
+		ProviderId:    storedVoucher.ProviderId,
+		Valid:         storedVoucher.Valid,
 	}
 
 	vc.RemoveVoucherFromMap(uid)
