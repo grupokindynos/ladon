@@ -37,6 +37,7 @@ var (
 	skipValidations    bool
 	currTime           CurrentTime
 	prepareVouchersMap = make(map[string]models.PrepareVoucherInfo)
+	devMode			   bool
 )
 
 const prepareVoucherTimeframe = 60 * 5 // 5 minutes
@@ -54,6 +55,7 @@ func main() {
 		"IMPORTANT: -local flag needs to be set in order to use this.")
 	stopProcessor := flag.Bool("stop-proc", false, "set this flag to stop the automatic run of processor")
 	port := flag.String("port", os.Getenv("PORT"), "set different port for local run")
+	devApi := flag.Bool("dev-api", false, "use Bitcou development API")
 
 	flag.Parse()
 
@@ -84,6 +86,8 @@ func main() {
 		go timer()
 	}
 
+	devMode = *devApi
+
 	App := GetApp()
 	_ = App.Run(":" + *port)
 }
@@ -99,7 +103,7 @@ func GetApp() *gin.Engine {
 }
 
 func ApplyRoutes(r *gin.Engine) {
-	bitcouService := services.NewBitcouService()
+	bitcouService := services.NewBitcouService(devMode)
 	vouchersCtrl := &controllers.VouchersController{
 		TxsAvailable:     !noTxsAvailable,
 		PreparesVouchers: prepareVouchersMap,
