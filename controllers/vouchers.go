@@ -364,7 +364,7 @@ func (vc *VouchersController) decodeAndCheckTx(voucherData hestia.Voucher, store
 			}
 			return
 		}
-		FeeTxId, err = vc.broadCastTx(polisCoinConfig, feeTx)
+		FeeTxId, err, _ = vc.broadCastTx(polisCoinConfig, feeTx)
 		if err != nil {
 			// If broadcast fail, we should mark error, no spent anything.
 			voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
@@ -411,7 +411,7 @@ func (vc *VouchersController) decodeAndCheckTx(voucherData hestia.Voucher, store
 		}
 		return
 	}
-	paymentTxid, err := vc.broadCastTx(coinConfig, rawTx)
+	paymentTxid, err, message := vc.broadCastTx(coinConfig, rawTx)
 	if err != nil {
 		// If broadcast fail and coin is POLIS mark as error
 		voucherData.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
@@ -428,18 +428,19 @@ func (vc *VouchersController) decodeAndCheckTx(voucherData hestia.Voucher, store
 	// Update voucher model include txid.
 	voucherData.PaymentData.Txid = paymentTxid
 	voucherData.FeePayment.Txid = FeeTxId
+	voucherData.Message = message
 	_, err = vc.Hestia.UpdateVoucher(voucherData)
 	if err != nil {
 		return
 	}
 }
 
-func (vc *VouchersController) broadCastTx(coinConfig *coins.Coin, rawTx string) (txid string, err error) {
+func (vc *VouchersController) broadCastTx(coinConfig *coins.Coin, rawTx string) (string, error, string) {
 	if !vc.TxsAvailable {
-		return "not published due no-txs flag", nil
+		return "not published due no-txs flag", nil, ""
 	}
 	blockbookWrapper := blockbook.NewBlockBookWrapper(coinConfig.Info.Blockbook)
-	return blockbookWrapper.SendTx(rawTx)
+	return blockbookWrapper.SendTxWithMessage(rawTx)
 }
 
 func (vc *VouchersController) Update(c *gin.Context) {
