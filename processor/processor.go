@@ -9,6 +9,7 @@ import (
 	"github.com/grupokindynos/common/coin-factory/coins"
 	"github.com/grupokindynos/common/hestia"
 	"github.com/grupokindynos/common/plutus"
+	"github.com/grupokindynos/common/telegram"
 	"github.com/grupokindynos/common/tokens/mrt"
 	"github.com/grupokindynos/common/tokens/mvt"
 	"github.com/grupokindynos/ladon/services"
@@ -28,8 +29,11 @@ type Processor struct {
 	Plutus          services.PlutusService
 }
 
+var telegramBot telegram.TelegramBot
+
 func (p *Processor) Start() {
 	fmt.Println("Starting Voucher Processor")
+	telegramBot = telegram.NewTelegramBot(os.Getenv("TELEGRAM_API_KEY"), os.Getenv("TELEGRAM_CHAT_ID"))
 	voucherStatus, err := p.Hestia.GetVouchersStatus()
 	if err != nil {
 		panic(err)
@@ -55,6 +59,7 @@ func (p *Processor) handlePendingVouchers(wg *sync.WaitGroup) {
 	vouchers, err := getPendingVouchers()
 	if err != nil {
 		fmt.Println("Pending vouchers processor finished with errors: " + err.Error())
+		telegramBot.SendError("Pending vouchers processor finished with errors: " + err.Error())
 		return
 	}
 	for _, v := range vouchers {
@@ -81,6 +86,7 @@ func (p *Processor) handleConfirmedVouchers(wg *sync.WaitGroup) {
 	vouchers, err := getConfirmedVouchers()
 	if err != nil {
 		fmt.Println("Confirmed vouchers processor finished with errors: " + err.Error())
+		telegramBot.SendError("Confirmed vouchers processor finished with errors: " + err.Error())
 		return
 	}
 	for _, v := range vouchers {
@@ -90,9 +96,11 @@ func (p *Processor) handleConfirmedVouchers(wg *sync.WaitGroup) {
 			_, err = p.Hestia.UpdateVoucher(v)
 			if err != nil {
 				fmt.Println("Unable to update voucher bitcou payment: " + err.Error())
+				telegramBot.SendError("Unable to update voucher bitcou payment: " + err.Error() + "\n Voucher ID: " + v.ID)
 				continue
 			}
 			fmt.Println("Unable to submit bitcou payment, should refund the user: " + err.Error())
+			telegramBot.SendError("Unable to submit bitcou payment, should refund the user: " + err.Error() + "\n Voucher ID: " + v.ID)
 			continue
 		}
 		v.BitcouPaymentData.Txid = txid
@@ -100,6 +108,7 @@ func (p *Processor) handleConfirmedVouchers(wg *sync.WaitGroup) {
 		_, err = p.Hestia.UpdateVoucher(v)
 		if err != nil {
 			fmt.Println("Unable to update voucher bitcou payment: " + err.Error())
+			telegramBot.SendError("Unable to update voucher bitcou payment: " + err.Error() + "\n Voucher ID: " + v.ID)
 			continue
 		}
 	}
@@ -110,6 +119,7 @@ func (p *Processor) handleConfirmingVouchers(wg *sync.WaitGroup) {
 	vouchers, err := getConfirmingVouchers()
 	if err != nil {
 		fmt.Println("Confirming vouchers processor finished with errors: " + err.Error())
+		telegramBot.SendError("Confirming vouchers processor finished with errors: " + err.Error())
 		return
 	}
 	// Check confirmations and return
@@ -117,12 +127,14 @@ func (p *Processor) handleConfirmingVouchers(wg *sync.WaitGroup) {
 		paymentCoinConfig, err := coinfactory.GetCoin(v.PaymentData.Coin)
 		if err != nil {
 			fmt.Println("Unable to get payment coin configuration: " + err.Error())
+			telegramBot.SendError("Unable to get payment coin configuration: " + err.Error() + "\n Voucher ID: " + v.ID)
 			continue
 		}
 		if v.PaymentData.Coin != "POLIS" {
 			feeCoinConfig, err := coinfactory.GetCoin(v.FeePayment.Coin)
 			if err != nil {
 				fmt.Println("Unable to get fee coin configuration: " + err.Error())
+				telegramBot.SendError("Unable to get fee coin configuration: " + err.Error() + "\n Voucher ID: " + v.ID)
 				continue
 			}
 			// Check if voucher has enough confirmations
@@ -171,6 +183,7 @@ func (p *Processor) handleRefundFeeVouchers(wg *sync.WaitGroup) {
 	vouchers, err := getRefundFeeVouchers()
 	if err != nil {
 		fmt.Println("Refund Fee vouchers processor finished with errors: " + err.Error())
+		telegramBot.SendError("Refund Fee vouchers processor finished with errors: " + err.Error())
 		return
 	}
 	for _, voucher := range vouchers {
@@ -182,12 +195,14 @@ func (p *Processor) handleRefundFeeVouchers(wg *sync.WaitGroup) {
 		_, err := p.Plutus.SubmitPayment(paymentBody)
 		if err != nil {
 			fmt.Println("unable to submit refund payment")
+			telegramBot.SendError("Unable to submit refund payment: " + err.Error() + "\n Voucher ID: " + voucher.ID)
 			continue
 		}
 		voucher.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefunded)
 		_, err = p.Hestia.UpdateVoucher(voucher)
 		if err != nil {
 			fmt.Println("unable to update voucher")
+			telegramBot.SendError("Unable to update voucher: " + err.Error() + "\n Voucher ID: " + voucher.ID)
 			continue
 		}
 	}
@@ -198,6 +213,7 @@ func (p *Processor) handleRefundTotalVouchers(wg *sync.WaitGroup) {
 	vouchers, err := getRefundTotalVouchers()
 	if err != nil {
 		fmt.Println("Refund Total vouchers processor finished with errors: " + err.Error())
+		telegramBot.SendError("Refund Total vouchers processor finished with errors: " + err.Error())
 		return
 	}
 	for _, voucher := range vouchers {
@@ -210,12 +226,14 @@ func (p *Processor) handleRefundTotalVouchers(wg *sync.WaitGroup) {
 			_, err = p.Plutus.SubmitPayment(paymentBody)
 			if err != nil {
 				fmt.Println("unable to submit refund payment")
+				telegramBot.SendError("Unable to submit refund payment: " + err.Error() + "\n Voucher ID: " + voucher.ID)
 				continue
 			}
 			voucher.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefunded)
 			_, err = p.Hestia.UpdateVoucher(voucher)
 			if err != nil {
 				fmt.Println("unable to update voucher")
+				telegramBot.SendError("Unable to update voucher: " + err.Error() + "\n Voucher ID: " + voucher.ID)
 				continue
 			}
 		} else {
@@ -227,12 +245,14 @@ func (p *Processor) handleRefundTotalVouchers(wg *sync.WaitGroup) {
 			_, err := p.Plutus.SubmitPayment(feePaymentBody)
 			if err != nil {
 				fmt.Println("unable to submit refund payment")
+				telegramBot.SendError("Unable to submit refund payment: " + err.Error() + "\n Voucher ID: " + voucher.ID)
 				continue
 			}
 			voucher.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundedPartially)
 			_, err = p.Hestia.UpdateVoucher(voucher)
 			if err != nil {
 				fmt.Println("unable to update voucher")
+				telegramBot.SendError("Unable to update voucher: " + err.Error() + "\n Voucher ID: " + voucher.ID)
 				continue
 			}
 			paymentBody := plutus.SendAddressBodyReq{
@@ -243,12 +263,14 @@ func (p *Processor) handleRefundTotalVouchers(wg *sync.WaitGroup) {
 			_, err = p.Plutus.SubmitPayment(paymentBody)
 			if err != nil {
 				fmt.Println("unable to submit refund payment")
+				telegramBot.SendError("Unable to submit refund payment: " + err.Error() + "\n Voucher ID: " + voucher.ID)
 				continue
 			}
 			voucher.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefunded)
 			_, err = p.Hestia.UpdateVoucher(voucher)
 			if err != nil {
 				fmt.Println("unable to update voucher")
+				telegramBot.SendError("Unable to update voucher: " + err.Error() + "\n Voucher ID: " + voucher.ID)
 				continue
 			}
 		}
@@ -260,6 +282,7 @@ func (p *Processor) handleTimeoutAwaitingVouchers(wg *sync.WaitGroup) {
 	vouchers, err := getAwaitingProviderVouchers()
 	if err != nil {
 		fmt.Println("Await provider vouchers processor finished with errors: " + err.Error())
+		telegramBot.SendError("Await provider vouchers processor finished with errors: " + err.Error())
 		return
 	}
 	for _, voucher := range vouchers {
@@ -268,6 +291,7 @@ func (p *Processor) handleTimeoutAwaitingVouchers(wg *sync.WaitGroup) {
 			_, err = p.Hestia.UpdateVoucher(voucher)
 			if err != nil {
 				fmt.Println("unable to update voucher")
+				telegramBot.SendError("Unable to update voucher: " + err.Error() + "\n Voucher ID: " + voucher.ID)
 				continue
 			}
 		}
