@@ -76,6 +76,7 @@ func (p *Processor) handlePendingVouchers(wg *sync.WaitGroup) {
 		_, err = p.Hestia.UpdateVoucher(v)
 		if err != nil {
 			fmt.Println("Unable to update voucher: " + err.Error())
+			telegramBot.SendError("Unable to update voucher: " + err.Error() + "\n Voucher ID: " + v.ID)
 			continue
 		}
 	}

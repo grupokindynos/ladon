@@ -60,6 +60,8 @@ github.com/grupokindynos/common v0.0.0-20200226201005-7e81b1e3b2f2 h1:ItDCHLFBdZ
 github.com/grupokindynos/common v0.0.0-20200226201005-7e81b1e3b2f2/go.mod h1:GuHK2gA5yF3hD5PjguSHuTf8f2xyEmdxoiFOFviyhng=
 github.com/grupokindynos/common v0.0.0-20200303161502-e2a5b2369e59 h1:ISn8SUiLKCssegWADJCwVfJoi8c5IoBbsgy3VTZPSAs=
 github.com/grupokindynos/common v0.0.0-20200303161502-e2a5b2369e59/go.mod h1:54Nv1EC/vlsMTdys83LQ7jHluB+bY5tXodU1orxqoAA=
+github.com/grupokindynos/common v0.0.0-20200304175449-340b19c16ad3 h1:TCBAP0jAdFoLDwkiBUegMcJ0/UxjPqeX/1e315mjpi8=
+github.com/grupokindynos/common v0.0.0-20200304175449-340b19c16ad3/go.mod h1:54Nv1EC/vlsMTdys83LQ7jHluB+bY5tXodU1orxqoAA=
 github.com/hashicorp/hcl v1.0.0/go.mod h1:E5yfLk+7swimpb2L/Alb/PJmXilQ/rhwaUYs4T20WEQ=
 github.com/heroku/heroku-go/v5 v5.1.0/go.mod h1:d+1QrZyjbnQJG1f8xIoVvMQRFLt3XRVZOdlm26Sr73U=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
