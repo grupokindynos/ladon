@@ -151,6 +151,7 @@ func (p *Processor) handleConfirmingVouchers(wg *sync.WaitGroup) {
 			err = checkTxId(&v.FeePayment)
 			if err != nil {
 				fmt.Println("Unable to get fee txId " + err.Error())
+				teleBot.SendError("Unable to get fee txId: " + err.Error() + "\n Voucher ID: " + v.ID)
 				continue
 			}
 			feeConfirmations, err := getConfirmations(feeCoinConfig, v.FeePayment.Txid)
@@ -173,6 +174,7 @@ func (p *Processor) handleConfirmingVouchers(wg *sync.WaitGroup) {
 		err = checkTxId(&v.PaymentData)
 		if err != nil {
 			fmt.Println("Unable to get txId " + err.Error())
+			teleBot.SendError("Unable to get txId: " + err.Error() + "\n Voucher ID: " + v.ID)
 			continue
 		}
 		paymentConfirmations, err := getConfirmations(paymentCoinConfig, v.PaymentData.Txid)
