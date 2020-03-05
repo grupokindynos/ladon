@@ -148,6 +148,11 @@ func (p *Processor) handleConfirmingVouchers(wg *sync.WaitGroup) {
 				}
 				continue
 			}
+			err = checkTxId(&v.FeePayment)
+			if err != nil {
+				fmt.Println("Unable to get fee txId " + err.Error())
+				continue
+			}
 			feeConfirmations, err := getConfirmations(feeCoinConfig, v.FeePayment.Txid)
 			if err != nil {
 				fmt.Println("Unable to get fee coin confirmations: " + err.Error())
@@ -164,6 +169,11 @@ func (p *Processor) handleConfirmingVouchers(wg *sync.WaitGroup) {
 				}
 				continue
 			}
+		}
+		err = checkTxId(&v.PaymentData)
+		if err != nil {
+			fmt.Println("Unable to get txId " + err.Error())
+			continue
 		}
 		paymentConfirmations, err := getConfirmations(paymentCoinConfig, v.PaymentData.Txid)
 		if err != nil {
@@ -378,4 +388,21 @@ func (p *Processor) submitBitcouPayment(coin string, address string, amount int6
 		Amount:  floatAmount / 1e8,
 	}
 	return p.Plutus.SubmitPayment(payment)
+}
+
+func checkTxId(payment *hestia.Payment) error {
+	if payment.Txid == "" {
+		txId, err := getMissingTxId(payment.Coin, payment.Address, payment.Amount)
+		if err != nil {
+			return err
+		}
+		payment.Txid = txId
+	}
+	return nil
+}
+
+func getMissingTxId(coin string, address string, amount int64) (string, error) {
+	coinConfig, _ := coinfactory.GetCoin(coin)
+	blockBook := blockbook.NewBlockBookWrapper(coinConfig.Info.Blockbook)
+	return blockBook.FindDepositTxId(address, amount)
 }
