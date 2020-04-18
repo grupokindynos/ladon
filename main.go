@@ -76,14 +76,13 @@ func main() {
 
 	} else {
 		hestiaEnv = "HESTIA_PRODUCTION_URL"
+		plutusEnv = "PLUTUS_PRODUCTION_URL"
 		if *noTxs || *skipVal || *localPlutus{
 			fmt.Println("cannot set testing flags without -local flag")
 			os.Exit(1)
 		}
 	}
-
-
-
+	
 	currTime = CurrentTime{
 		Hour:   time.Now().Hour(),
 		Day:    time.Now().Day(),
