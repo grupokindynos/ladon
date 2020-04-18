@@ -33,6 +33,7 @@ type CurrentTime struct {
 
 var (
 	hestiaEnv          string
+	plutusEnv		   string
 	noTxsAvailable     bool
 	skipValidations    bool
 	currTime           CurrentTime
@@ -56,6 +57,7 @@ func main() {
 	stopProcessor := flag.Bool("stop-proc", false, "set this flag to stop the automatic run of processor")
 	port := flag.String("port", os.Getenv("PORT"), "set different port for local run")
 	devApi := flag.Bool("dev-api", false, "use Bitcou development API")
+	localPlutus := flag.Bool("local-plutus", false, "use local instance for plutus")
 
 	flag.Parse()
 
@@ -66,14 +68,21 @@ func main() {
 		// check if testing flags were set
 		noTxsAvailable = *noTxs
 		skipValidations = *skipVal
+		if *localPlutus {
+			plutusEnv = "PLUTUS_LOCAL_URL"
+		} else {
+			plutusEnv = "PLUTUS_PRODUCTION_URL"
+		}
 
 	} else {
 		hestiaEnv = "HESTIA_PRODUCTION_URL"
-		if *noTxs || *skipVal {
+		if *noTxs || *skipVal || *localPlutus{
 			fmt.Println("cannot set testing flags without -local flag")
 			os.Exit(1)
 		}
 	}
+
+
 
 	currTime = CurrentTime{
 		Hour:   time.Now().Hour(),
@@ -107,7 +116,7 @@ func ApplyRoutes(r *gin.Engine) {
 	vouchersCtrl := &controllers.VouchersController{
 		TxsAvailable:     !noTxsAvailable,
 		PreparesVouchers: prepareVouchersMap,
-		Plutus:           &services.PlutusRequests{PlutusURL: os.Getenv("PLUTUS_PRODUCTION_URL")},
+		Plutus:           &services.PlutusRequests{PlutusURL: os.Getenv(plutusEnv)},
 		Hestia:           &services.HestiaRequests{HestiaURL: hestiaEnv},
 		Bitcou:           bitcouService,
 		Obol:             &obol.ObolRequest{ObolURL: os.Getenv("OBOL_PRODUCTION_URL")},
@@ -165,7 +174,7 @@ func timer() {
 	proc := processor.Processor{
 		SkipValidations: skipValidations,
 		Hestia:          &services.HestiaRequests{HestiaURL: hestiaEnv},
-		Plutus:          &services.PlutusRequests{PlutusURL: os.Getenv("PLUTUS_PRODUCTION_URL")},
+		Plutus:          &services.PlutusRequests{PlutusURL: os.Getenv(plutusEnv)},
 	}
 
 	for {
