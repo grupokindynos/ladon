@@ -5,6 +5,8 @@ import (
 	"errors"
 	"github.com/grupokindynos/common/blockbook"
 	"io/ioutil"
+	"math"
+	"math/big"
 	"net/http"
 	"os"
 	"strconv"
@@ -155,6 +157,18 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	if err != nil {
 		return nil, err
 	}
+	// check if its a token to adjust to the amount
+	coinConfig, err := coinfactory.GetCoin(PrepareVoucher.Coin)
+	if err != nil {
+		return nil, err
+	}
+	if coinConfig.Info.Token && coinConfig.Info.Tag != "ETH" {
+		paymentAmount, err = amount.NewAmount(roundTo(paymentAmount.ToNormalUnit(), coinConfig.Info.Decimals))
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	paymentInfo := models.PaymentInfo{Address: paymentAddr, Amount: int64(paymentAmount.ToUnit(amount.AmountSats))}
 	// DASH amount on sats to pay Bitcou.
 	// For internal usage
@@ -439,6 +453,9 @@ func (vc *VouchersController) broadCastTx(coinConfig *coins.Coin, rawTx string) 
 	if !vc.TxsAvailable {
 		return "not published due no-txs flag", nil, ""
 	}
+	if coinConfig.Info.Token {
+		coinConfig, _ = coinfactory.GetCoin("ETH")
+	}
 	blockbookWrapper := blockbook.NewBlockBookWrapper(coinConfig.Info.Blockbook)
 	return blockbookWrapper.SendTxWithMessage(rawTx)
 }
@@ -543,4 +560,22 @@ func (vc *VouchersController) GetUserVouchersByTimestampOld(uid string, timestam
 		return nil, err
 	}
 	return response, nil
+}
+
+func roundTo(n float64, decimals int) float64 {
+	// conversion to bigInt to avoid overflow
+	decimalFactor := math.Pow10(decimals)
+	val := new(big.Float)
+	pot := new(big.Float)
+	val.SetFloat64(n)
+	pot.SetFloat64(decimalFactor)
+	val.Mul(val, pot)
+	adjusted, acc := val.Float64()
+	if acc.String() == "Exact" {
+		return math.Ceil(adjusted) / decimalFactor
+	} else {
+		// we take the risk of overflow, wich could cause the loss of a decimal factor
+		return math.Ceil(n*decimalFactor) / decimalFactor
+	}
+
 }

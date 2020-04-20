@@ -18,7 +18,7 @@ type PlutusRequests struct {
 }
 
 func (p *PlutusRequests) GetNewPaymentAddress(coin string) (addr string, err error) {
-	req, err := mvt.CreateMVTToken("GET", p.PlutusURL+"/address/"+coin, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+	req, err := mvt.CreateMVTToken("GET", p.PlutusURL+"/v2/address/"+coin+"?source=ladon", "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return addr, err
 	}
@@ -56,7 +56,7 @@ func (p *PlutusRequests) GetNewPaymentAddress(coin string) (addr string, err err
 }
 
 func (p *PlutusRequests) SubmitPayment(body plutus.SendAddressBodyReq) (txid string, err error) {
-	req, err := mvt.CreateMVTToken("POST", p.PlutusURL+"/send/address", "ladon", os.Getenv("MASTER_PASSWORD"), body, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+	req, err := mvt.CreateMVTToken("POST", p.PlutusURL+"/v2/send/address?source=ladon", "ladon", os.Getenv("MASTER_PASSWORD"), body, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return txid, err
 	}
@@ -94,7 +94,7 @@ func (p *PlutusRequests) SubmitPayment(body plutus.SendAddressBodyReq) (txid str
 }
 
 func (p *PlutusRequests) ValidateRawTx(body plutus.ValidateRawTxReq) (valid bool, err error) {
-	req, err := mvt.CreateMVTToken("POST", p.PlutusURL+"/validate/tx", "ladon", os.Getenv("MASTER_PASSWORD"), body, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+	req, err := mvt.CreateMVTToken("POST", p.PlutusURL+"/v2/validate/tx?source=ladon", "ladon", os.Getenv("MASTER_PASSWORD"), body, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return false, err
 	}
@@ -132,7 +132,7 @@ func (p *PlutusRequests) ValidateRawTx(body plutus.ValidateRawTxReq) (valid bool
 }
 
 func (p *PlutusRequests) GetWalletBalance(coin string) (plutus.Balance, error) {
-	req, err := mvt.CreateMVTToken("GET", p.PlutusURL+"/balance/"+coin, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+	req, err := mvt.CreateMVTToken("GET", p.PlutusURL+"/v2/balance/"+coin+"?source=ladon", "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("PLUTUS_AUTH_USERNAME"), os.Getenv("PLUTUS_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return plutus.Balance{}, err
 	}
