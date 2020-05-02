@@ -119,6 +119,11 @@ func (p *Processor) handleConfirmingVouchers(wg *sync.WaitGroup) {
 			fmt.Println("Unable to get payment coin configuration: " + err.Error())
 			continue
 		}
+		ethConfig, err := coinfactory.GetCoin("ETH")
+		if err == nil {
+			paymentCoinConfig.BlockchainInfo = ethConfig.BlockchainInfo
+
+		}
 		if v.PaymentData.Coin != "POLIS" {
 			feeCoinConfig, err := coinfactory.GetCoin(v.FeePayment.Coin)
 			if err != nil {
@@ -168,6 +173,9 @@ func (p *Processor) handleConfirmingVouchers(wg *sync.WaitGroup) {
 			continue
 		}
 		v.PaymentData.Confirmations = int32(paymentConfirmations)
+		if v.PaymentData.Confirmations >= int32(paymentCoinConfig.BlockchainInfo.MinConfirmations) {
+			v.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusConfirmed)
+		}
 		_, err = p.Hestia.UpdateVoucher(v)
 		if err != nil {
 			fmt.Println("Unable to update voucher confirmations: " + err.Error())
@@ -347,6 +355,9 @@ func getVouchers(status hestia.VoucherStatus) ([]hestia.Voucher, error) {
 }
 
 func getConfirmations(coinConfig *coins.Coin, txid string) (int, error) {
+	if coinConfig.Info.Token {
+		coinConfig, _ = coinfactory.GetCoin("ETH")
+	}
 	blockbookWrapper := blockbook.NewBlockBookWrapper(coinConfig.Info.Blockbook)
 	txData, err := blockbookWrapper.GetTx(txid)
 	if err != nil {
@@ -378,6 +389,9 @@ func checkTxId(payment *hestia.Payment) error {
 
 func getMissingTxId(coin string, address string, amount int64) (string, error) {
 	coinConfig, _ := coinfactory.GetCoin(coin)
+	if coinConfig.Info.Token {
+		coinConfig, _ = coinfactory.GetCoin("ETH")
+	}
 	blockBook := blockbook.NewBlockBookWrapper(coinConfig.Info.Blockbook)
 	return blockBook.FindDepositTxId(address, amount)
 }
