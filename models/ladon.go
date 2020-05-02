@@ -7,7 +7,7 @@ type PrepareVoucher struct {
 	Country        string `json:"country"`
 	VoucherName    string `json:"name"`
 	VoucherImage   string `json:"image"`
-	PhoneNumber	   string `json:"phone_nb"`
+	PhoneNumber    string `json:"phone_nb"`
 	ProviderId     int32  `json:"provider_id"`
 	Valid          int32  `json:"valid"`
 }
@@ -37,7 +37,7 @@ type PrepareVoucherInfo struct {
 	AmountFeeEuro    string      `json:"amount_fee_euro"`
 	Name             string      `json:"name"`
 	Image            string      `json:"image"`
-	PhoneNumber		 int64		 `json:"phone_nb"`
+	PhoneNumber      int64       `json:"phone_nb"`
 	ProviderId       int32       `json:"provider_id"`
 	Valid            int32       `json:"valid"`
 }
