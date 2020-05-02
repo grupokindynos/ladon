@@ -18,7 +18,7 @@ type BitcouRequests struct {
 	BitcouURL    string
 	BitcouToken  string
 	VouchersList VouchersData
-	DevMode		 bool
+	DevMode      bool
 }
 
 type VouchersData struct {

@@ -3,7 +3,6 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
-	"github.com/grupokindynos/common/blockbook"
 	"io/ioutil"
 	"math"
 	"math/big"
@@ -13,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/grupokindynos/common/blockbook"
 
 	"github.com/gin-gonic/gin"
 	coinfactory "github.com/grupokindynos/common/coin-factory"
