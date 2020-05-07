@@ -174,6 +174,7 @@ func timer() {
 		SkipValidations: skipValidations,
 		Hestia:          &services.HestiaRequests{HestiaURL: hestiaEnv},
 		Plutus:          &services.PlutusRequests{PlutusURL: os.Getenv(plutusEnv)},
+		HestiaUrl: os.Getenv(hestiaEnv),
 	}
 
 	for {

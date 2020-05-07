@@ -26,6 +26,7 @@ type Processor struct {
 	SkipValidations bool
 	Hestia          services.HestiaService
 	Plutus          services.PlutusService
+	HestiaUrl string
 }
 
 func (p *Processor) Start() {
@@ -52,7 +53,7 @@ func (p *Processor) Start() {
 
 func (p *Processor) handlePendingVouchers(wg *sync.WaitGroup) {
 	defer wg.Done()
-	vouchers, err := getPendingVouchers()
+	vouchers, err := p.getPendingVouchers()
 	if err != nil {
 		fmt.Println("Pending vouchers processor finished with errors: " + err.Error())
 		return
@@ -78,7 +79,7 @@ func (p *Processor) handlePendingVouchers(wg *sync.WaitGroup) {
 
 func (p *Processor) handleConfirmedVouchers(wg *sync.WaitGroup) {
 	defer wg.Done()
-	vouchers, err := getConfirmedVouchers()
+	vouchers, err := p.getConfirmedVouchers()
 	if err != nil {
 		fmt.Println("Confirmed vouchers processor finished with errors: " + err.Error())
 		return
@@ -107,7 +108,7 @@ func (p *Processor) handleConfirmedVouchers(wg *sync.WaitGroup) {
 
 func (p *Processor) handleConfirmingVouchers(wg *sync.WaitGroup) {
 	defer wg.Done()
-	vouchers, err := getConfirmingVouchers()
+	vouchers, err := p.getConfirmingVouchers()
 	if err != nil {
 		fmt.Println("Confirming vouchers processor finished with errors: " + err.Error())
 		return
@@ -186,7 +187,7 @@ func (p *Processor) handleConfirmingVouchers(wg *sync.WaitGroup) {
 
 func (p *Processor) handleRefundFeeVouchers(wg *sync.WaitGroup) {
 	defer wg.Done()
-	vouchers, err := getRefundFeeVouchers()
+	vouchers, err := p.getRefundFeeVouchers()
 	if err != nil {
 		fmt.Println("Refund Fee vouchers processor finished with errors: " + err.Error())
 		return
@@ -213,7 +214,7 @@ func (p *Processor) handleRefundFeeVouchers(wg *sync.WaitGroup) {
 
 func (p *Processor) handleRefundTotalVouchers(wg *sync.WaitGroup) {
 	defer wg.Done()
-	vouchers, err := getRefundTotalVouchers()
+	vouchers, err := p.getRefundTotalVouchers()
 	if err != nil {
 		fmt.Println("Refund Total vouchers processor finished with errors: " + err.Error())
 		return
@@ -275,7 +276,7 @@ func (p *Processor) handleRefundTotalVouchers(wg *sync.WaitGroup) {
 
 func (p *Processor) handleTimeoutAwaitingVouchers(wg *sync.WaitGroup) {
 	defer wg.Done()
-	vouchers, err := getAwaitingProviderVouchers()
+	vouchers, err := p.getAwaitingProviderVouchers()
 	if err != nil {
 		fmt.Println("Await provider vouchers processor finished with errors: " + err.Error())
 		return
@@ -292,32 +293,32 @@ func (p *Processor) handleTimeoutAwaitingVouchers(wg *sync.WaitGroup) {
 	}
 }
 
-func getPendingVouchers() ([]hestia.Voucher, error) {
-	return getVouchers(hestia.VoucherStatusPending)
+func (p *Processor) getPendingVouchers() ([]hestia.Voucher, error) {
+	return p.getVouchers(hestia.VoucherStatusPending)
 }
 
-func getConfirmingVouchers() ([]hestia.Voucher, error) {
-	return getVouchers(hestia.VoucherStatusConfirming)
+func (p *Processor) getConfirmingVouchers() ([]hestia.Voucher, error) {
+	return p.getVouchers(hestia.VoucherStatusConfirming)
 }
 
-func getConfirmedVouchers() ([]hestia.Voucher, error) {
-	return getVouchers(hestia.VoucherStatusConfirmed)
+func (p *Processor) getConfirmedVouchers() ([]hestia.Voucher, error) {
+	return p.getVouchers(hestia.VoucherStatusConfirmed)
 }
 
-func getRefundTotalVouchers() ([]hestia.Voucher, error) {
-	return getVouchers(hestia.VoucherStatusRefundTotal)
+func (p *Processor) getRefundTotalVouchers() ([]hestia.Voucher, error) {
+	return p.getVouchers(hestia.VoucherStatusRefundTotal)
 }
 
-func getRefundFeeVouchers() ([]hestia.Voucher, error) {
-	return getVouchers(hestia.VoucherStatusRefundFee)
+func (p *Processor) getRefundFeeVouchers() ([]hestia.Voucher, error) {
+	return p.getVouchers(hestia.VoucherStatusRefundFee)
 }
 
-func getAwaitingProviderVouchers() ([]hestia.Voucher, error) {
-	return getVouchers(hestia.VoucherStatusAwaitingProvider)
+func (p *Processor) getAwaitingProviderVouchers() ([]hestia.Voucher, error) {
+	return p.getVouchers(hestia.VoucherStatusAwaitingProvider)
 }
 
-func getVouchers(status hestia.VoucherStatus) ([]hestia.Voucher, error) {
-	req, err := mvt.CreateMVTToken("GET", hestia.ProductionURL+"/voucher/all?filter="+hestia.GetVoucherStatusString(status), "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+func (p *Processor) getVouchers(status hestia.VoucherStatus) ([]hestia.Voucher, error) {
+	req, err := mvt.CreateMVTToken("GET", p.HestiaUrl+"/voucher/all?filter="+hestia.GetVoucherStatusString(status), "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return nil, err
 	}
