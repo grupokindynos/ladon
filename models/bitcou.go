@@ -99,6 +99,12 @@ type BitcouBaseResponse struct {
 	Meta MetaData      `json:"meta"`
 }
 
+type PurchaseInfoResponseV2 struct {
+	TxId string        `json:"txn_id"`
+	AmountEuro float64 `json:"amount_euro"`
+	RedeemData string  `json:"redeem_data"`
+}
+
 type PurchaseInfoResponse struct {
 	Amount              float64 `json:"amount"`
 	AmountEuro          string  `json:"amount_euro"`

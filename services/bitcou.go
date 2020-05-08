@@ -104,6 +104,47 @@ func (bs *BitcouRequests) GetTransactionInformation(purchaseInfo models.Purchase
 	return purchaseData, nil
 }
 
+func (bs *BitcouRequests) GetTransactionInformationV2(purchaseInfo models.PurchaseInfo) (models.PurchaseInfoResponseV2, error) {
+	url := ""
+	if bs.DevMode {
+		url = os.Getenv("BITCOU_DEV_URL") + "voucher/transaction"
+	} else {
+		url = os.Getenv("BITCOU_URL") + "voucher/transaction"
+	}
+	token := "Bearer " + os.Getenv("BITCOU_TOKEN")
+	byteBody, err := json.Marshal(purchaseInfo)
+	postBody := bytes.NewBuffer(byteBody)
+	req, err := http.NewRequest("POST", url, postBody)
+	if err != nil {
+		return models.PurchaseInfoResponseV2{}, err
+	}
+	req.Header.Add("Authorization", token)
+	client := &http.Client{Timeout: 60 * time.Second}
+	res, err := client.Do(req)
+	if err != nil {
+		return models.PurchaseInfoResponseV2{}, err
+	}
+	defer func() {
+		_ = res.Body.Close()
+	}()
+	contents, _ := ioutil.ReadAll(res.Body)
+	var response models.BitcouBaseResponse
+	err = json.Unmarshal(contents, &response)
+	if err != nil {
+		return models.PurchaseInfoResponseV2{}, err
+	}
+	var purchaseData models.PurchaseInfoResponseV2
+	dataBytes, err := json.Marshal(response.Data[0])
+	if err != nil {
+		return models.PurchaseInfoResponseV2{}, err
+	}
+	err = json.Unmarshal(dataBytes, &purchaseData)
+	if err != nil {
+		return models.PurchaseInfoResponseV2{}, err
+	}
+	return purchaseData, nil
+}
+
 func NewBitcouService(devMode bool) *BitcouRequests {
 	service := &BitcouRequests{
 		BitcouURL:   os.Getenv("BITCOU_URL"),
