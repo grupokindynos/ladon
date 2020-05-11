@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -24,19 +23,12 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type CurrentTime struct {
-	Hour   int
-	Day    int
-	Minute int
-	Second int
-}
-
 var (
 	hestiaEnv          string
 	plutusEnv          string
+	adrestiaEnv        string
 	noTxsAvailable     bool
 	skipValidations    bool
-	currTime           CurrentTime
 	prepareVouchersMap = make(map[string]models.PrepareVoucherInfo)
 	devMode            bool
 )
@@ -64,7 +56,7 @@ func main() {
 	// If flag was set, change the hestia request url to be local
 	if *localRun {
 		hestiaEnv = "HESTIA_LOCAL_URL"
-
+		adrestiaEnv = "ADRESTIA_LOCAL_URL"
 		// check if testing flags were set
 		noTxsAvailable = *noTxs
 		skipValidations = *skipVal
@@ -77,21 +69,16 @@ func main() {
 	} else {
 		hestiaEnv = "HESTIA_PRODUCTION_URL"
 		plutusEnv = "PLUTUS_PRODUCTION_URL"
+		adrestiaEnv = "ADRESTIA_PRODUCTION_URL"
 		if *noTxs || *skipVal || *localPlutus {
 			fmt.Println("cannot set testing flags without -local flag")
 			os.Exit(1)
 		}
 	}
 
-	currTime = CurrentTime{
-		Hour:   time.Now().Hour(),
-		Day:    time.Now().Day(),
-		Minute: time.Now().Minute(),
-		Second: time.Now().Second(),
-	}
-
 	if !*stopProcessor {
-		go timer()
+		go runProcessor()
+		go runProcessorV2()
 	}
 
 	devMode = *devApi
@@ -169,7 +156,7 @@ func ValidateRequest(c *gin.Context, method func(payload []byte, uid string, vou
 	return
 }
 
-func timer() {
+func runProcessor() {
 	proc := processor.Processor{
 		SkipValidations: skipValidations,
 		Hestia:          &services.HestiaRequests{HestiaURL: hestiaEnv},
@@ -177,44 +164,27 @@ func timer() {
 		HestiaUrl: os.Getenv(hestiaEnv),
 	}
 
-	for {
-		time.Sleep(1 * time.Second)
-		currTime = CurrentTime{
-			Hour:   time.Now().Hour(),
-			Day:    time.Now().Day(),
-			Minute: time.Now().Minute(),
-			Second: time.Now().Second(),
-		}
-		if currTime.Second == 0 {
-			var wg sync.WaitGroup
-			wg.Add(1)
-			runCrons(&wg, proc)
-			wg.Wait()
-		}
+	ticker := time.NewTicker(1 * time.Minute)
+	for range ticker.C {
+		proc.Start()
 	}
 }
 
-func runCrons(mainWg *sync.WaitGroup, proc processor.Processor) {
-	defer func() {
-		mainWg.Done()
-	}()
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go runCronMinutes(1, proc.Start, &wg) // 1 minute
-	wg.Wait()
-}
+func runProcessorV2() {
+	proc2 := processor.ProcessorV2{
+		SkipValidations: skipValidations,
+		Hestia:          &services.HestiaRequests{HestiaURL:hestiaEnv},
+		Plutus:          &services.PlutusRequests{PlutusURL:os.Getenv(plutusEnv)},
+		Bitcou:          services.NewBitcouService(devMode),
+		Adrestia:        &services.AdrestiaRequests{AdrestiaUrl: adrestiaEnv},
+		HestiaUrl:       hestiaEnv,
+	}
 
-func runCronMinutes(schedule int, function func(), wg *sync.WaitGroup) {
-	go func() {
-		defer func() {
-			wg.Done()
-		}()
-		remainder := currTime.Minute % schedule
-		if remainder == 0 {
-			function()
-		}
-		return
-	}()
+	ticker := time.NewTicker(1 * time.Minute)
+	for range ticker.C {
+		proc2.Start()
+	}
+
 }
 
 func checkAndRemoveVouchers(ctrl *controllers.VouchersController) {
