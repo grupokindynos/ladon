@@ -24,13 +24,14 @@ import (
 )
 
 var (
-	hestiaEnv          string
-	plutusEnv          string
-	adrestiaEnv        string
-	noTxsAvailable     bool
-	skipValidations    bool
-	prepareVouchersMap = make(map[string]models.PrepareVoucherInfo)
-	devMode            bool
+	hestiaEnv            string
+	plutusEnv            string
+	adrestiaEnv          string
+	noTxsAvailable       bool
+	skipValidations      bool
+	prepareVouchersMap   = make(map[string]models.PrepareVoucherInfo)
+	devMode              bool
+	prepareVouchersMapV2 = make(map[string]models.PrepareVoucherInfoV2)
 )
 
 const prepareVoucherTimeframe = 60 * 5 // 5 minutes
@@ -107,6 +108,15 @@ func ApplyRoutes(r *gin.Engine) {
 		Bitcou:           bitcouService,
 		Obol:             &obol.ObolRequest{ObolURL: os.Getenv("OBOL_PRODUCTION_URL")},
 	}
+	vouchersCtrlV2 := &controllers.VouchersControllerV2{
+		TxsAvailable:     !noTxsAvailable,
+		PreparesVouchers: prepareVouchersMapV2,
+		Plutus:           &services.PlutusRequests{PlutusURL: os.Getenv(plutusEnv)},
+		Hestia:           &services.HestiaRequests{HestiaURL: hestiaEnv},
+		Bitcou:           bitcouService,
+		Obol:             &obol.ObolRequest{ObolURL: os.Getenv("OBOL_PRODUCTION_URL")},
+		Adrestia:         &services.AdrestiaRequests{AdrestiaUrl: adrestiaEnv},
+	}
 
 	go checkAndRemoveVouchers(vouchersCtrl)
 	api := r.Group("/")
@@ -118,6 +128,12 @@ func ApplyRoutes(r *gin.Engine) {
 
 		// Bitcou endpoint for a voucher redeem
 		api.POST("/redeem", vouchersCtrl.Update)
+	}
+	apiV2 := r.Group("/v2/")
+	{
+		apiV2.POST("/prepare", func(context *gin.Context) { ValidateRequest(context, vouchersCtrlV2.PrepareV2) })
+		apiV2.POST("/new", func(context *gin.Context) { ValidateRequest(context, vouchersCtrlV2.StoreV2) })
+
 	}
 	r.NoRoute(func(c *gin.Context) {
 		c.String(http.StatusNotFound, "Not Found")
@@ -161,7 +177,7 @@ func runProcessor() {
 		SkipValidations: skipValidations,
 		Hestia:          &services.HestiaRequests{HestiaURL: hestiaEnv},
 		Plutus:          &services.PlutusRequests{PlutusURL: os.Getenv(plutusEnv)},
-		HestiaUrl: os.Getenv(hestiaEnv),
+		HestiaUrl:       os.Getenv(hestiaEnv),
 	}
 
 	ticker := time.NewTicker(1 * time.Minute)
