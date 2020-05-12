@@ -32,6 +32,7 @@ func (p *ProcessorV2) Start() {
 }
 
 func (p *ProcessorV2) handlePaymentProcessing(wg *sync.WaitGroup) {
+	defer wg.Done()
 	vouchers := p.getVoucherByStatus(hestia.VoucherStatusV2PaymentProcessing)
 	for _, voucher := range vouchers {
 		coinInfo, err := coinfactory.GetCoin(voucher.UserPayment.Coin)
@@ -72,7 +73,6 @@ func (p *ProcessorV2) handlePaymentProcessing(wg *sync.WaitGroup) {
 			}
 		}
 	}
-	defer wg.Done()
 }
 
 func (p *ProcessorV2) handleRedeemed(wg *sync.WaitGroup) {
@@ -90,8 +90,8 @@ func (p *ProcessorV2) handleRedeemed(wg *sync.WaitGroup) {
 		}
 		if res.DepositInfo.Status == hestia.ExchangeOrderStatusCompleted {
 			voucher.Conversion.Conversions[0].Amount = res.DepositInfo.ReceivedAmount
-			voucher.Conversion.Status = hestia.ShiftV2TradeStatusCreated // Se ve mal que diga shift, pero bueno
 			voucher.Status = hestia.VoucherStatusV2PerformingTrade
+			voucher.ReceivedAmount = res.DepositInfo.ReceivedAmount // Esto se va a sobreescribir si se necesitan trades
 			// no se si haga falta ponerle el exchange
 			_, err := p.Hestia.UpdateVoucherV2(voucher)
 			if err != nil {
@@ -109,7 +109,7 @@ func (p *ProcessorV2) handlePerformingTrade(wg *sync.WaitGroup) {
 		case hestia.ShiftV2TradeStatusCreated:
 			p.handleDirectionalTradeCreated(&voucher.Conversion)
 		case hestia.ShiftV2TradeStatusPerforming:
-			p.handleDirectionalTradePerforming(&voucher.Conversion)
+			p.handleDirectionalTradePerforming(&voucher)
 			if voucher.Conversion.Status == hestia.ShiftV2TradeStatusCompleted {
 				voucher.Status = hestia.VoucherStatusV2Complete
 				voucher.FulfilledTime = time.Now().Unix()
@@ -189,7 +189,8 @@ func (p *ProcessorV2) getVoucherByStatus(status hestia.VoucherStatusV2) (voucher
 	return
 }
 
-func (p *ProcessorV2) handleDirectionalTradePerforming(dt *hestia.DirectionalTrade) {
+func (p *ProcessorV2) handleDirectionalTradePerforming(voucher *hestia.VoucherV2) {
+	dt := &voucher.Conversion
 	if dt.Conversions[0].Status == hestia.ExchangeOrderStatusCompleted {
 		res, err := p.Adrestia.GetTradeStatus(dt.Conversions[1])
 		if err != nil {
@@ -201,6 +202,7 @@ func (p *ProcessorV2) handleDirectionalTradePerforming(dt *hestia.DirectionalTra
 			dt.Conversions[1].FulfilledTime = time.Now().Unix()
 			dt.Conversions[1].Status = hestia.ExchangeOrderStatusCompleted
 			dt.Status = hestia.ShiftV2TradeStatusCompleted
+			voucher.ReceivedAmount = res.ReceivedAmount
 		}
 	} else {
 		res, err := p.Adrestia.GetTradeStatus(dt.Conversions[0])
@@ -221,6 +223,7 @@ func (p *ProcessorV2) handleDirectionalTradePerforming(dt *hestia.DirectionalTra
 				dt.Conversions[1].Status = hestia.ExchangeOrderStatusOpen
 			} else {
 				dt.Status = hestia.ShiftV2TradeStatusCompleted
+				voucher.ReceivedAmount =  res.ReceivedAmount
 			}
 			dt.Conversions[0].Status = hestia.ExchangeOrderStatusCompleted
 			dt.Conversions[0].ReceivedAmount = res.ReceivedAmount
