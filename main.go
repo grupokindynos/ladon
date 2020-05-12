@@ -189,8 +189,8 @@ func runProcessor() {
 func runProcessorV2() {
 	proc2 := processor.ProcessorV2{
 		SkipValidations: skipValidations,
-		Hestia:          &services.HestiaRequests{HestiaURL: hestiaEnv},
-		Plutus:          &services.PlutusRequests{PlutusURL: os.Getenv(plutusEnv)},
+		Hestia:          &services.HestiaRequests{HestiaURL:hestiaEnv},
+		Plutus:          &services.PlutusRequests{PlutusURL:os.Getenv(plutusEnv)},
 		Bitcou:          services.NewBitcouService(devMode),
 		Adrestia:        &services.AdrestiaRequests{AdrestiaUrl: adrestiaEnv},
 		HestiaUrl:       hestiaEnv,

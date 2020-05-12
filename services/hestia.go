@@ -313,7 +313,7 @@ func (h *HestiaRequests) GetVouchersByTimestamp(uid string, timestamp string) (v
 	return vouchers, nil
 }
 
-func (h *HestiaRequests) GetVouchersByTimestampV2(uid string, timestamp string) (vouchers []hestia.Voucher, err error) {
+func (h *HestiaRequests) GetVouchersByTimestampV2(uid string, timestamp string) (vouchers []hestia.VoucherV2, err error) {
 	req, err := mvt.CreateMVTToken("GET", os.Getenv(h.HestiaURL)+"/voucher2/all_by_timestamp?timestamp="+timestamp+"&userid="+uid, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return vouchers, err
