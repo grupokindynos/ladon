@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/grupokindynos/common/hestia"
 	"github.com/grupokindynos/common/tokens/mrt"
 	"github.com/grupokindynos/common/tokens/mvt"
@@ -56,7 +57,7 @@ func (h *HestiaRequests) GetVouchersStatus() (hestia.Config, error) {
 }
 
 func (h *HestiaRequests) GetVouchersByStatusV2(status hestia.VoucherStatusV2) ([]hestia.VoucherV2, error) {
-	req, err := mvt.CreateMVTToken("GET", os.Getenv(h.HestiaURL)+"/voucher/all?filter="+hestia.GetVoucherStatusV2String(status), "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+	req, err := mvt.CreateMVTToken("GET", os.Getenv(h.HestiaURL)+"/voucher2/all?filter="+fmt.Sprintf("%d", status), "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return nil, err
 	}

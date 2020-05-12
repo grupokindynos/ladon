@@ -20,8 +20,8 @@ type AdrestiaRequests struct {
 }
 
 func (a *AdrestiaRequests) DepositInfo(depositParams models.DepositParams) (depositInfo models.DepositInfo, err error) {
-	url := os.Getenv(a.AdrestiaUrl) + "deposit"
-	req, err := mvt.CreateMVTToken("POST", url, "tyche", os.Getenv("MASTER_PASSWORD"), depositParams, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("TYCHE_PRIV_KEY"))
+	url := os.Getenv(a.AdrestiaUrl) + "/deposit"
+	req, err := mvt.CreateMVTToken("POST", url, "ladon", os.Getenv("MASTER_PASSWORD"), depositParams, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return
 	}
@@ -60,8 +60,8 @@ func (a *AdrestiaRequests) DepositInfo(depositParams models.DepositParams) (depo
 }
 
 func (a *AdrestiaRequests) Trade(tradeParams hestia.Trade) (txId string, err error) {
-	url := os.Getenv(a.AdrestiaUrl) + "trade"
-	req, err := mvt.CreateMVTToken("POST", url, "tyche", os.Getenv("MASTER_PASSWORD"), tradeParams, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("TYCHE_PRIV_KEY"))
+	url := os.Getenv(a.AdrestiaUrl) + "/trade"
+	req, err := mvt.CreateMVTToken("POST", url, "ladon", os.Getenv("MASTER_PASSWORD"), tradeParams, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return
 	}
@@ -98,8 +98,8 @@ func (a *AdrestiaRequests) Trade(tradeParams hestia.Trade) (txId string, err err
 }
 
 func (a *AdrestiaRequests) GetTradeStatus (tradeParams hestia.Trade) (tradeInfo hestia.ExchangeOrderInfo, err error) {
-	url := os.Getenv(a.AdrestiaUrl) + "trade/status"
-	req, err := mvt.CreateMVTToken("POST", url, "tyche", os.Getenv("MASTER_PASSWORD"), tradeParams, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("TYCHE_PRIV_KEY"))
+	url := os.Getenv(a.AdrestiaUrl) + "/trade/status"
+	req, err := mvt.CreateMVTToken("POST", url, "ladon", os.Getenv("MASTER_PASSWORD"), tradeParams, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return
 	}
@@ -138,8 +138,8 @@ func (a *AdrestiaRequests) GetTradeStatus (tradeParams hestia.Trade) (tradeInfo 
 }
 
 func (a *AdrestiaRequests) Withdraw(withdrawParams models.WithdrawParams) (withdrawal models.WithdrawInfo, err error) {
-	url := os.Getenv(a.AdrestiaUrl) + "withdraw"
-	req, err := mvt.CreateMVTToken("POST", url, "tyche", os.Getenv("MASTER_PASSWORD"), withdrawParams, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("TYCHE_PRIV_KEY"))
+	url := os.Getenv(a.AdrestiaUrl) + "/withdraw"
+	req, err := mvt.CreateMVTToken("POST", url, "ladon", os.Getenv("MASTER_PASSWORD"), withdrawParams, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return
 	}
@@ -178,8 +178,8 @@ func (a *AdrestiaRequests) Withdraw(withdrawParams models.WithdrawParams) (withd
 }
 
 func (a *AdrestiaRequests) GetWithdrawalTxHash (withdrawParams models.WithdrawInfo) (txId string, err error) {
-	url := os.Getenv(a.AdrestiaUrl) + "withdraw/hash"
-	req, err := mvt.CreateMVTToken("POST", url, "tyche", os.Getenv("MASTER_PASSWORD"), withdrawParams, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("TYCHE_PRIV_KEY"))
+	url := os.Getenv(a.AdrestiaUrl) + "/withdraw/hash"
+	req, err := mvt.CreateMVTToken("POST", url, "ladon", os.Getenv("MASTER_PASSWORD"), withdrawParams, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return
 	}
