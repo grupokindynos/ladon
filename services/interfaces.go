@@ -35,7 +35,8 @@ type BitcouService interface {
 type AdrestiaService interface {
 	DepositInfo(depositParams amodels.DepositParams) (depositInfo amodels.DepositInfo, err error)
 	Trade(tradeParams hestia.Trade) (txId string, err error)
-	GetTradeStatus (tradeParams hestia.Trade) (tradeInfo hestia.ExchangeOrderInfo, err error)
+	GetTradeStatus(tradeParams hestia.Trade) (tradeInfo hestia.ExchangeOrderInfo, err error)
 	Withdraw(withdrawParams amodels.WithdrawParams) (withdrawal amodels.WithdrawInfo, err error)
-	GetWithdrawalTxHash (withdrawParams amodels.WithdrawInfo) (txId string, err error)
+	GetWithdrawalTxHash(withdrawParams amodels.WithdrawInfo) (txId string, err error)
+	GetPath(fromCoin string, toCoin string) (path amodels.PathResponse, err error)
 }
