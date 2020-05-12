@@ -126,32 +126,29 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	feeInfo := models.PaymentInfo{Address: feePaymentAddr, Amount: int64(feeAmount.ToUnit(amount.AmountSats))}
 	userPaymentInfo := models.PaymentInfo{Address: paymentAddr, Amount: paymentInfo.Amount + feeInfo.Amount}
 
-	/*
-		// Validate that users hasn't bought more than 210 euro in vouchers on the last 24 hours.
-		timestamp := strconv.FormatInt(time.Now().Unix()-24*3600, 10)
-		vouchers, err := vc.Hestia.GetVouchersByTimestamp(uid, timestamp)
-		if err != nil {
-			return nil, err
+	// Validate that users hasn't bought more than 210 euro in vouchers on the last 24 hours.
+	timestamp := strconv.FormatInt(time.Now().Unix()-24*3600, 10)
+	vouchers, err := vc.Hestia.GetVouchersByTimestampV2(uid, timestamp)
+	if err != nil {
+		return nil, err
+	}
+
+	totalAmountEuro := purchaseAmountEuro
+
+	for _, voucher := range vouchers {
+		if voucher.Status != hestia.VoucherStatusV2Error && voucher.Status != hestia.VoucherStatusV2Refunded {
+			amEr := voucher.AmountEuro
+			amEr /= 100
+			totalAmountEuro += amEr
 		}
+	}
 
+	if totalAmountEuro > 210.0 {
+		return nil, commonErrors.ErrorVoucherLimit
+	}
 
-		totalAmountEuro := purchaseAmountEuro
-
-		for _, voucher := range vouchers {
-			if voucher.Status != hestia.GetVoucherStatusString(hestia.VoucherStatusError) && voucher.Status != hestia.GetVoucherStatusString(hestia.VoucherStatusRefunded) { // Excludes errored Vouchers from Spent Amount
-				amEr, _ := strconv.ParseFloat(voucher.AmountEuro, 64)
-				amEr /= 100
-				//amFeeEr, _ := strconv.ParseFloat(voucher.AmountFeeEuro, 64)
-				totalAmountEuro += amEr
-			}
-		}
-
-		if totalAmountEuro > 210.0 {
-			return nil, commonErrors.ErrorVoucherLimit
-		}
-	*/
 	// exchange path
-	pathInfo, err := vc.Adrestia.GetPath(PrepareVoucher.Coin, "USDT")
+	pathInfo, err := vc.Adrestia.GetPath(PrepareVoucher.Coin)
 	if err != nil {
 		err = commonErrors.ErrorFillingPaymentInformation
 		return nil, err

@@ -45,17 +45,17 @@ type PrepareVoucherInfo struct {
 }
 
 type PrepareVoucherInfoV2 struct {
-	ID             string              `json:"id"`
-	Timestamp      int64               `json:"timestamp"`
-	AmountEuro     float64             `json:"amount_euro"`
-	UserPayment    PaymentInfo         `json:"user_payment"`
-	Coin           string              `json:"coin"`
-	VoucherType    int                 `json:"voucher_type"`
-	VoucherVariant int                 `json:"voucher_variant"`
-	Name           string              `json:"name"`
-	PhoneNumber    int64               `json:"phone_nb"`
-	ProviderId     string              `json:"provider_id"`
-	Path           models.PathResponse `json:"paths"`
+	ID             string                     `json:"id"`
+	Timestamp      int64                      `json:"timestamp"`
+	AmountEuro     float64                    `json:"amount_euro"`
+	UserPayment    PaymentInfo                `json:"user_payment"`
+	Coin           string                     `json:"coin"`
+	VoucherType    int                        `json:"voucher_type"`
+	VoucherVariant int                        `json:"voucher_variant"`
+	Name           string                     `json:"name"`
+	PhoneNumber    int64                      `json:"phone_nb"`
+	ProviderId     string                     `json:"provider_id"`
+	Path           models.VoucherPathResponse `json:"path"`
 }
 
 type StoreVoucher struct {

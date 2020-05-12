@@ -38,5 +38,5 @@ type AdrestiaService interface {
 	GetTradeStatus(tradeParams hestia.Trade) (tradeInfo hestia.ExchangeOrderInfo, err error)
 	Withdraw(withdrawParams amodels.WithdrawParams) (withdrawal amodels.WithdrawInfo, err error)
 	GetWithdrawalTxHash(withdrawParams amodels.WithdrawInfo) (txId string, err error)
-	GetPath(fromCoin string, toCoin string) (path amodels.PathResponse, err error)
+	GetPath(fromCoin string) (path amodels.VoucherPathResponse, err error)
 }
