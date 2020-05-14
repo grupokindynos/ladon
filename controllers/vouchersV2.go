@@ -169,7 +169,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		VoucherVariant: voucherVariantInt,
 		Path:           pathInfo,
 		UserPayment:    userPaymentInfo,
-		AmountEuro:     float64(210),
+		AmountEuro:     float64(110),
 		Name:           PrepareVoucher.VoucherName,
 		PhoneNumber:    int64(phoneNumber),
 		ProviderId:     providerIdInt,
