@@ -235,7 +235,7 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 		RedeemCode:    "",
 		Conversion: hestia.DirectionalTrade{
 			Conversions:    inTrade,
-			Status:         hestia.ShiftV2TradeStatusInitialized,
+			Status:         hestia.ShiftV2TradeStatusCreated,
 			Exchange:       exchange,
 			WithdrawAmount: 0.0,
 		},
