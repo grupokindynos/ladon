@@ -65,7 +65,6 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	if err != nil {
 		return nil, err
 	}
-	// If the user is using another coin that is not Polis we will need a Polis payment address to pay the fee
 	feePaymentAddr := paymentAddr
 
 	// Convert the variant id to int
@@ -79,7 +78,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		return nil, err
 	}
 
-	bitcouPrepareTx := models.PurchaseInfo{
+	/*bitcouPrepareTx := models.PurchaseInfo{
 		TransactionID: newVoucherID,
 		ProductID:     int32(PrepareVoucher.VoucherType),
 		VariantID:     int32(voucherVariantInt),
@@ -87,16 +86,19 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	}
 
 	// get info from new bitcou voucher variant
-	voucherDetails, err := vc.Bitcou.GetTransactionInformationV2(bitcouPrepareTx)
+	/*voucherDetails, err := vc.Bitcou.GetTransactionInformationV2(bitcouPrepareTx)
 	if err != nil {
 		return nil, err
-	}
+	}*/
 
 	euroRate, err := vc.Obol.GetCoin2FIATRate(PrepareVoucher.Coin, "EUR")
 	if err != nil {
 		return nil, err
 	}
-	purchaseAmountEuro := voucherDetails.AmountEuro / 100
+
+	//purchaseAmountEuro := voucherDetails.AmountEuro / 100
+	//test
+	purchaseAmountEuro := float64(110) / 100
 	// amount for the voucher in the coin
 	paymentAmountCoin := purchaseAmountEuro / euroRate
 	paymentAmount, err := amount.NewAmount(paymentAmountCoin)
@@ -167,7 +169,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		VoucherVariant: voucherVariantInt,
 		Path:           pathInfo,
 		UserPayment:    userPaymentInfo,
-		AmountEuro:     voucherDetails.AmountEuro,
+		AmountEuro:     float64(110),
 		Name:           PrepareVoucher.VoucherName,
 		PhoneNumber:    int64(phoneNumber),
 		ProviderId:     providerIdInt,
@@ -246,13 +248,11 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 	if err != nil {
 		return nil, err
 	}
-	go vc.decodeAndCheckTxV2(voucher, storedVoucher, voucherPayments.RawTx, voucherPayments.FeeTx)
+	go vc.decodeAndCheckTxV2(voucher, storedVoucher, voucherPayments.RawTx)
 	return voucherId, nil
 }
 
-func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2, storedVoucherData models.PrepareVoucherInfoV2, rawTx string, feeTx string) {
-
-	var FeeTxId string
+func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2, storedVoucherData models.PrepareVoucherInfoV2, rawTx string) {
 	// Validate Payment RawTx
 	body := plutus.ValidateRawTxReq{
 		Coin:    voucherData.UserPayment.Coin,
@@ -273,7 +273,6 @@ func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2,
 	// Broadcast rawTx
 	coinConfig, err := coinfactory.GetCoin(voucherData.UserPayment.Coin)
 	if err != nil {
-		// If get coin fail and coin is POLIS mark as error
 		voucherData.Status = hestia.VoucherStatusV2Error
 		_, err = vc.Hestia.UpdateVoucherV2(voucherData)
 		if err != nil {
@@ -292,7 +291,6 @@ func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2,
 	}
 	// Update voucher model include txid.
 	voucherData.UserPayment.Txid = paymentTxid
-	voucherData.UserPayment.Txid = FeeTxId
 	_, err = vc.Hestia.UpdateVoucherV2(voucherData)
 	if err != nil {
 		return
