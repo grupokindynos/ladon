@@ -92,7 +92,6 @@ func (p *ProcessorV2) handleRedeemed(wg *sync.WaitGroup) {
 			voucher.Conversion.Conversions[0].Amount = res.DepositInfo.ReceivedAmount
 			voucher.Status = hestia.VoucherStatusV2PerformingTrade
 			voucher.ReceivedAmount = res.DepositInfo.ReceivedAmount // Esto se va a sobreescribir si se necesitan trades
-			// no se si haga falta ponerle el exchange
 			_, err := p.Hestia.UpdateVoucherV2(voucher)
 			if err != nil {
 				log.Println("handleRedeemed - UpdateVoucherV2 - " + err.Error())
