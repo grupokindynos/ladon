@@ -189,6 +189,12 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 	if err != nil {
 		return nil, err
 	}
+	var status hestia.ShiftV2TradeStatus
+	if len(storedVoucher.Path.InwardOrder) == 0 {
+		status = hestia.ShiftV2TradeStatusCompleted
+	} else {
+		status = hestia.ShiftV2TradeStatusInitialized
+	}
 	// create trade
 	exchange := ""
 	var inTrade []hestia.Trade
@@ -237,7 +243,7 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 		RedeemCode:    "",
 		Conversion: hestia.DirectionalTrade{
 			Conversions:    inTrade,
-			Status:         hestia.ShiftV2TradeStatusCompleted,
+			Status:         status,
 			Exchange:       exchange,
 			WithdrawAmount: 0.0,
 		},
