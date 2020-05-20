@@ -206,6 +206,8 @@ github.com/grupokindynos/common v0.0.0-20200501195405-3604aabfdc29 h1:DhLnj8Ae36
 github.com/grupokindynos/common v0.0.0-20200501195405-3604aabfdc29/go.mod h1:TmP70nKfgs35046GoB8TIq1r1OFvEHYaaEvaPs6PayM=
 github.com/grupokindynos/common v0.0.0-20200511182408-01adf1b4925b h1:NdywVVSXORaQ458i4X7rYvbv/E66CUAuXBH817kOEOg=
 github.com/grupokindynos/common v0.0.0-20200511182408-01adf1b4925b/go.mod h1:TmP70nKfgs35046GoB8TIq1r1OFvEHYaaEvaPs6PayM=
+github.com/grupokindynos/common v0.0.0-20200520164733-ae478e34b1b2 h1:Wz+foWKskHHfAFZP6b27s2QRbmbyl17vbCV+WsgtbME=
+github.com/grupokindynos/common v0.0.0-20200520164733-ae478e34b1b2/go.mod h1:TmP70nKfgs35046GoB8TIq1r1OFvEHYaaEvaPs6PayM=
 github.com/grupokindynos/go-binance v0.0.0-20200430034119-30d9d0485f22 h1:C48WvEz0LdfkYMj7/TToANULCmAQi13A6JvFAUtgukc=
 github.com/grupokindynos/go-binance v0.0.0-20200430034119-30d9d0485f22/go.mod h1:RgYTB+ZsGwA2qfu4o9ObHcsGijn3F04BdV5Nv0mmMqI=
 github.com/gxed/hashland/keccakpg v0.0.1/go.mod h1:kRzw3HkwxFU1mpmPP8v1WyQzwdGfmKFJ6tItnhQ67kU=

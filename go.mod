@@ -9,7 +9,7 @@ require (
 	github.com/golang/mock v1.4.3
 	github.com/golang/protobuf v1.4.1 // indirect
 	github.com/grupokindynos/adrestia-go v0.0.0-20200511180046-017877cf7ae9
-	github.com/grupokindynos/common v0.0.0-20200511182408-01adf1b4925b
+	github.com/grupokindynos/common v0.0.0-20200520164733-ae478e34b1b2
 	github.com/joho/godotenv v1.3.0
 	github.com/martinboehm/btcd v0.0.0-20200313230603-83af86142d93 // indirect
 	github.com/olympus-protocol/ogen v0.0.0-20200511213457-a3850a6fcd6d

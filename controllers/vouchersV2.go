@@ -139,7 +139,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 
 	for _, voucher := range vouchers {
 		if voucher.Status != hestia.VoucherStatusV2Error && voucher.Status != hestia.VoucherStatusV2Refunded {
-			amEr := voucher.AmountEuro
+			amEr := float64(voucher.AmountEuro)
 			amEr /= 100
 			totalAmountEuro += amEr
 		}
@@ -169,7 +169,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		VoucherVariant: voucherVariantInt,
 		Path:           pathInfo,
 		UserPayment:    userPaymentInfo,
-		AmountEuro:     float64(545),
+		AmountEuro:     545,
 		Name:           PrepareVoucher.VoucherName,
 		PhoneNumber:    int64(phoneNumber),
 		ProviderId:     providerIdInt,
