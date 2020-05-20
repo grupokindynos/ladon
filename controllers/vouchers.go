@@ -42,11 +42,12 @@ type VouchersController struct {
 }
 
 func (vc *VouchersController) Status(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
-	status, err := vc.Hestia.GetVouchersStatus()
+	return true, nil
+	/*status, err := vc.Hestia.GetVouchersStatus()
 	if err != nil {
 		return nil, err
 	}
-	return status.Vouchers.Service, nil
+	return status.Vouchers.Service, nil*/
 }
 
 func (vc *VouchersController) GetListForPhone(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {

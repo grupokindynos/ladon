@@ -32,16 +32,16 @@ type VouchersControllerV2 struct {
 
 func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
 	// Get the vouchers percentage fee for PolisPay
-	config, err := vc.Hestia.GetVouchersStatus()
+	/*config, err := vc.Hestia.GetVouchersStatus()
 	if err != nil {
 		return nil, err
 	}
 	if !config.Vouchers.Service {
 		return nil, err
-	}
+	}*/
 	// Grab information on the payload
 	var PrepareVoucher models.PrepareVoucher
-	err = json.Unmarshal(payload, &PrepareVoucher)
+	err := json.Unmarshal(payload, &PrepareVoucher)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 
 	//purchaseAmountEuro := voucherDetails.AmountEuro / 100
 	//test
-	purchaseAmountEuro := float64(545) / 100
+	purchaseAmountEuro := float64(110) / 100
 	// amount for the voucher in the coin
 	paymentAmountCoin := purchaseAmountEuro / euroRate
 	paymentAmount, err := amount.NewAmount(paymentAmountCoin)
@@ -169,7 +169,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		VoucherVariant: voucherVariantInt,
 		Path:           pathInfo,
 		UserPayment:    userPaymentInfo,
-		AmountEuro:     float64(545),
+		AmountEuro:     float64(110),
 		Name:           PrepareVoucher.VoucherName,
 		PhoneNumber:    int64(phoneNumber),
 		ProviderId:     providerIdInt,
