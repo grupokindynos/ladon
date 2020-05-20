@@ -3,7 +3,6 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/grupokindynos/common/blockbook"
 	coinfactory "github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/common/coin-factory/coins"
@@ -46,8 +45,6 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("%+v\n", PrepareVoucher)
-
 	coinsConfig, err := vc.Hestia.GetCoinsConfig()
 	if err != nil {
 		return nil, err
@@ -81,7 +78,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		return nil, err
 	}
 
-	/*bitcouPrepareTx := models.PurchaseInfo{	104,180
+	/*bitcouPrepareTx := models.PurchaseInfo{
 		TransactionID: newVoucherID,
 		ProductID:     int32(PrepareVoucher.VoucherType),
 		VariantID:     int32(voucherVariantInt),
@@ -151,23 +148,18 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	if totalAmountEuro > 210.0 {
 		return nil, commonErrors.ErrorVoucherLimit
 	}
-	fmt.Println("path")
+
 	// exchange path
 	pathInfo, err := vc.Adrestia.GetPath(PrepareVoucher.Coin)
 	if err != nil {
-		fmt.Println("err")
 		err = commonErrors.ErrorFillingPaymentInformation
 		return nil, err
 	}
-	fmt.Printf("%+v\n", pathInfo)
-
 	// Build the response
 	res := models.PrepareVoucherResponse{
 		Payment: paymentInfo,
 		Fee:     feeInfo,
 	}
-	fmt.Printf("%+v\n", res)
-
 	// Store on local cache
 	prepareVoucher := models.PrepareVoucherInfoV2{
 		ID:             newVoucherID,
@@ -184,8 +176,6 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	}
 
 	vc.AddVoucherToMapV2(uid, prepareVoucher)
-	s, _ := json.MarshalIndent(prepareVoucher, "", "\t")
-	fmt.Print(string(s))
 	return res, nil
 }
 
@@ -271,8 +261,6 @@ func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2,
 		Address: voucherData.UserPayment.Address,
 	}
 	valid, err := vc.Plutus.ValidateRawTx(body)
-	s, _ := json.MarshalIndent(body, "", "\t")
-	fmt.Print(string(s))
 	if err != nil || !valid {
 		// If fail and coin is POLIS mark as error
 		voucherData.Status = hestia.VoucherStatusV2Error
