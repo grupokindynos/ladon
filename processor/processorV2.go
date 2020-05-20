@@ -7,6 +7,7 @@ import (
 	models "github.com/grupokindynos/ladon/models"
 	"github.com/grupokindynos/ladon/services"
 	"log"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -62,9 +63,10 @@ func (p *ProcessorV2) handlePaymentProcessing(wg *sync.WaitGroup) {
 				voucher.RedeemCode = err.Error()
 				voucher.Status = hestia.VoucherStatusV2NeedsRefund
 			} else {
+				amountEuro, _ := strconv.ParseInt(res.AmountEuro, 10, 64)
 				voucher.BitcouTxId = res.TxId
 				voucher.RedeemCode = res.RedeemData
-				voucher.AmountEuro = res.AmountEuro
+				voucher.AmountEuro = amountEuro
 				voucher.Status = hestia.VoucherStatusV2Redeemed
 			}
 			_, err = p.Hestia.UpdateVoucherV2(voucher)

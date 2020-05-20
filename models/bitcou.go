@@ -92,6 +92,8 @@ type PurchaseInfo struct {
 	ProductID     int32  `json:"product_id"`
 	VariantID     int32  `json:"variant_id"`
 	PhoneNB       int64  `json:"phone_nb"`
+	Email         string `json:"email"`
+	KYC  		  bool   `json:"kyc"`
 }
 
 type BitcouBaseResponse struct {
@@ -101,7 +103,7 @@ type BitcouBaseResponse struct {
 
 type PurchaseInfoResponseV2 struct {
 	TxId string        `json:"txn_id"`
-	AmountEuro float64 `json:"amount_euro"`
+	AmountEuro string `json:"amount_euro"`
 	RedeemData string  `json:"redeem_data"`
 }
 
