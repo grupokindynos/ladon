@@ -89,8 +89,13 @@ func (p *ProcessorV2) handleRedeemed(wg *sync.WaitGroup) {
 			continue
 		}
 		if res.DepositInfo.Status == hestia.ExchangeOrderStatusCompleted {
-			voucher.Conversion.Conversions[0].Amount = res.DepositInfo.ReceivedAmount
-			voucher.Status = hestia.VoucherStatusV2PerformingTrade
+			if voucher.Conversion.Status == hestia.ShiftV2TradeStatusCompleted { // User payed with stable coin.
+				voucher.Status = hestia.VoucherStatusV2Complete
+			} else {
+				voucher.Conversion.Conversions[0].Amount = res.DepositInfo.ReceivedAmount
+				voucher.Status = hestia.VoucherStatusV2PerformingTrade
+			}
+
 			voucher.ReceivedAmount = res.DepositInfo.ReceivedAmount // Esto se va a sobreescribir si se necesitan trades
 			_, err := p.Hestia.UpdateVoucherV2(voucher)
 			if err != nil {
