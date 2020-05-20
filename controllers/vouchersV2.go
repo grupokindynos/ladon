@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/grupokindynos/common/blockbook"
 	coinfactory "github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/common/coin-factory/coins"
@@ -45,6 +46,8 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("%+v\n", PrepareVoucher)
+
 	coinsConfig, err := vc.Hestia.GetCoinsConfig()
 	if err != nil {
 		return nil, err
@@ -78,7 +81,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		return nil, err
 	}
 
-	/*bitcouPrepareTx := models.PurchaseInfo{
+	/*bitcouPrepareTx := models.PurchaseInfo{	104,180
 		TransactionID: newVoucherID,
 		ProductID:     int32(PrepareVoucher.VoucherType),
 		VariantID:     int32(voucherVariantInt),
@@ -98,7 +101,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 
 	//purchaseAmountEuro := voucherDetails.AmountEuro / 100
 	//test
-	purchaseAmountEuro := float64(110) / 100
+	purchaseAmountEuro := float64(545) / 100
 	// amount for the voucher in the coin
 	paymentAmountCoin := purchaseAmountEuro / euroRate
 	paymentAmount, err := amount.NewAmount(paymentAmountCoin)
@@ -148,18 +151,23 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	if totalAmountEuro > 210.0 {
 		return nil, commonErrors.ErrorVoucherLimit
 	}
-
+	fmt.Println("path")
 	// exchange path
 	pathInfo, err := vc.Adrestia.GetPath(PrepareVoucher.Coin)
 	if err != nil {
+		fmt.Println("err")
 		err = commonErrors.ErrorFillingPaymentInformation
 		return nil, err
 	}
+	fmt.Printf("%+v\n", pathInfo)
+
 	// Build the response
 	res := models.PrepareVoucherResponse{
 		Payment: paymentInfo,
 		Fee:     feeInfo,
 	}
+	fmt.Printf("%+v\n", res)
+
 	// Store on local cache
 	prepareVoucher := models.PrepareVoucherInfoV2{
 		ID:             newVoucherID,
@@ -169,13 +177,15 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		VoucherVariant: voucherVariantInt,
 		Path:           pathInfo,
 		UserPayment:    userPaymentInfo,
-		AmountEuro:     float64(110),
+		AmountEuro:     float64(545),
 		Name:           PrepareVoucher.VoucherName,
 		PhoneNumber:    int64(phoneNumber),
 		ProviderId:     providerIdInt,
 	}
 
 	vc.AddVoucherToMapV2(uid, prepareVoucher)
+	s, _ := json.MarshalIndent(prepareVoucher, "", "\t")
+	fmt.Print(string(s))
 	return res, nil
 }
 
@@ -237,7 +247,7 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 		RedeemCode:    "",
 		Conversion: hestia.DirectionalTrade{
 			Conversions:    inTrade,
-			Status:         hestia.ShiftV2TradeStatusInitialized,
+			Status:         hestia.ShiftV2TradeStatusCompleted,
 			Exchange:       exchange,
 			WithdrawAmount: 0.0,
 		},
@@ -261,6 +271,8 @@ func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2,
 		Address: voucherData.UserPayment.Address,
 	}
 	valid, err := vc.Plutus.ValidateRawTx(body)
+	s, _ := json.MarshalIndent(body, "", "\t")
+	fmt.Print(string(s))
 	if err != nil || !valid {
 		// If fail and coin is POLIS mark as error
 		voucherData.Status = hestia.VoucherStatusV2Error
