@@ -14,6 +14,7 @@ import (
 	"github.com/grupokindynos/ladon/services"
 	"github.com/olympus-protocol/ogen/utils/amount"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"sync"
@@ -87,6 +88,8 @@ func (p *Processor) handleConfirmedVouchers(wg *sync.WaitGroup) {
 	for _, v := range vouchers {
 		txid, err := p.submitBitcouPayment(v.BitcouPaymentData.Coin, v.BitcouPaymentData.Address, v.BitcouPaymentData.Amount)
 		if err != nil {
+			log.Println("handleConfirmingVouchers::submitBitcouPayment::")
+			log.Println(err)
 			fmt.Println("Unable to submit bitcou payment, should refund the user: " + err.Error())
 			v.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundTotal)
 			_, err = p.Hestia.UpdateVoucher(v)
