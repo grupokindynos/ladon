@@ -78,7 +78,7 @@ func main() {
 	}
 
 	if !*stopProcessor {
-		go runProcessor()
+		//go runProcessor()
 		go runProcessorV2()
 	}
 
