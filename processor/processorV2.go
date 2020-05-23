@@ -1,6 +1,7 @@
 package processor
 
 import (
+	"fmt"
 	amodels "github.com/grupokindynos/adrestia-go/models"
 	coinfactory "github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/common/hestia"
@@ -16,25 +17,28 @@ type ProcessorV2 struct {
 	SkipValidations bool
 	Hestia          services.HestiaService
 	Plutus          services.PlutusService
-	Bitcou			services.BitcouService
-	Adrestia		services.AdrestiaService
-	HestiaUrl string
+	Bitcou          services.BitcouService
+	Adrestia        services.AdrestiaService
+	HestiaUrl       string
 }
 
 func (p *ProcessorV2) Start() {
 	var wg sync.WaitGroup
+	fmt.Println("Starting Processor")
 	wg.Add(5)
 	go p.handlePaymentProcessing(&wg)
 	go p.handleRedeemed(&wg)
 	go p.handlePerformingTrade(&wg)
 	go p.handleNeedsRefund(&wg)
 	go p.handleWaitingRefundTxId(&wg)
+	fmt.Println("Ending Processor")
 	wg.Wait()
 }
 
 func (p *ProcessorV2) handlePaymentProcessing(wg *sync.WaitGroup) {
 	defer wg.Done()
 	vouchers := p.getVoucherByStatus(hestia.VoucherStatusV2PaymentProcessing)
+	fmt.Println("Couvhers Processing", vouchers)
 	for _, voucher := range vouchers {
 		coinInfo, err := coinfactory.GetCoin(voucher.UserPayment.Coin)
 		if err != nil {
@@ -57,6 +61,8 @@ func (p *ProcessorV2) handlePaymentProcessing(wg *sync.WaitGroup) {
 				ProductID:     int32(voucher.VoucherId),
 				VariantID:     int32(voucher.VariantId),
 				PhoneNB:       voucher.PhoneNumber,
+				Email:         "luiscorrea9614@gmail.com", // TODO REPLACE WITH USER'S EMAIL
+				KYC:           false,
 			})
 			if err != nil {
 				log.Println("handlePaymentProcessing - GetTransactionInformation - " + err.Error())
@@ -138,7 +144,7 @@ func (p *ProcessorV2) handleNeedsRefund(wg *sync.WaitGroup) {
 			Address: voucher.UserPayment.Address,
 		})
 		if err != nil {
-			log.Println("handleNeedsRefund - DepositInfo - " +  err.Error())
+			log.Println("handleNeedsRefund - DepositInfo - " + err.Error())
 			continue
 		}
 		if res.DepositInfo.Status == hestia.ExchangeOrderStatusCompleted {
@@ -229,7 +235,7 @@ func (p *ProcessorV2) handleDirectionalTradePerforming(voucher *hestia.VoucherV2
 				dt.Conversions[1].Status = hestia.ExchangeOrderStatusOpen
 			} else {
 				dt.Status = hestia.ShiftV2TradeStatusCompleted
-				voucher.ReceivedAmount =  res.ReceivedAmount
+				voucher.ReceivedAmount = res.ReceivedAmount
 			}
 			dt.Conversions[0].Status = hestia.ExchangeOrderStatusCompleted
 			dt.Conversions[0].ReceivedAmount = res.ReceivedAmount
@@ -250,5 +256,3 @@ func (p *ProcessorV2) handleDirectionalTradeCreated(dt *hestia.DirectionalTrade)
 	dt.Conversions[0].OrderId = res
 	dt.Status = hestia.ShiftV2TradeStatusPerforming
 }
-
-

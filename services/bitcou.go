@@ -3,6 +3,7 @@ package services
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/grupokindynos/ladon/models"
 	"io/ioutil"
 	"net/http"
@@ -111,7 +112,8 @@ func (bs *BitcouRequests) GetTransactionInformationV2(purchaseInfo models.Purcha
 	} else {
 		url = os.Getenv("BITCOU_URL") + "voucher/transaction"
 	}
-	token := "Bearer " + os.Getenv("BITCOU_TOKEN")
+	println(url)
+	token := "Bearer " + os.Getenv("BITCOU_TOKEN_2")
 	byteBody, err := json.Marshal(purchaseInfo)
 	postBody := bytes.NewBuffer(byteBody)
 	req, err := http.NewRequest("POST", url, postBody)
@@ -146,8 +148,14 @@ func (bs *BitcouRequests) GetTransactionInformationV2(purchaseInfo models.Purcha
 }
 
 func NewBitcouService(devMode bool) *BitcouRequests {
+	var url string
+	if devMode {
+		url = os.Getenv("BITCOU_URL_DEV")
+	} else {
+		url = os.Getenv("BITCOU_URL")
+	}
 	service := &BitcouRequests{
-		BitcouURL:   os.Getenv("BITCOU_URL"),
+		BitcouURL:   url,
 		BitcouToken: os.Getenv("BITCOU_TOKEN"),
 		VouchersList: VouchersData{
 			List:        make(map[string][]models.Voucher),
@@ -155,5 +163,7 @@ func NewBitcouService(devMode bool) *BitcouRequests {
 		},
 		DevMode: devMode,
 	}
+
+	fmt.Print("Using Bitcou URL: ", service.BitcouURL, service.BitcouToken)
 	return service
 }

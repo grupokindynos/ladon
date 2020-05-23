@@ -195,6 +195,7 @@ func runProcessorV2() {
 		Adrestia:        &services.AdrestiaRequests{AdrestiaUrl: adrestiaEnv},
 		HestiaUrl:       hestiaEnv,
 	}
+	fmt.Println("Bitcou", proc2.Bitcou)
 
 	ticker := time.NewTicker(1 * time.Minute)
 	for range ticker.C {
