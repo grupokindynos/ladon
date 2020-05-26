@@ -349,3 +349,39 @@ func (h *HestiaRequests) GetVouchersByTimestampV2(uid string, timestamp string) 
 	}
 	return vouchers, nil
 }
+
+func (h *HestiaRequests) GetUserInfo(uid string) (info string, err error) {
+	req, err := mvt.CreateMVTToken("GET", os.Getenv(h.HestiaURL)+"/voucher2/user/info?userid="+uid, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+	if err != nil {
+		return info, err
+	}
+	client := http.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	res, err := client.Do(req)
+	if err != nil {
+		return info, err
+	}
+	defer res.Body.Close()
+	tokenResponse, err := ioutil.ReadAll(res.Body)
+
+	if err != nil {
+		return info, err
+	}
+	var tokenString string
+	err = json.Unmarshal(tokenResponse, &tokenString)
+	if err != nil {
+		return info, err
+	}
+	headerSignature := res.Header.Get("service")
+	valid, payload := mrt.VerifyMRTToken(headerSignature, tokenString, os.Getenv("HESTIA_PUBLIC_KEY"), os.Getenv("MASTER_PASSWORD"))
+	if !valid {
+		return info, err
+	}
+	err = json.Unmarshal(payload, &info)
+	if err != nil {
+		return info, err
+	}
+	return info, nil
+}

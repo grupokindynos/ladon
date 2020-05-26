@@ -56,6 +56,7 @@ type PrepareVoucherInfoV2 struct {
 	PhoneNumber    int64                      `json:"phone_nb"`
 	ProviderId     string                     `json:"provider_id"`
 	Path           models.VoucherPathResponse `json:"path"`
+	Email          string                     `json:"email"`
 }
 
 type StoreVoucher struct {

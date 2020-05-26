@@ -67,6 +67,12 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	}
 	feePaymentAddr := paymentAddr
 
+	//get email
+	email, err := vc.Hestia.GetUserInfo(uid)
+	if err != nil {
+		return nil, err
+	}
+
 	// Convert the variant id to int
 	voucherVariantInt, _ := strconv.Atoi(PrepareVoucher.VoucherVariant)
 	providerIdInt := strconv.Itoa(int(PrepareVoucher.ProviderId))
@@ -173,6 +179,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		Name:           PrepareVoucher.VoucherName,
 		PhoneNumber:    int64(phoneNumber),
 		ProviderId:     providerIdInt,
+		Email:          email,
 	}
 
 	vc.AddVoucherToMapV2(uid, prepareVoucher)
@@ -247,6 +254,7 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 			Exchange:       exchange,
 			WithdrawAmount: 0.0,
 		},
+		Email: storedVoucher.Email,
 	}
 
 	vc.RemoveVoucherFromMapV2(uid)

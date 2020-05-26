@@ -24,6 +24,7 @@ type HestiaService interface {
 	GetVouchersByStatusV2(status hestia.VoucherStatusV2) ([]hestia.VoucherV2, error)
 	GetVouchersByTimestamp(uid string, timestamp string) (vouchers []hestia.Voucher, err error)
 	GetVouchersByTimestampV2(uid string, timestamp string) (vouchers []hestia.VoucherV2, err error)
+	GetUserInfo(uid string) (info string, err error)
 }
 
 type BitcouService interface {
