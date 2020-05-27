@@ -161,6 +161,12 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		err = commonErrors.ErrorFillingPaymentInformation
 		return nil, err
 	}
+
+	voucherInfo, err := vc.Hestia.GetVoucherInfoV2(PrepareVoucher.Country, voucherid)
+	if err != nil {
+		return nil, err
+	}
+
 	// Build the response
 	res := models.PrepareVoucherResponse{
 		Payment: paymentInfo,
@@ -180,6 +186,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		PhoneNumber:    int64(phoneNumber),
 		ProviderId:     providerIdInt,
 		Email:          email,
+		ShippingMethod: voucherInfo.Shipping.GetEnum(),
 	}
 
 	vc.AddVoucherToMapV2(uid, prepareVoucher)
@@ -255,6 +262,7 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 			WithdrawAmount: 0.0,
 		},
 		Email: storedVoucher.Email,
+		ShippingMethod: storedVoucher.ShippingMethod,
 	}
 
 	vc.RemoveVoucherFromMapV2(uid)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/grupokindynos/common/hestia"
 	"github.com/grupokindynos/common/utils"
 	"github.com/grupokindynos/ladon/services"
@@ -75,4 +76,15 @@ func TestAddVoucher(t *testing.T) {
 	if err != nil {
 		log.Println(err)
 	}
+}
+
+func TestGetVoucherInfo(t *testing.T) {
+	h := &services.HestiaRequests{HestiaURL:"HESTIA_LOCAL_URL"}
+	voucherInfo, err := h.GetVoucherInfoV2("MX", "1164")
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	fmt.Printf("%+v\n", voucherInfo)
+	log.Println(voucherInfo.Shipping.GetEnum())
 }

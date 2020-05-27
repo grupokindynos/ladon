@@ -7,6 +7,7 @@ import (
 	"github.com/grupokindynos/common/hestia"
 	"github.com/grupokindynos/common/tokens/mrt"
 	"github.com/grupokindynos/common/tokens/mvt"
+	"github.com/grupokindynos/ladon/models"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -170,7 +171,7 @@ func (h *HestiaRequests) GetVoucherInfo(voucherid string) (hestia.Voucher, error
 	return response, nil
 }
 
-func (h *HestiaRequests) GetVoucherInfoV2(voucherid string) (hestia.VoucherV2, error) {
+func (h *HestiaRequests) GetVoucherV2(voucherid string) (hestia.VoucherV2, error) {
 	req, err := mvt.CreateMVTToken("GET", os.Getenv(h.HestiaURL)+"/voucher2/single/"+voucherid, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return hestia.VoucherV2{}, err
@@ -204,6 +205,44 @@ func (h *HestiaRequests) GetVoucherInfoV2(voucherid string) (hestia.VoucherV2, e
 	err = json.Unmarshal(payload, &response)
 	if err != nil {
 		return hestia.VoucherV2{}, err
+	}
+	return response, nil
+}
+
+func (h *HestiaRequests) GetVoucherInfoV2(country string, productId string) (models.LightVoucherV2, error) {
+	req, err := mvt.CreateMVTToken("GET", os.Getenv(h.HestiaURL)+"/voucher2/getVoucherInfo/"+country+"/"+productId, "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+	if err != nil {
+		return models.LightVoucherV2{}, err
+	}
+	client := http.Client{
+		Timeout: 5 * time.Second,
+	}
+	res, err := client.Do(req)
+	if err != nil {
+		return models.LightVoucherV2{}, err
+	}
+	defer res.Body.Close()
+	tokenResponse, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return models.LightVoucherV2{}, err
+	}
+	headerSignature := res.Header.Get("service")
+	if headerSignature == "" {
+		return models.LightVoucherV2{}, errors.New("no header signature")
+	}
+	var tokenString string
+	err = json.Unmarshal(tokenResponse, &tokenString)
+	if err != nil {
+		return models.LightVoucherV2{}, err
+	}
+	valid, payload := mrt.VerifyMRTToken(headerSignature, tokenString, os.Getenv("HESTIA_PUBLIC_KEY"), os.Getenv("MASTER_PASSWORD"))
+	if !valid {
+		return models.LightVoucherV2{}, err
+	}
+	var response models.LightVoucherV2
+	err = json.Unmarshal(payload, &response)
+	if err != nil {
+		return models.LightVoucherV2{}, err
 	}
 	return response, nil
 }

@@ -1,6 +1,9 @@
 package models
 
-import "github.com/grupokindynos/adrestia-go/models"
+import (
+	"github.com/grupokindynos/adrestia-go/models"
+	"github.com/grupokindynos/common/hestia"
+)
 
 type PrepareVoucher struct {
 	Coin           string `json:"coin"`
@@ -57,6 +60,7 @@ type PrepareVoucherInfoV2 struct {
 	ProviderId     string                     `json:"provider_id"`
 	Path           models.VoucherPathResponse `json:"path"`
 	Email          string                     `json:"email"`
+	ShippingMethod hestia.VoucherShippingMethod `json:"shipping_method"`
 }
 
 type StoreVoucher struct {

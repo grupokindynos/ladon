@@ -236,6 +236,10 @@ github.com/grupokindynos/common v0.0.0-20200520164733-ae478e34b1b2 h1:Wz+foWKskH
 github.com/grupokindynos/common v0.0.0-20200520164733-ae478e34b1b2/go.mod h1:TmP70nKfgs35046GoB8TIq1r1OFvEHYaaEvaPs6PayM=
 github.com/grupokindynos/common v0.0.0-20200524204417-9046ecab55c8 h1:kRB3GxtUjT+4QHcCs4u8gU9mJn+j36bZieYhLw0C54I=
 github.com/grupokindynos/common v0.0.0-20200524204417-9046ecab55c8/go.mod h1:TmP70nKfgs35046GoB8TIq1r1OFvEHYaaEvaPs6PayM=
+github.com/grupokindynos/common v0.0.0-20200527164707-ec29b20e8011 h1:CNYxCZDjslaiEqSU3UyjEiB5/DcvA9lT81XyhazlZwo=
+github.com/grupokindynos/common v0.0.0-20200527164707-ec29b20e8011/go.mod h1:TmP70nKfgs35046GoB8TIq1r1OFvEHYaaEvaPs6PayM=
+github.com/grupokindynos/common v0.0.0-20200527165344-1ca7db29a898 h1:WJDBIY7gUl03I9t0lwtkQmNvRQcEL+NOTJa8nFZFA9A=
+github.com/grupokindynos/common v0.0.0-20200527165344-1ca7db29a898/go.mod h1:TmP70nKfgs35046GoB8TIq1r1OFvEHYaaEvaPs6PayM=
 github.com/grupokindynos/go-binance v0.0.0-20200430034119-30d9d0485f22 h1:C48WvEz0LdfkYMj7/TToANULCmAQi13A6JvFAUtgukc=
 github.com/grupokindynos/go-binance v0.0.0-20200430034119-30d9d0485f22/go.mod h1:RgYTB+ZsGwA2qfu4o9ObHcsGijn3F04BdV5Nv0mmMqI=
 github.com/gxed/hashland/keccakpg v0.0.1/go.mod h1:kRzw3HkwxFU1mpmPP8v1WyQzwdGfmKFJ6tItnhQ67kU=
