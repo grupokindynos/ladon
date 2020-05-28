@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
+	"github.com/spf13/cast"
 	"io/ioutil"
 	"math"
 	"math/big"
@@ -62,7 +63,7 @@ func (vc *VouchersController) GetListForPhone(payload []byte, uid string, vouche
 
 func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
 	// Get the vouchers percentage fee for PolisPay
-	if uid != "gwY3fy79LZMtUbSNBDoom7llGfh2" {
+	/*if uid != "gwY3fy79LZMtUbSNBDoom7llGfh2" || uid != "TO3FrEneQcf2RN2QdL8paY6IvBF2" {
 		config, err := vc.Hestia.GetVouchersStatus()
 
 		if err != nil {
@@ -71,11 +72,16 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		if !config.Vouchers.Service {
 			return nil, err
 		}
+	}*/
+	status, err := vc.Status(nil, uid, "", "" )
+	statusBool := cast.ToBool(status)
+	if !statusBool {
+		return status, err
 	}
 
 	// Grab information on the payload
 	var PrepareVoucher models.PrepareVoucher
-	err := json.Unmarshal(payload, &PrepareVoucher)
+	err = json.Unmarshal(payload, &PrepareVoucher)
 	if err != nil {
 		return nil, err
 	}
