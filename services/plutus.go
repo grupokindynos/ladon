@@ -76,7 +76,7 @@ func (p *PlutusRequests) SubmitPayment(body plutus.SendAddressBodyReq) (txid str
 	var tokenString string
 	err = json.Unmarshal(tokenResponse, &tokenString)
 	if err != nil {
-		log.Println("error unmarshalling plutus response", tokenResponse)
+		log.Println("error unmarshalling plutus response", string(tokenResponse))
 		return txid, err
 	}
 	headerSignature := res.Header.Get("service")
