@@ -3,8 +3,10 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/spf13/cast"
 	"io/ioutil"
+	"log"
 	"math"
 	"math/big"
 	"net/http"
@@ -475,6 +477,7 @@ func (vc *VouchersController) broadCastTx(coinConfig *coins.Coin, rawTx string) 
 }
 
 func (vc *VouchersController) Update(c *gin.Context) {
+	fmt.Println("Redeeming Code")
 	authToken := c.GetHeader("Authorization")
 	bearerToken := strings.Split(authToken, "Bearer ")
 	if bearerToken[1] != os.Getenv("BITCOU_TOKEN") {
@@ -484,11 +487,15 @@ func (vc *VouchersController) Update(c *gin.Context) {
 	var voucherInfo models.RedeemCodeVoucher
 	err := c.BindJSON(&voucherInfo)
 	if err != nil {
+		log.Println("error deserializing redeem code", err)
+		log.Println("Request Data Below")
+		log.Println(c.GetRawData())
 		responses.GlobalResponseError(nil, err, c)
 		return
 	}
 	storedVoucherInfo, err := vc.Hestia.GetVoucherInfo(voucherInfo.VoucherID)
 	if err != nil {
+		log.Println("error retrieving voucher ", voucherInfo.VoucherID, "for redeem code", err)
 		responses.GlobalResponseError(nil, errors.New("voucher not found"), c)
 		return
 	}
@@ -508,9 +515,12 @@ func (vc *VouchersController) Update(c *gin.Context) {
 			Coin:    "POLIS",
 			Amount:  amountHand.ToNormalUnit(),
 		}
-		// TODO make sure error is handled
-		txid, _ := vc.Plutus.SubmitPayment(bitcouPayment)
+		txid, err := vc.Plutus.SubmitPayment(bitcouPayment)
+		if err != nil {
+			storedVoucherInfo.Message = "Plutus unable to broadcast bitcou fee payment"
+		}
 		storedVoucherInfo.BitcouFeePaymentData.Txid = txid
+		_, err = vc.Hestia.UpdateVoucher(storedVoucherInfo)
 	}
 	responses.GlobalResponseError("success", nil, c)
 	return
