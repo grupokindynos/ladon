@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -75,6 +76,7 @@ func (p *PlutusRequests) SubmitPayment(body plutus.SendAddressBodyReq) (txid str
 	var tokenString string
 	err = json.Unmarshal(tokenResponse, &tokenString)
 	if err != nil {
+		log.Println("error unmarshalling plutus response", tokenResponse)
 		return txid, err
 	}
 	headerSignature := res.Header.Get("service")
