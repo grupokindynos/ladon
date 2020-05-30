@@ -89,6 +89,7 @@ func (p *Processor) handleConfirmedVouchers(wg *sync.WaitGroup) {
 	for _, v := range vouchers {
 		txid, err := p.submitBitcouPayment(v.BitcouPaymentData.Coin, v.BitcouPaymentData.Address, v.BitcouPaymentData.Amount)
 		if err != nil {
+			log.Println(v.BitcouPaymentData.Coin, " ", v.BitcouPaymentData.Address, " ", v.BitcouPaymentData.Amount)
 			log.Println("handleConfirmingVouchers::submitBitcouPayment::", err)
 			fmt.Println("Unable to submit bitcou payment, should refund the user: " + err.Error())
 			v.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundTotal)
