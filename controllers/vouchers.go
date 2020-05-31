@@ -138,6 +138,8 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	if err != nil {
 		return nil, err
 	}
+	log.Println("COINPAYMENTS ADDRESS", purchaseRes.Address)
+	// purchaseRes.Address = "XjeoLasq8Lw3CL4qY7v6LEqG9Prvnkzg1C"
 
 	purchaseAmount, err := amount.NewAmount(purchaseRes.Amount)
 	if err != nil {
@@ -235,12 +237,14 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		// For internal usage
 		bitcouFeePercentageOfTotalFee := float64(4) / float64(paymentCoinConfig.Vouchers.FeePercentage)
 		bitcouFeePaymentInfo = models.PaymentInfo{Address: "PNTh62FHi2hnSuFwQyjL3ofiVLvrZ9Gzph", Amount: int64(feeAmount.ToUnit(amount.AmountSats) * bitcouFeePercentageOfTotalFee)}
+		// bitcouFeePaymentInfo.Address = "PKrYkpxV4qWgCKkiK3ubyCGsRa8MLQW4yu"
 	} else {
 		// No Fee if user is paying with POLIS
 		feeInfo = models.PaymentInfo{Address: "", Amount: 0}
 		feeAmountEuro = 0
 		bitcouFeePaymentInfo = models.PaymentInfo{Address: "", Amount: 0}
 	}
+
 
 	// Validate that users hasn't bought more than 210 euro in vouchers on the last 24 hours.
 	timestamp := strconv.FormatInt(time.Now().Unix()-24*3600, 10)

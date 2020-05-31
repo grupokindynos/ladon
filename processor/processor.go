@@ -288,6 +288,7 @@ func (p *Processor) handleTimeoutAwaitingVouchers(wg *sync.WaitGroup) {
 	for _, voucher := range vouchers {
 		if voucher.Timestamp+timeoutAwaiting < time.Now().Unix() {
 			voucher.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundTotal)
+			voucher.Message = "Awaiting Provider Timeout"
 			_, err = p.Hestia.UpdateVoucher(voucher)
 			if err != nil {
 				fmt.Println("unable to update voucher")
