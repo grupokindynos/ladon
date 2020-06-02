@@ -162,7 +162,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		return nil, err
 	}
 
-	voucherInfo, err := vc.Hestia.GetVoucherInfoV2(PrepareVoucher.Country, voucherid)
+	voucherInfo, err := vc.Hestia.GetVoucherInfoV2(PrepareVoucher.Country, strconv.Itoa(int(PrepareVoucher.ProductId)))
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +261,7 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 			Exchange:       exchange,
 			WithdrawAmount: 0.0,
 		},
-		Email: storedVoucher.Email,
+		Email:          storedVoucher.Email,
 		ShippingMethod: storedVoucher.ShippingMethod,
 	}
 

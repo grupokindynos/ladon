@@ -15,6 +15,7 @@ type PrepareVoucher struct {
 	PhoneNumber    string `json:"phone_nb"`
 	ProviderId     int32  `json:"provider_id"`
 	Valid          int32  `json:"valid"`
+	ProductId      int32  `json:"product_id"`
 }
 
 type PrepareVoucherResponse struct {
@@ -48,18 +49,18 @@ type PrepareVoucherInfo struct {
 }
 
 type PrepareVoucherInfoV2 struct {
-	ID             string                     `json:"id"`
-	Timestamp      int64                      `json:"timestamp"`
-	AmountEuro     int64                      `json:"amount_euro"`
-	UserPayment    PaymentInfo                `json:"user_payment"`
-	Coin           string                     `json:"coin"`
-	VoucherType    int                        `json:"voucher_type"`
-	VoucherVariant int                        `json:"voucher_variant"`
-	Name           string                     `json:"name"`
-	PhoneNumber    int64                      `json:"phone_nb"`
-	ProviderId     string                     `json:"provider_id"`
-	Path           models.VoucherPathResponse `json:"path"`
-	Email          string                     `json:"email"`
+	ID             string                       `json:"id"`
+	Timestamp      int64                        `json:"timestamp"`
+	AmountEuro     int64                        `json:"amount_euro"`
+	UserPayment    PaymentInfo                  `json:"user_payment"`
+	Coin           string                       `json:"coin"`
+	VoucherType    int                          `json:"voucher_type"`
+	VoucherVariant int                          `json:"voucher_variant"`
+	Name           string                       `json:"name"`
+	PhoneNumber    int64                        `json:"phone_nb"`
+	ProviderId     string                       `json:"provider_id"`
+	Path           models.VoucherPathResponse   `json:"path"`
+	Email          string                       `json:"email"`
 	ShippingMethod hestia.VoucherShippingMethod `json:"shipping_method"`
 }
 
