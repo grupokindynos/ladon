@@ -147,16 +147,32 @@ func (bs *BitcouRequests) GetTransactionInformationV2(purchaseInfo models.Purcha
 	return purchaseData, nil
 }
 
-func NewBitcouService(devMode bool) *BitcouRequests {
+func NewBitcouService(devMode bool, version int) *BitcouRequests {
 	var url string
 	if devMode {
-		url = os.Getenv("BITCOU_URL_DEV")
+		if version == 1 {
+			url = os.Getenv("BITCOU_DEV_URL_V1")
+		} else {
+			url = os.Getenv("BITCOU_DEV_URL_V2")
+		}
 	} else {
-		url = os.Getenv("BITCOU_URL")
+		if version == 1 {
+			url = os.Getenv("BITCOU_URL_V1")
+		} else {
+			url = os.Getenv("BITCOU_URL_V2")
+		}
 	}
+
+	var token string
+	if version == 1 {
+		token = os.Getenv("BITCOU_TOKEN_V1")
+	} else {
+		token = os.Getenv("BITCOU_TOKEN_V2")
+	}
+
 	service := &BitcouRequests{
 		BitcouURL:   url,
-		BitcouToken: os.Getenv("BITCOU_TOKEN"),
+		BitcouToken: token,
 		VouchersList: VouchersData{
 			List:        make(map[string][]models.Voucher),
 			LastUpdated: time.Time{},
