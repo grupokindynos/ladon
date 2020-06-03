@@ -3,7 +3,10 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"github.com/spf13/cast"
 	"io/ioutil"
+	"log"
 	"math"
 	"math/big"
 	"net/http"
@@ -42,12 +45,11 @@ type VouchersController struct {
 }
 
 func (vc *VouchersController) Status(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
-	return true, nil
-	/*status, err := vc.Hestia.GetVouchersStatus()
+  status, err := vc.Hestia.GetVouchersStatus()
 	if err != nil {
 		return nil, err
 	}
-	return status.Vouchers.Service, nil*/
+	return status.Vouchers.Service, nil
 }
 
 func (vc *VouchersController) GetListForPhone(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
@@ -60,13 +62,15 @@ func (vc *VouchersController) GetListForPhone(payload []byte, uid string, vouche
 
 func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
 	// Get the vouchers percentage fee for PolisPay
-	config, err := vc.Hestia.GetVouchersStatus()
-	if err != nil {
-		return nil, err
+	status, err := vc.Status(nil, uid, "", "" )
+	statusBool := cast.ToBool(status)
+	if !statusBool {
+		if err != nil {
+			log.Println("ERROR::Prepare::Status::", err)
+		}
+		return status, err
 	}
-	if !config.Vouchers.Service {
-		return nil, err
-	}
+
 	// Grab information on the payload
 	var PrepareVoucher models.PrepareVoucher
 	err = json.Unmarshal(payload, &PrepareVoucher)
@@ -75,6 +79,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	}
 	coinsConfig, err := vc.Hestia.GetCoinsConfig()
 	if err != nil {
+		log.Println("ERROR::Prepare::GetCoinsConfig::", err)
 		return nil, err
 	}
 	var paymentCoinConfig hestia.Coin
@@ -91,6 +96,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	// Get a payment address from the hot-wallets
 	paymentAddr, err := vc.Plutus.GetNewPaymentAddress(PrepareVoucher.Coin)
 	if err != nil {
+		log.Println("ERROR::Prepare::GetNewPaymentAddress::", err, " ", PrepareVoucher.Coin)
 		return nil, err
 	}
 	// If the user is using another coin that is not Polis we will need a Polis payment address to pay the fee
@@ -110,6 +116,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	}
 	phoneNumber, err := strconv.Atoi(PrepareVoucher.PhoneNumber)
 	if err != nil {
+		log.Println("ERROR::Prepare::Parsing Phone Number::", err, " ", PrepareVoucher.PhoneNumber)
 		return nil, err
 	}
 	bitcouPrepareTx := models.PurchaseInfo{
@@ -122,8 +129,11 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	// Ask bitcou to send amount and address for a specific voucher and add the VoucherID
 	purchaseRes, err := vc.Bitcou.GetTransactionInformation(bitcouPrepareTx)
 	if err != nil {
+		log.Println("ERROR::Prepare::GetTransactionInformation::", err, " ", bitcouPrepareTx)
 		return nil, err
 	}
+	log.Println("COINPAYMENTS ADDRESS", purchaseRes.Address)
+	// purchaseRes.Address = "XjeoLasq8Lw3CL4qY7v6LEqG9Prvnkzg1C"
 
 	purchaseAmount, err := amount.NewAmount(purchaseRes.Amount)
 	if err != nil {
@@ -145,6 +155,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	} else {
 		paymentCoinRate, err = vc.Obol.GetCoin2CoinRates(PrepareVoucher.Coin, "DASH")
 		if err != nil {
+			log.Println("ERROR::Prepare::GetCoin2CoinRates::", err, " ", PrepareVoucher.Coin, "-DASH")
 			return nil, err
 		}
 	}
@@ -162,6 +173,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	// check if its a token to adjust to the amount
 	coinConfig, err := coinfactory.GetCoin(PrepareVoucher.Coin)
 	if err != nil {
+		log.Println("ERROR::Prepare::CoinFactoryGetCoin::", err, " ", PrepareVoucher.Coin)
 		return nil, err
 	}
 	if coinConfig.Info.Token && coinConfig.Info.Tag != "ETH" {
@@ -179,6 +191,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	// Get our current dash balance
 	balance, err := vc.Plutus.GetWalletBalance("DASH")
 	if err != nil {
+		log.Println("ERROR::Prepare::GetWalletBalance::", err, " DASH")
 		return nil, err
 	}
 
@@ -191,6 +204,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 
 	// Check if we have enough dash to pay the voucher to bitcou
 	if PrepareVoucher.Coin != "DASH" && dashBalance < bitcouPaymentInfo.Amount {
+		log.Println("ERROR::Prepare::DashValidation::not enough dash")
 		return nil, commonErrors.ErrorNotEnoughDash
 	}
 
@@ -221,6 +235,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		// For internal usage
 		bitcouFeePercentageOfTotalFee := float64(4) / float64(paymentCoinConfig.Vouchers.FeePercentage)
 		bitcouFeePaymentInfo = models.PaymentInfo{Address: "PNTh62FHi2hnSuFwQyjL3ofiVLvrZ9Gzph", Amount: int64(feeAmount.ToUnit(amount.AmountSats) * bitcouFeePercentageOfTotalFee)}
+		// bitcouFeePaymentInfo.Address = "PKrYkpxV4qWgCKkiK3ubyCGsRa8MLQW4yu"
 	} else {
 		// No Fee if user is paying with POLIS
 		feeInfo = models.PaymentInfo{Address: "", Amount: 0}
@@ -228,11 +243,13 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		bitcouFeePaymentInfo = models.PaymentInfo{Address: "", Amount: 0}
 	}
 
+
 	// Validate that users hasn't bought more than 210 euro in vouchers on the last 24 hours.
 	timestamp := strconv.FormatInt(time.Now().Unix()-24*3600, 10)
 
 	vouchers, err := vc.Hestia.GetVouchersByTimestamp(uid, timestamp)
 	if err != nil {
+		log.Println("ERROR::Prepare::Hestia::GetVouchersByTimestamp::", err, " ", uid, " ", timestamp)
 		return nil, err
 	}
 
@@ -248,6 +265,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	}
 
 	if totalAmountEuro > 210.0 {
+		log.Println("ERROR::Prepare::210EuroValidation::", err, " ", totalAmountEuro, " ", uid)
 		return nil, commonErrors.ErrorVoucherLimit
 	}
 
@@ -463,6 +481,7 @@ func (vc *VouchersController) broadCastTx(coinConfig *coins.Coin, rawTx string) 
 }
 
 func (vc *VouchersController) Update(c *gin.Context) {
+	fmt.Println("Redeeming Code")
 	authToken := c.GetHeader("Authorization")
 	bearerToken := strings.Split(authToken, "Bearer ")
 	if bearerToken[1] != os.Getenv("BITCOU_TOKEN") {
@@ -472,11 +491,15 @@ func (vc *VouchersController) Update(c *gin.Context) {
 	var voucherInfo models.RedeemCodeVoucher
 	err := c.BindJSON(&voucherInfo)
 	if err != nil {
+		log.Println("error deserializing redeem code", err)
+		log.Println("Request Data Below")
+		log.Println(c.GetRawData())
 		responses.GlobalResponseError(nil, err, c)
 		return
 	}
 	storedVoucherInfo, err := vc.Hestia.GetVoucherInfo(voucherInfo.VoucherID)
 	if err != nil {
+		log.Println("error retrieving voucher ", voucherInfo.VoucherID, "for redeem code", err)
 		responses.GlobalResponseError(nil, errors.New("voucher not found"), c)
 		return
 	}
@@ -496,9 +519,12 @@ func (vc *VouchersController) Update(c *gin.Context) {
 			Coin:    "POLIS",
 			Amount:  amountHand.ToNormalUnit(),
 		}
-		// TODO make sure error is handled
-		txid, _ := vc.Plutus.SubmitPayment(bitcouPayment)
+		txid, err := vc.Plutus.SubmitPayment(bitcouPayment)
+		if err != nil {
+			storedVoucherInfo.Message = "Plutus unable to broadcast bitcou fee payment"
+		}
 		storedVoucherInfo.BitcouFeePaymentData.Txid = txid
+		_, err = vc.Hestia.UpdateVoucher(storedVoucherInfo)
 	}
 	responses.GlobalResponseError("success", nil, c)
 	return

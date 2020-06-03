@@ -164,6 +164,7 @@ func ValidateRequest(c *gin.Context, method func(payload []byte, uid string, vou
 	}
 	response, err := method(payload, uid, voucherid, phoneNb)
 	if err != nil {
+		log.Println("user: ", uid, "\nerror: ", err, "\nvoucher", voucherid)
 		responses.GlobalResponseError(nil, err, c)
 		return
 	}

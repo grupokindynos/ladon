@@ -12,6 +12,7 @@ import (
 	"github.com/grupokindynos/ladon/services"
 	"github.com/olympus-protocol/ogen/utils/amount"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"sync"
@@ -39,6 +40,7 @@ func (p *Processor) Start() {
 	}
 	var wg sync.WaitGroup
 	wg.Add(6)
+	fmt.Println("Voucher Processor Starting")
 	go p.handlePendingVouchers(&wg)
 	go p.handleConfirmingVouchers(&wg)
 	go p.handleConfirmedVouchers(&wg)
@@ -85,13 +87,15 @@ func (p *Processor) handleConfirmedVouchers(wg *sync.WaitGroup) {
 	for _, v := range vouchers {
 		txid, err := p.submitBitcouPayment(v.BitcouPaymentData.Coin, v.BitcouPaymentData.Address, v.BitcouPaymentData.Amount)
 		if err != nil {
+			log.Println(v.BitcouPaymentData.Coin, " ", v.BitcouPaymentData.Address, " ", v.BitcouPaymentData.Amount)
+			log.Println("handleConfirmingVouchers::submitBitcouPayment::", err)
+			fmt.Println("Unable to submit bitcou payment, should refund the user: " + err.Error())
 			v.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundTotal)
 			_, err = p.Hestia.UpdateVoucher(v)
 			if err != nil {
 				fmt.Println("Unable to update voucher bitcou payment: " + err.Error())
 				continue
 			}
-			fmt.Println("Unable to submit bitcou payment, should refund the user: " + err.Error())
 			continue
 		}
 		v.BitcouPaymentData.Txid = txid
@@ -197,7 +201,7 @@ func (p *Processor) handleRefundFeeVouchers(wg *sync.WaitGroup) {
 		}
 		_, err := p.Plutus.SubmitPayment(paymentBody)
 		if err != nil {
-			fmt.Println("unable to submit refund payment")
+			fmt.Println("unable to submit refund payment for ", voucher.ID)
 			continue
 		}
 		voucher.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefunded)
@@ -225,7 +229,7 @@ func (p *Processor) handleRefundTotalVouchers(wg *sync.WaitGroup) {
 			}
 			_, err = p.Plutus.SubmitPayment(paymentBody)
 			if err != nil {
-				fmt.Println("unable to submit refund payment")
+				fmt.Println("unable to submit refund payment for", voucher.ID)
 				continue
 			}
 			voucher.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefunded)
@@ -242,7 +246,7 @@ func (p *Processor) handleRefundTotalVouchers(wg *sync.WaitGroup) {
 			}
 			_, err := p.Plutus.SubmitPayment(feePaymentBody)
 			if err != nil {
-				fmt.Println("unable to submit refund payment")
+				fmt.Println("unable to submit refund payment for", voucher.ID)
 				continue
 			}
 			voucher.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundedPartially)
@@ -258,7 +262,7 @@ func (p *Processor) handleRefundTotalVouchers(wg *sync.WaitGroup) {
 			}
 			_, err = p.Plutus.SubmitPayment(paymentBody)
 			if err != nil {
-				fmt.Println("unable to submit refund payment")
+				fmt.Println("unable to submit refund payment for ", voucher.ID)
 				continue
 			}
 			voucher.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefunded)
@@ -281,6 +285,7 @@ func (p *Processor) handleTimeoutAwaitingVouchers(wg *sync.WaitGroup) {
 	for _, voucher := range vouchers {
 		if voucher.Timestamp+timeoutAwaiting < time.Now().Unix() {
 			voucher.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundTotal)
+			voucher.Message = "Awaiting Provider Timeout"
 			_, err = p.Hestia.UpdateVoucher(voucher)
 			if err != nil {
 				fmt.Println("unable to update voucher")
