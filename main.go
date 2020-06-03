@@ -48,7 +48,7 @@ func main() {
 	skipVal := flag.Bool("skip-val", false, "set this flag to avoid validations on txs."+
 		"IMPORTANT: -local flag needs to be set in order to use this.")
 	stopProcessor := flag.Bool("stop-proc", false, "set this flag to stop the automatic run of processor")
-	port := flag.String("port", os.Getenv("PORT"), "set different port for local run")
+	//port := flag.String("port", os.Getenv("PORT"), "set different port for local run")
 	devApi := flag.Bool("dev-api", false, "use Bitcou development API")
 	localPlutus := flag.Bool("local-plutus", false, "use local instance for plutus")
 
@@ -78,14 +78,19 @@ func main() {
 	}
 
 	if !*stopProcessor {
-		//go runProcessor()
+		go runProcessor()
 		go runProcessorV2()
 	}
 
 	devMode = *devApi
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
 	App := GetApp()
-	_ = App.Run(":" + *port)
+	_ = App.Run(":" + port)
 }
 
 func GetApp() *gin.Engine {
@@ -99,13 +104,12 @@ func GetApp() *gin.Engine {
 }
 
 func ApplyRoutes(r *gin.Engine) {
-	bitcouService := services.NewBitcouService(devMode)
 	vouchersCtrl := &controllers.VouchersController{
 		TxsAvailable:     !noTxsAvailable,
 		PreparesVouchers: prepareVouchersMap,
 		Plutus:           &services.PlutusRequests{PlutusURL: os.Getenv(plutusEnv)},
 		Hestia:           &services.HestiaRequests{HestiaURL: hestiaEnv},
-		Bitcou:           bitcouService,
+		Bitcou:           services.NewBitcouService(devMode, 1),
 		Obol:             &obol.ObolRequest{ObolURL: os.Getenv("OBOL_PRODUCTION_URL")},
 	}
 	vouchersCtrlV2 := &controllers.VouchersControllerV2{
@@ -113,7 +117,7 @@ func ApplyRoutes(r *gin.Engine) {
 		PreparesVouchers: prepareVouchersMapV2,
 		Plutus:           &services.PlutusRequests{PlutusURL: os.Getenv(plutusEnv)},
 		Hestia:           &services.HestiaRequests{HestiaURL: hestiaEnv},
-		Bitcou:           bitcouService,
+		Bitcou:           services.NewBitcouService(devMode, 2),
 		Obol:             &obol.ObolRequest{ObolURL: os.Getenv("OBOL_PRODUCTION_URL")},
 		Adrestia:         &services.AdrestiaRequests{AdrestiaUrl: adrestiaEnv},
 	}
@@ -192,7 +196,7 @@ func runProcessorV2() {
 		SkipValidations: skipValidations,
 		Hestia:          &services.HestiaRequests{HestiaURL:hestiaEnv},
 		Plutus:          &services.PlutusRequests{PlutusURL:os.Getenv(plutusEnv)},
-		Bitcou:          services.NewBitcouService(devMode),
+		Bitcou:          services.NewBitcouService(devMode, 2),
 		Adrestia:        &services.AdrestiaRequests{AdrestiaUrl: adrestiaEnv},
 		HestiaUrl:       hestiaEnv,
 	}
