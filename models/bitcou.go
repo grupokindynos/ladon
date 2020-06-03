@@ -1,5 +1,9 @@
 package models
 
+import (
+	"github.com/grupokindynos/common/hestia"
+)
+
 type Countries struct {
 	Austria      bool `json:"austria"`
 	Belgium      bool `json:"belgium"`
@@ -92,11 +96,19 @@ type PurchaseInfo struct {
 	ProductID     int32  `json:"product_id"`
 	VariantID     int32  `json:"variant_id"`
 	PhoneNB       int64  `json:"phone_nb"`
+	Email         string `json:"email"`
+	KYC  		  bool   `json:"kyc"`
 }
 
 type BitcouBaseResponse struct {
 	Data []interface{} `json:"data"`
 	Meta MetaData      `json:"meta"`
+}
+
+type PurchaseInfoResponseV2 struct {
+	TxId string        `json:"txn_id"`
+	AmountEuro string `json:"amount_euro"`
+	RedeemData string  `json:"redeem_data"`
 }
 
 type PurchaseInfoResponse struct {
@@ -119,4 +131,34 @@ type BitcouPhoneResponseList struct {
 
 type BitcouPhoneBodyReq struct {
 	PhoneNumber string `json:"phone_number"`
+}
+type LightVoucherV2 struct {
+	Name         string          `firestore:"name" json:"name"`
+	ProductID    int             `firestore:"product_id" json:"product_id"`
+	//RedeemPlace  RedeemPlace     `firestore:"redeem_place" json:"redeem_place"`
+	Shipping     ShippingV2        `firestore:"shipping" json:"shipping"`
+	TraderID     int             `firestore:"trader_id" json:"trader_id"`
+	Variants     []Variants      `firestore:"variants" json:"variants"`
+	ProviderID   int             `firestore:"provider_id" json:"provider_id"`
+	ProviderName string          `firestore:"provider_name" json:"provider_name"`
+	Benefits     map[string]bool `firestore:"benefits" json:"benefits"`
+	Description  string          `firestore:"description" json:"description"`
+	Valid        int64           `firestore:"valid" json:"valid"`
+	//SKU          string          `firestore:"localizationKey" json:"localizationKey"`
+}
+
+type ShippingV2 struct {
+	SendByEmail  bool `json:"send_by_email"`
+	AddToAccount bool `json:"add_to_account"`
+	SendByAPI    bool `json:"send_by_api"`
+}
+
+func (s *ShippingV2) GetEnum() hestia.VoucherShippingMethod {
+	if s.SendByEmail {
+		return hestia.VoucherShippingMethodEmail
+	}
+	if s.AddToAccount {
+		return hestia.VoucherShippingMethodAccount
+	}
+	return hestia.VoucherShippingMethodApi
 }

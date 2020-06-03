@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/grupokindynos/common/blockbook"
 	coinfactory "github.com/grupokindynos/common/coin-factory"
-	"github.com/grupokindynos/common/coin-factory/coins"
 	"github.com/grupokindynos/common/hestia"
 	"github.com/grupokindynos/common/plutus"
 	"github.com/grupokindynos/common/tokens/mrt"
@@ -127,7 +125,6 @@ func (p *Processor) handleConfirmingVouchers(wg *sync.WaitGroup) {
 		ethConfig, err := coinfactory.GetCoin("ETH")
 		if err == nil {
 			paymentCoinConfig.BlockchainInfo = ethConfig.BlockchainInfo
-
 		}
 		if v.PaymentData.Coin != "POLIS" {
 			feeCoinConfig, err := coinfactory.GetCoin(v.FeePayment.Coin)
@@ -360,18 +357,6 @@ func (p *Processor) getVouchers(status hestia.VoucherStatus) ([]hestia.Voucher, 
 	return response, nil
 }
 
-func getConfirmations(coinConfig *coins.Coin, txid string) (int, error) {
-	if coinConfig.Info.Token {
-		coinConfig, _ = coinfactory.GetCoin("ETH")
-	}
-	blockbookWrapper := blockbook.NewBlockBookWrapper(coinConfig.Info.Blockbook)
-	txData, err := blockbookWrapper.GetTx(txid)
-	if err != nil {
-		return 0, err
-	}
-	return txData.Confirmations, nil
-}
-
 func (p *Processor) submitBitcouPayment(coin string, address string, amount int64) (txid string, err error) {
 	floatAmount := float64(amount)
 	payment := plutus.SendAddressBodyReq{
@@ -380,24 +365,4 @@ func (p *Processor) submitBitcouPayment(coin string, address string, amount int6
 		Amount:  floatAmount / 1e8,
 	}
 	return p.Plutus.SubmitPayment(payment)
-}
-
-func checkTxId(payment *hestia.Payment) error {
-	if payment.Txid == "" {
-		txId, err := getMissingTxId(payment.Coin, payment.Address, payment.Amount)
-		if err != nil {
-			return err
-		}
-		payment.Txid = txId
-	}
-	return nil
-}
-
-func getMissingTxId(coin string, address string, amount int64) (string, error) {
-	coinConfig, _ := coinfactory.GetCoin(coin)
-	if coinConfig.Info.Token {
-		coinConfig, _ = coinfactory.GetCoin("ETH")
-	}
-	blockBook := blockbook.NewBlockBookWrapper(coinConfig.Info.Blockbook)
-	return blockBook.FindDepositTxId(address, amount)
 }
