@@ -487,7 +487,7 @@ func (vc *VouchersController) Update(c *gin.Context) {
 	fmt.Println("Redeeming Code")
 	authToken := c.GetHeader("Authorization")
 	bearerToken := strings.Split(authToken, "Bearer ")
-	if bearerToken[1] != os.Getenv("BITCOU_TOKEN") {
+	if bearerToken[1] != os.Getenv("BITCOU_TOKEN_V1") {
 		responses.GlobalResponseNoAuth(c)
 		return
 	}
