@@ -28,13 +28,9 @@ type VouchersData struct {
 }
 
 func (bs *BitcouRequests) GetPhoneTopUpList(phoneNb string) ([]int, error) {
-	url := ""
-	if bs.DevMode {
-		url = os.Getenv("BITCOU_DEV_URL") + "voucher/availableVouchersByPhoneNb"
-	} else {
-		url = os.Getenv("BITCOU_URL") + "voucher/availableVouchersByPhoneNb"
-	}
-	token := "Bearer " + os.Getenv("BITCOU_TOKEN")
+	url := bs.BitcouURL + "voucher/availableVouchersByPhoneNb"
+	token := "Bearer " + bs.BitcouToken
+
 	body := models.BitcouPhoneBodyReq{PhoneNumber: phoneNb}
 	byteBody, err := json.Marshal(body)
 	postBody := bytes.NewBuffer(byteBody)
@@ -65,13 +61,9 @@ func (bs *BitcouRequests) GetPhoneTopUpList(phoneNb string) ([]int, error) {
 }
 
 func (bs *BitcouRequests) GetTransactionInformation(purchaseInfo models.PurchaseInfo) (models.PurchaseInfoResponse, error) {
-	url := ""
-	if bs.DevMode {
-		url = os.Getenv("BITCOU_DEV_URL") + "voucher/transaction"
-	} else {
-		url = os.Getenv("BITCOU_URL") + "voucher/transaction"
-	}
-	token := "Bearer " + os.Getenv("BITCOU_TOKEN")
+	url := bs.BitcouURL + "voucher/transaction"
+	token := "Bearer " + bs.BitcouToken
+
 	byteBody, err := json.Marshal(purchaseInfo)
 	postBody := bytes.NewBuffer(byteBody)
 	req, err := http.NewRequest("POST", url, postBody)
@@ -106,14 +98,9 @@ func (bs *BitcouRequests) GetTransactionInformation(purchaseInfo models.Purchase
 }
 
 func (bs *BitcouRequests) GetTransactionInformationV2(purchaseInfo models.PurchaseInfo) (models.PurchaseInfoResponseV2, error) {
-	url := ""
-	if bs.DevMode {
-		url = os.Getenv("BITCOU_DEV_URL") + "voucher/transaction"
-	} else {
-		url = os.Getenv("BITCOU_URL") + "voucher/transaction"
-	}
-	println(url)
-	token := "Bearer " + os.Getenv("BITCOU_TOKEN_2")
+	url := bs.BitcouURL + "voucher/transaction"
+	token := "Bearer " + bs.BitcouToken
+
 	byteBody, err := json.Marshal(purchaseInfo)
 	postBody := bytes.NewBuffer(byteBody)
 	req, err := http.NewRequest("POST", url, postBody)
