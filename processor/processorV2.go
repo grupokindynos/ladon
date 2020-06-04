@@ -38,16 +38,16 @@ func (p *ProcessorV2) Start() {
 func (p *ProcessorV2) handlePaymentProcessing(wg *sync.WaitGroup) {
 	defer wg.Done()
 	vouchers := p.getVoucherByStatus(hestia.VoucherStatusV2PaymentProcessing)
-	fmt.Println("Couvhers Processing", vouchers)
+	fmt.Println("Vouchers handlePaymentProcessing ", GetVoucherIds(vouchers))
 	for _, voucher := range vouchers {
 		coinInfo, err := coinfactory.GetCoin(voucher.UserPayment.Coin)
 		if err != nil {
-			log.Println("handlePaymentProcessing - GetCoin - " + err.Error())
+			log.Println("ProcessorV2::handlePaymentProcessing::GetCoin::", voucher.UserPayment.Coin, err.Error())
 			continue
 		}
 		err = checkTxId(&voucher.UserPayment)
 		if err != nil {
-			log.Println("handlePaymentProcessing - checkTxId - " + err.Error())
+			log.Println("ProcessorV2::handlePaymentProcessing::checkTxId::", voucher.UserPayment, " ", err.Error())
 			continue
 		}
 		confirmations, err := getConfirmations(coinInfo, voucher.UserPayment.Txid)
@@ -93,6 +93,7 @@ func (p *ProcessorV2) handleRedeemed(wg *sync.WaitGroup) {
 			Address: voucher.UserPayment.Address,
 		})
 		if err != nil {
+
 			log.Println("handleRedeemed - DepositInfo - " + err.Error())
 			continue
 		}
@@ -255,4 +256,11 @@ func (p *ProcessorV2) handleDirectionalTradeCreated(dt *hestia.DirectionalTrade)
 	dt.Conversions[0].CreatedTime = time.Now().Unix()
 	dt.Conversions[0].OrderId = res
 	dt.Status = hestia.ShiftV2TradeStatusPerforming
+}
+
+func GetVoucherIds(hestiaVouchers []hestia.VoucherV2) (vouchers []string){
+	for _, voucher := range hestiaVouchers {
+		vouchers = append(vouchers, voucher.Id)
+	}
+	return
 }
