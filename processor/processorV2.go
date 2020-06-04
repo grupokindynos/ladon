@@ -93,8 +93,8 @@ func (p *ProcessorV2) handleRedeemed(wg *sync.WaitGroup) {
 			Address: voucher.UserPayment.Address,
 		})
 		if err != nil {
-
-			log.Println("handleRedeemed - DepositInfo - " + err.Error())
+			log.Println(voucher.Id)
+			log.Println("ProcessorV2::handleRedeemed::DepositInfo::", voucher.UserPayment.Txid, " ", voucher.UserPayment.Coin, " ", voucher.UserPayment.Address, err.Error())
 			continue
 		}
 		if res.DepositInfo.Status == hestia.ExchangeOrderStatusCompleted {
