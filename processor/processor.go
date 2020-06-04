@@ -144,7 +144,7 @@ func (p *Processor) handleConfirmingVouchers(wg *sync.WaitGroup) {
 			}
 			err = checkTxId(&v.FeePayment)
 			if err != nil {
-				log.Println("Processor::handlePaymentProcessing::checkTxId::", v.PaymentData, " ", err.Error())
+				log.Println("Processor::handlePaymentProcessing::checkTxId::", v.PaymentData, " ", v.ID, " ", err.Error())
 				continue
 			}
 			feeConfirmations, err := getConfirmations(feeCoinConfig, v.FeePayment.Txid)
@@ -166,7 +166,7 @@ func (p *Processor) handleConfirmingVouchers(wg *sync.WaitGroup) {
 		}
 		err = checkTxId(&v.PaymentData)
 		if err != nil {
-			log.Println("Processor::handlePaymentProcessing::checkTxId::", v.PaymentData, " ", err.Error())
+			log.Println("Processor::handlePaymentProcessing::checkTxId::", v.PaymentData, " ", v.ID, " ", err.Error())
 			continue
 		}
 		paymentConfirmations, err := getConfirmations(paymentCoinConfig, v.PaymentData.Txid)
