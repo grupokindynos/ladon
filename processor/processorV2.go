@@ -24,14 +24,14 @@ type ProcessorV2 struct {
 
 func (p *ProcessorV2) Start() {
 	var wg sync.WaitGroup
-	fmt.Println("Starting Processor")
+	fmt.Println("Starting ProcessorV2")
 	wg.Add(5)
 	go p.handlePaymentProcessing(&wg)
 	go p.handleRedeemed(&wg)
 	go p.handlePerformingTrade(&wg)
 	go p.handleNeedsRefund(&wg)
 	go p.handleWaitingRefundTxId(&wg)
-	fmt.Println("Ending Processor")
+	fmt.Println("Ending ProcessorV2")
 	wg.Wait()
 }
 
