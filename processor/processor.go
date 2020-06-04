@@ -144,12 +144,12 @@ func (p *Processor) handleConfirmingVouchers(wg *sync.WaitGroup) {
 			}
 			err = checkTxId(&v.FeePayment)
 			if err != nil {
-				fmt.Println("Unable to get fee txId " + err.Error())
+				log.Println("Processor::handlePaymentProcessing::checkTxId::", v.PaymentData, " ", err.Error())
 				continue
 			}
 			feeConfirmations, err := getConfirmations(feeCoinConfig, v.FeePayment.Txid)
 			if err != nil {
-				fmt.Println("Unable to get fee coin confirmations: " + err.Error())
+				log.Println("Processor::handlePaymentProcessing::getConfirmations::", v.PaymentData, " ", err.Error())
 				continue
 			}
 			v.FeePayment.Confirmations = int32(feeConfirmations)
@@ -166,12 +166,12 @@ func (p *Processor) handleConfirmingVouchers(wg *sync.WaitGroup) {
 		}
 		err = checkTxId(&v.PaymentData)
 		if err != nil {
-			fmt.Println("Unable to get txId " + err.Error())
+			log.Println("Processor::handlePaymentProcessing::checkTxId::", v.PaymentData, " ", err.Error())
 			continue
 		}
 		paymentConfirmations, err := getConfirmations(paymentCoinConfig, v.PaymentData.Txid)
 		if err != nil {
-			fmt.Println("Unable to get payment coin confirmations: " + err.Error())
+			log.Println("Processor::handlePaymentProcessing::getConfirmations::", v.PaymentData, " ", err.Error())
 			continue
 		}
 		v.PaymentData.Confirmations = int32(paymentConfirmations)
@@ -190,7 +190,7 @@ func (p *Processor) handleRefundFeeVouchers(wg *sync.WaitGroup) {
 	defer wg.Done()
 	vouchers, err := p.getRefundFeeVouchers()
 	if err != nil {
-		fmt.Println("Refund Fee vouchers processor finished with errors: " + err.Error())
+		log.Println("Processor::handlePaymentProcessing::getRefundFeeVouchers::", err.Error())
 		return
 	}
 	for _, voucher := range vouchers {
