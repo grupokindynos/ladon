@@ -136,8 +136,6 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		log.Println("ERROR::Prepare::GetTransactionInformation::", err, " ", bitcouPrepareTx)
 		return nil, err
 	}
-	log.Println("COINPAYMENTS ADDRESS", purchaseRes.Address)
-	// purchaseRes.Address = "XjeoLasq8Lw3CL4qY7v6LEqG9Prvnkzg1C"
 
 	purchaseAmount, err := amount.NewAmount(purchaseRes.Amount)
 	if err != nil {
