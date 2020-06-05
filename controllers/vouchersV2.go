@@ -86,6 +86,8 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		return nil, err
 	}
 
+	// TODO Get Price from Hestia
+
 	euroRate, err := vc.Obol.GetCoin2FIATRate(PrepareVoucher.Coin, "EUR")
 	if err != nil {
 		return nil, err
