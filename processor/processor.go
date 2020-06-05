@@ -10,7 +10,7 @@ import (
 	"github.com/grupokindynos/common/tokens/mrt"
 	"github.com/grupokindynos/common/tokens/mvt"
 	"github.com/grupokindynos/ladon/services"
-	"github.com/olympus-protocol/ogen/utils/amount"
+	"github.com/shopspring/decimal"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -194,10 +194,11 @@ func (p *Processor) handleRefundFeeVouchers(wg *sync.WaitGroup) {
 		return
 	}
 	for _, voucher := range vouchers {
+		am, _ := decimal.NewFromInt(voucher.PaymentData.Amount).DivRound(decimal.NewFromInt(1e8), 8).Float64()
 		paymentBody := plutus.SendAddressBodyReq{
 			Address: voucher.RefundFeeAddr,
 			Coin:    "POLIS",
-			Amount:  amount.AmountType(voucher.FeePayment.Amount).ToNormalUnit(),
+			Amount:  am,
 		}
 		_, err := p.Plutus.SubmitPayment(paymentBody)
 		if err != nil {
@@ -221,11 +222,12 @@ func (p *Processor) handleRefundTotalVouchers(wg *sync.WaitGroup) {
 		return
 	}
 	for _, voucher := range vouchers {
+		am, _ := decimal.NewFromInt(voucher.PaymentData.Amount).DivRound(decimal.NewFromInt(1e8), 8).Float64()
 		if voucher.PaymentData.Coin == "POLIS" {
 			paymentBody := plutus.SendAddressBodyReq{
 				Address: voucher.RefundAddr,
 				Coin:    voucher.PaymentData.Coin,
-				Amount:  amount.AmountType(voucher.PaymentData.Amount).ToNormalUnit(),
+				Amount:  am,
 			}
 			_, err = p.Plutus.SubmitPayment(paymentBody)
 			if err != nil {
@@ -239,10 +241,11 @@ func (p *Processor) handleRefundTotalVouchers(wg *sync.WaitGroup) {
 				continue
 			}
 		} else {
+			am, _ := decimal.NewFromInt(voucher.PaymentData.Amount).DivRound(decimal.NewFromInt(1e8), 8).Float64()
 			feePaymentBody := plutus.SendAddressBodyReq{
 				Address: voucher.RefundFeeAddr,
 				Coin:    "POLIS",
-				Amount:  amount.AmountType(voucher.FeePayment.Amount).ToNormalUnit(),
+				Amount:  am,
 			}
 			_, err := p.Plutus.SubmitPayment(feePaymentBody)
 			if err != nil {
@@ -255,10 +258,11 @@ func (p *Processor) handleRefundTotalVouchers(wg *sync.WaitGroup) {
 				fmt.Println("unable to update voucher")
 				continue
 			}
+			am, _ = decimal.NewFromInt(voucher.PaymentData.Amount).DivRound(decimal.NewFromInt(1e8), 8).Float64()
 			paymentBody := plutus.SendAddressBodyReq{
 				Address: voucher.RefundAddr,
 				Coin:    voucher.PaymentData.Coin,
-				Amount:  amount.AmountType(voucher.PaymentData.Amount).ToNormalUnit(),
+				Amount:  am,
 			}
 			_, err = p.Plutus.SubmitPayment(paymentBody)
 			if err != nil {
