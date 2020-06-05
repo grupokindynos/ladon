@@ -13,7 +13,7 @@ import (
 	"github.com/grupokindynos/common/utils"
 	"github.com/grupokindynos/ladon/models"
 	"github.com/grupokindynos/ladon/services"
-	"github.com/olympus-protocol/ogen/utils/amount"
+	"github.com/shopspring/decimal"
 	"strconv"
 	"sync"
 	"time"
@@ -31,7 +31,6 @@ type VouchersControllerV2 struct {
 }
 
 func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
-	// Get the vouchers percentage fee for PolisPay
 	/*config, err := vc.Hestia.GetVouchersStatus()
 	if err != nil {
 		return nil, err
@@ -61,11 +60,14 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	// Create a VoucherID
 	newVoucherID := utils.RandomString()
 	// Get a payment address from the hot-wallets
-	paymentAddr, err := vc.Plutus.GetNewPaymentAddress(PrepareVoucher.Coin)
+	// exchange path
+	pathInfo, err := vc.Adrestia.GetPath(PrepareVoucher.Coin)
 	if err != nil {
+		err = commonErrors.ErrorFillingPaymentInformation
 		return nil, err
 	}
-	feePaymentAddr := paymentAddr
+	paymentAddr := pathInfo.Address
+	feePaymentAddr := pathInfo.Address
 
 	//get email
 	email, err := vc.Hestia.GetUserInfo(uid)
@@ -84,19 +86,6 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		return nil, err
 	}
 
-	/*bitcouPrepareTx := models.PurchaseInfo{
-		TransactionID: newVoucherID,
-		ProductID:     int32(PrepareVoucher.VoucherType),
-		VariantID:     int32(voucherVariantInt),
-		PhoneNB:       int64(phoneNumber),
-	}
-
-	// get info from new bitcou voucher variant
-	/*voucherDetails, err := vc.Bitcou.GetTransactionInformationV2(bitcouPrepareTx)
-	if err != nil {
-		return nil, err
-	}*/
-
 	euroRate, err := vc.Obol.GetCoin2FIATRate(PrepareVoucher.Coin, "EUR")
 	if err != nil {
 		return nil, err
@@ -105,33 +94,22 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	//purchaseAmountEuro := voucherDetails.AmountEuro / 100
 	//test
 	purchaseAmountEuro := float64(110) / 100
-	// amount for the voucher in the coin
-	paymentAmountCoin := purchaseAmountEuro / euroRate
-	paymentAmount, err := amount.NewAmount(paymentAmountCoin)
-	if err != nil {
-		return nil, err
-	}
-	// fee
+	// Amounts for amount and fees in float representation
+	paymentAmount := decimal.NewFromFloat(purchaseAmountEuro / euroRate)
 	feePercentage := paymentCoinConfig.Vouchers.FeePercentage / float64(100)
-	feeAmount, err := amount.NewAmount(paymentAmount.ToNormalUnit() * feePercentage)
-	if err != nil {
-		return nil, err
-	}
-
+	feeAmount := paymentAmount.Mul(decimal.NewFromFloat(feePercentage))
 	// check if its a token to adjust to the amount
 	coinConfig, err := coinfactory.GetCoin(PrepareVoucher.Coin)
 	if err != nil {
 		return nil, err
 	}
 	if coinConfig.Info.Token && coinConfig.Info.Tag != "ETH" {
-		paymentAmount, err = amount.NewAmount(roundTo(paymentAmount.ToNormalUnit(), coinConfig.Info.Decimals))
-		if err != nil {
-			return nil, err
-		}
+		aux, _ := paymentAmount.Float64()
+		paymentAmount = decimal.NewFromFloat(roundTo(aux, coinConfig.Info.Decimals))
 	}
 
-	paymentInfo := models.PaymentInfo{Address: paymentAddr, Amount: int64(paymentAmount.ToUnit(amount.AmountSats))}
-	feeInfo := models.PaymentInfo{Address: feePaymentAddr, Amount: int64(feeAmount.ToUnit(amount.AmountSats))}
+	paymentInfo := models.PaymentInfo{Address: paymentAddr, Amount: paymentAmount.Mul(decimal.NewFromInt(1e8)).IntPart()}
+	feeInfo := models.PaymentInfo{Address: feePaymentAddr, Amount: feeAmount.Mul(decimal.NewFromInt(1e8)).IntPart()}
 	userPaymentInfo := models.PaymentInfo{Address: paymentAddr, Amount: paymentInfo.Amount + feeInfo.Amount}
 
 	// Validate that users hasn't bought more than 210 euro in vouchers on the last 24 hours.
@@ -153,13 +131,6 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 
 	if totalAmountEuro > 210.0 {
 		return nil, commonErrors.ErrorVoucherLimit
-	}
-
-	// exchange path
-	pathInfo, err := vc.Adrestia.GetPath(PrepareVoucher.Coin)
-	if err != nil {
-		err = commonErrors.ErrorFillingPaymentInformation
-		return nil, err
 	}
 
 	voucherInfo, err := vc.Hestia.GetVoucherInfoV2(PrepareVoucher.Country, strconv.Itoa(int(PrepareVoucher.ProductId)))
@@ -229,7 +200,7 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 		inTrade = append(inTrade, newTrade)
 	}
 	if len(inTrade) > 0 {
-		inTrade[0].Amount = amount.AmountType(storedVoucher.UserPayment.Amount).ToNormalUnit()
+		inTrade[0].Amount, _ = decimal.NewFromInt(storedVoucher.UserPayment.Amount).DivRound(decimal.NewFromInt(1e8), 8).Float64()
 	}
 
 	voucher := hestia.VoucherV2{
