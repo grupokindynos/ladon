@@ -61,7 +61,7 @@ func (p *ProcessorV2) handlePaymentProcessing(wg *sync.WaitGroup) {
 				ProductID:     int32(voucher.VoucherId),
 				VariantID:     int32(voucher.VariantId),
 				PhoneNB:       voucher.PhoneNumber,
-				Email:         "luiscorrea9614@gmail.com", // TODO REPLACE WITH USER'S EMAIL
+				Email:         voucher.Email,
 				KYC:           false,
 			})
 			if err != nil {
