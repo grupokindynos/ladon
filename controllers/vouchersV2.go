@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/grupokindynos/common/blockbook"
 	coinfactory "github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/common/coin-factory/coins"
@@ -86,16 +87,29 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		return nil, err
 	}
 
-	// TODO Get Price from Hestia
+	voucherInfo, err := vc.Hestia.GetVoucherInfoV2(PrepareVoucher.Country, strconv.Itoa(int(PrepareVoucher.ProductId)))
+	if err != nil {
+		return nil, err
+	}
 
+	variantIndex := -1
+	for i, variant := range voucherInfo.Variants {
+		if PrepareVoucher.VoucherVariant == variant.VariantID {
+			variantIndex = i
+			break
+		}
+	}
+	fmt.Println(variantIndex)
+
+	// TODO VALIDATE PRICE IS ALWAYS IN EURO
 	euroRate, err := vc.Obol.GetCoin2FIATRate(PrepareVoucher.Coin, "EUR")
 	if err != nil {
 		return nil, err
 	}
 
-	//purchaseAmountEuro := voucherDetails.AmountEuro / 100
-	//test
 	purchaseAmountEuro := float64(110) / 100
+	// purchaseAmountEuro := voucherInfo.Variants[variantIndex].Price / 100 // TODO This is for production
+
 	// Amounts for amount and fees in float representation
 	paymentAmount := decimal.NewFromFloat(purchaseAmountEuro / euroRate)
 	feePercentage := paymentCoinConfig.Vouchers.FeePercentage / float64(100)
@@ -133,11 +147,6 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 
 	if totalAmountEuro > 210.0 {
 		return nil, commonErrors.ErrorVoucherLimit
-	}
-
-	voucherInfo, err := vc.Hestia.GetVoucherInfoV2(PrepareVoucher.Country, strconv.Itoa(int(PrepareVoucher.ProductId)))
-	if err != nil {
-		return nil, err
 	}
 
 	// Build the response
