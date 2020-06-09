@@ -241,7 +241,7 @@ func (p *Processor) handleRefundTotalVouchers(wg *sync.WaitGroup) {
 				continue
 			}
 		} else {
-			am, _ := decimal.NewFromInt(voucher.PaymentData.Amount).DivRound(decimal.NewFromInt(1e8), 8).Float64()
+			am, _ := decimal.NewFromInt(voucher.FeePayment.Amount).DivRound(decimal.NewFromInt(1e8), 8).Float64()
 			feePaymentBody := plutus.SendAddressBodyReq{
 				Address: voucher.RefundFeeAddr,
 				Coin:    "POLIS",
