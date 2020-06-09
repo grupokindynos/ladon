@@ -61,6 +61,7 @@ func (p *Processor) handlePendingVouchers(wg *sync.WaitGroup) {
 	for _, v := range vouchers {
 		if v.Timestamp+timeoutAwaiting < time.Now().Unix() {
 			v.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
+			v.Message = "Timeout Pending Vouchers"
 			_, err = p.Hestia.UpdateVoucher(v)
 			if err != nil {
 				fmt.Println("Unable to update voucher confirmations: " + err.Error())
@@ -91,6 +92,7 @@ func (p *Processor) handleConfirmedVouchers(wg *sync.WaitGroup) {
 			log.Println("handleConfirmingVouchers::submitBitcouPayment::", err)
 			fmt.Println("Unable to submit bitcou payment, should refund the user: " + err.Error())
 			v.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundTotal)
+			v.Message = "error paying bitcou " + err.Error()
 			_, err = p.Hestia.UpdateVoucher(v)
 			if err != nil {
 				fmt.Println("Unable to update voucher bitcou payment: " + err.Error())
