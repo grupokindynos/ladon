@@ -5,7 +5,7 @@ import (
 	amodels "github.com/grupokindynos/adrestia-go/models"
 	coinfactory "github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/common/hestia"
-	models "github.com/grupokindynos/ladon/models"
+	"github.com/grupokindynos/ladon/models"
 	"github.com/grupokindynos/ladon/services"
 	"log"
 	"strconv"
@@ -57,20 +57,20 @@ func (p *ProcessorV2) handlePaymentProcessing(wg *sync.WaitGroup) {
 		}
 		log.Println("SIMULATING BITCOU PROCESS FOR ", voucher.Id)
 		if confirmations >= coinInfo.BlockchainInfo.MinConfirmations {
-			res := models.PurchaseInfoResponseV2{
+			/*res := models.PurchaseInfoResponseV2{
 				TxId:       "TEST-TXID",
 				AmountEuro: "3",
 				RedeemData: "YOU WILL RECEIVE THIS CODE VIA TBD",
 			}
-			err = nil
-			/*res, err := p.Bitcou.GetTransactionInformationV2(models.PurchaseInfo{
+			err = nil*/
+			res, err := p.Bitcou.GetTransactionInformationV2(models.PurchaseInfo{
 				TransactionID: voucher.Id,
 				ProductID:     int32(voucher.VoucherId),
 				VariantID:     int32(voucher.VariantId),
 				PhoneNB:       voucher.PhoneNumber,
 				Email:         voucher.Email,
 				KYC:           false,
-			})*/
+			})
 			if err != nil {
 				log.Println("handlePaymentProcessing - GetTransactionInformation - " + err.Error())
 				voucher.RedeemCode = err.Error()
