@@ -47,12 +47,12 @@ func (p *ProcessorV2) handlePaymentProcessing(wg *sync.WaitGroup) {
 		}
 		err = checkTxId(&voucher.UserPayment)
 		if err != nil {
-			log.Println("ProcessorV2::handlePaymentProcessing::checkTxId::", voucher.UserPayment, " ", err.Error())
+			log.Println("ProcessorV2::handlePaymentProcessing::checkTxId::", voucher.Id, " ", voucher.UserPayment, " ", err.Error())
 			continue
 		}
 		confirmations, err := getConfirmations(coinInfo, voucher.UserPayment.Txid)
 		if err != nil {
-			log.Println("handlePaymentProcessing - getConfirmations - " + err.Error())
+			log.Println("handlePaymentProcessing - getConfirmations - ", voucher.Id, " ", err.Error())
 			continue
 		}
 		log.Println("SIMULATING BITCOU PROCESS FOR ", voucher.Id)
