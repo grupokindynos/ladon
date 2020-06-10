@@ -181,6 +181,8 @@ github.com/grupokindynos/common v0.0.0-20200608210421-a00121e41d6f h1:kQrZiaOk7n
 github.com/grupokindynos/common v0.0.0-20200608210421-a00121e41d6f/go.mod h1:lCXEoFdFmLhbC6bGfhkByFYv6ndS+j+qr+SUBZ4ryx0=
 github.com/grupokindynos/common v0.0.0-20200610142514-c0cfa6303f2d h1:YaGzSR5HtDzhN0DZzAt7bCoH4+Dqu77zWOgpaqHx1dc=
 github.com/grupokindynos/common v0.0.0-20200610142514-c0cfa6303f2d/go.mod h1:lCXEoFdFmLhbC6bGfhkByFYv6ndS+j+qr+SUBZ4ryx0=
+github.com/grupokindynos/common v0.0.0-20200610165125-1573e4cc660a h1:rbDgw0lq2exo6+2yfL6zzoZ0uHSUwV9qdKZrl0rBUs0=
+github.com/grupokindynos/common v0.0.0-20200610165125-1573e4cc660a/go.mod h1:lCXEoFdFmLhbC6bGfhkByFYv6ndS+j+qr+SUBZ4ryx0=
 github.com/grupokindynos/go-binance v0.0.0-20200521174839-befa530034d2 h1:tR0HXvKN67jYqN7d0w5fHvNqfuGcWWvFk7HQ6PWJEG8=
 github.com/grupokindynos/go-binance v0.0.0-20200521174839-befa530034d2/go.mod h1:t0HMFWanG5UtRfZo/2Hc4KO4sbrJSKQoOrlintfiVTM=
 github.com/hashicorp/consul/api v1.3.0/go.mod h1:MmDNSzIMUjNpY/mQ398R4bk2FnqQLoPndWW5VkKPlCE=

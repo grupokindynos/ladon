@@ -100,6 +100,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		}
 	}
 	fmt.Println(variantIndex)
+	PrepareVoucher.Valid = int32(voucherInfo.Valid)
 
 	// TODO VALIDATE PRICE IS ALWAYS IN EURO
 	euroRate, err := vc.Obol.GetCoin2FIATRate(PrepareVoucher.Coin, "EUR")
@@ -169,6 +170,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		ProviderId:     providerIdInt,
 		Email:          email,
 		ShippingMethod: voucherInfo.Shipping.GetEnum(),
+		Valid: PrepareVoucher.Valid,
 	}
 
 	vc.AddVoucherToMapV2(uid, prepareVoucher)
@@ -246,6 +248,7 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 		Email:          storedVoucher.Email,
 		ShippingMethod: storedVoucher.ShippingMethod,
 		Message: "",
+		Valid: storedVoucher.Valid,
 	}
 
 	vc.RemoveVoucherFromMapV2(uid)

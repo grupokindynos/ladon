@@ -80,6 +80,7 @@ func (p *ProcessorV2) handlePaymentProcessing(wg *sync.WaitGroup) {
 				voucher.BitcouTxId = res.TxId
 				voucher.RedeemCode = res.RedeemData
 				voucher.AmountEuro = amountEuro
+				voucher.FulfilledTime = time.Now().Unix()
 				voucher.Status = hestia.VoucherStatusV2Redeemed
 			}
 			_, err = p.Hestia.UpdateVoucherV2(voucher)
