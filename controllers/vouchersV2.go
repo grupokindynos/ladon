@@ -245,6 +245,7 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 		},
 		Email:          storedVoucher.Email,
 		ShippingMethod: storedVoucher.ShippingMethod,
+		Message: "",
 	}
 
 	vc.RemoveVoucherFromMapV2(uid)
@@ -267,6 +268,11 @@ func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2,
 	valid, err := vc.Plutus.ValidateRawTx(body)
 	if err != nil || !valid {
 		// If fail and coin is POLIS mark as error
+		if err != nil {
+			voucherData.Message = "decode&checkTxV2:: could not validate RawTx: " + err.Error()
+		} else {
+			voucherData.Message = "decode&checkTxV2:: could not validate RawTx: tx not valid"
+		}
 		voucherData.Status = hestia.VoucherStatusV2Error
 		_, err = vc.Hestia.UpdateVoucherV2(voucherData)
 		if err != nil {
@@ -277,6 +283,7 @@ func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2,
 	// Broadcast rawTx
 	coinConfig, err := coinfactory.GetCoin(voucherData.UserPayment.Coin)
 	if err != nil {
+		voucherData.Message = "error getting payment coin info: " + err.Error()
 		voucherData.Status = hestia.VoucherStatusV2Error
 		_, err = vc.Hestia.UpdateVoucherV2(voucherData)
 		if err != nil {
@@ -286,6 +293,7 @@ func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2,
 	}
 	paymentTxid, err, _ := vc.broadCastTxV2(coinConfig, rawTx)
 	if err != nil {
+		voucherData.Message = "error broadcasting transaction: " + err.Error()
 		voucherData.Status = hestia.VoucherStatusV2Error
 		_, err = vc.Hestia.UpdateVoucherV2(voucherData)
 		if err != nil {
