@@ -10,7 +10,6 @@ import (
 	commonErrors "github.com/grupokindynos/common/errors"
 	"github.com/grupokindynos/common/hestia"
 	"github.com/grupokindynos/common/obol"
-	"github.com/grupokindynos/common/plutus"
 	"github.com/grupokindynos/common/utils"
 	"github.com/grupokindynos/ladon/models"
 	"github.com/grupokindynos/ladon/services"
@@ -260,12 +259,12 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 
 func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2, storedVoucherData models.PrepareVoucherInfoV2, rawTx string) {
 	// Validate Payment RawTx
-	body := plutus.ValidateRawTxReq{
+	/*body := plutus.ValidateRawTxReq{
 		Coin:    voucherData.UserPayment.Coin,
 		RawTx:   rawTx,
 		Amount:  voucherData.UserPayment.Amount,
 		Address: voucherData.UserPayment.Address,
-	}
+	}*/
 	/*valid, err := vc.Plutus.ValidateRawTx(body)
 	if err != nil || !valid {
 		// If fail and coin is POLIS mark as error
