@@ -266,7 +266,7 @@ func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2,
 		Amount:  voucherData.UserPayment.Amount,
 		Address: voucherData.UserPayment.Address,
 	}
-	valid, err := vc.Plutus.ValidateRawTx(body)
+	/*valid, err := vc.Plutus.ValidateRawTx(body)
 	if err != nil || !valid {
 		// If fail and coin is POLIS mark as error
 		if err != nil {
@@ -281,7 +281,7 @@ func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2,
 			return
 		}
 		return
-	}
+	}*/
 	// Broadcast rawTx
 	coinConfig, err := coinfactory.GetCoin(voucherData.UserPayment.Coin)
 	if err != nil {
