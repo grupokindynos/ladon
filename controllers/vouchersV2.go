@@ -15,6 +15,7 @@ import (
 	"github.com/grupokindynos/ladon/models"
 	"github.com/grupokindynos/ladon/services"
 	"github.com/shopspring/decimal"
+	"log"
 	"strconv"
 	"sync"
 	"time"
@@ -273,6 +274,7 @@ func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2,
 		} else {
 			voucherData.Message = "decode&checkTxV2:: could not validate RawTx: tx not valid"
 		}
+		log.Println(voucherData.Message)
 		voucherData.Status = hestia.VoucherStatusV2Error
 		_, err = vc.Hestia.UpdateVoucherV2(voucherData)
 		if err != nil {
@@ -284,6 +286,7 @@ func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2,
 	coinConfig, err := coinfactory.GetCoin(voucherData.UserPayment.Coin)
 	if err != nil {
 		voucherData.Message = "error getting payment coin info: " + err.Error()
+		log.Println(voucherData.Message)
 		voucherData.Status = hestia.VoucherStatusV2Error
 		_, err = vc.Hestia.UpdateVoucherV2(voucherData)
 		if err != nil {
@@ -294,6 +297,7 @@ func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2,
 	paymentTxid, err, _ := vc.broadCastTxV2(coinConfig, rawTx)
 	if err != nil {
 		voucherData.Message = "error broadcasting transaction: " + err.Error()
+		log.Println(voucherData.Message)
 		voucherData.Status = hestia.VoucherStatusV2Error
 		_, err = vc.Hestia.UpdateVoucherV2(voucherData)
 		if err != nil {
