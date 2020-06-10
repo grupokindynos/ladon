@@ -56,14 +56,20 @@ func (p *ProcessorV2) handlePaymentProcessing(wg *sync.WaitGroup) {
 			continue
 		}
 		if confirmations >= coinInfo.BlockchainInfo.MinConfirmations {
-			res, err := p.Bitcou.GetTransactionInformationV2(models.PurchaseInfo{
+			res := models.PurchaseInfoResponseV2{
+				TxId:       "TEST-TXID",
+				AmountEuro: "3",
+				RedeemData: "YOU WILL RECEIVE THIS CODE VIA",
+			}
+			err = nil
+			/*res, err := p.Bitcou.GetTransactionInformationV2(models.PurchaseInfo{
 				TransactionID: voucher.Id,
 				ProductID:     int32(voucher.VoucherId),
 				VariantID:     int32(voucher.VariantId),
 				PhoneNB:       voucher.PhoneNumber,
 				Email:         voucher.Email,
 				KYC:           false,
-			})
+			})*/
 			if err != nil {
 				log.Println("handlePaymentProcessing - GetTransactionInformation - " + err.Error())
 				voucher.RedeemCode = err.Error()
