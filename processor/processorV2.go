@@ -55,11 +55,12 @@ func (p *ProcessorV2) handlePaymentProcessing(wg *sync.WaitGroup) {
 			log.Println("handlePaymentProcessing - getConfirmations - " + err.Error())
 			continue
 		}
+		log.Println("SIMULATING BITCOU PROCESS FOR ", voucher.Id)
 		if confirmations >= coinInfo.BlockchainInfo.MinConfirmations {
 			res := models.PurchaseInfoResponseV2{
 				TxId:       "TEST-TXID",
 				AmountEuro: "3",
-				RedeemData: "YOU WILL RECEIVE THIS CODE VIA",
+				RedeemData: "YOU WILL RECEIVE THIS CODE VIA TBD",
 			}
 			err = nil
 			/*res, err := p.Bitcou.GetTransactionInformationV2(models.PurchaseInfo{
