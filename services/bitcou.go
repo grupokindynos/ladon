@@ -3,9 +3,11 @@ package services
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/grupokindynos/ladon/models"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -123,15 +125,21 @@ func (bs *BitcouRequests) GetTransactionInformationV2(purchaseInfo models.Purcha
 		return models.PurchaseInfoResponseV2{}, err
 	}
 	var purchaseData models.PurchaseInfoResponseV2
-	dataBytes, err := json.Marshal(response.Data[0])
-	if err != nil {
-		return models.PurchaseInfoResponseV2{}, err
+	if len(response.Data) >= 1 {
+		dataBytes, err := json.Marshal(response.Data[0])
+		if err != nil {
+			return models.PurchaseInfoResponseV2{}, err
+		}
+		err = json.Unmarshal(dataBytes, &purchaseData)
+		if err != nil {
+			return models.PurchaseInfoResponseV2{}, err
+		}
+		return purchaseData, nil
+	} else {
+		log.Println("GetTransactionInformationV2:: bad response", string(contents))
+		return purchaseData, errors.New("bad response from Bitcou")
 	}
-	err = json.Unmarshal(dataBytes, &purchaseData)
-	if err != nil {
-		return models.PurchaseInfoResponseV2{}, err
-	}
-	return purchaseData, nil
+
 }
 
 func NewBitcouService(devMode bool, version int) *BitcouRequests {
