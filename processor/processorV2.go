@@ -55,7 +55,7 @@ func (p *ProcessorV2) handlePaymentProcessing(wg *sync.WaitGroup) {
 			log.Println("handlePaymentProcessing - getConfirmations - ", voucher.Id, " ", err.Error())
 			continue
 		}
-		log.Println("SIMULATING BITCOU PROCESS FOR ", voucher.Id)
+		// log.Println("SIMULATING BITCOU PROCESS FOR ", voucher.Id)
 		if confirmations >= coinInfo.BlockchainInfo.MinConfirmations {
 			/*res := models.PurchaseInfoResponseV2{
 				TxId:       "TEST-TXID",

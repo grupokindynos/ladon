@@ -108,8 +108,12 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		return nil, err
 	}
 
-	purchaseAmountEuro := float64(110) / 100
-	// purchaseAmountEuro := voucherInfo.Variants[variantIndex].Price / 100 // TODO This is for production
+	var purchaseAmountEuro float64
+	if uid == "gwY3fy79LZMtUbSNBDoom7llGfh2" {
+		purchaseAmountEuro = float64(110) / 100
+	} else {
+		purchaseAmountEuro = voucherInfo.Variants[variantIndex].Price / 100
+	}
 
 	// Amounts for amount and fees in float representation
 	paymentAmount := decimal.NewFromFloat(purchaseAmountEuro / euroRate)
