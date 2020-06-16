@@ -111,6 +111,10 @@ type PurchaseInfoResponseV2 struct {
 	RedeemData string  `json:"redeem_data"`
 }
 
+type AccountInfo struct {
+	Amount int64        `json:"amount"`
+}
+
 type PurchaseInfoResponse struct {
 	Amount              float64 `json:"amount"`
 	AmountEuro          string  `json:"amount_euro"`

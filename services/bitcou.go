@@ -139,7 +139,45 @@ func (bs *BitcouRequests) GetTransactionInformationV2(purchaseInfo models.Purcha
 		log.Println("GetTransactionInformationV2:: bad response", string(contents))
 		return purchaseData, errors.New("bad response from Bitcou")
 	}
+}
 
+func (bs *BitcouRequests) GetAccountBalanceV2() (models.AccountInfo, error) {
+	url := bs.BitcouURL + "account/balance"
+	token := "Bearer " + bs.BitcouToken
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return models.AccountInfo{}, err
+	}
+	req.Header.Add("Authorization", token)
+	client := &http.Client{Timeout: 60 * time.Second}
+	res, err := client.Do(req)
+	if err != nil {
+		return models.AccountInfo{}, err
+	}
+	defer func() {
+		_ = res.Body.Close()
+	}()
+	contents, _ := ioutil.ReadAll(res.Body)
+	var response models.BitcouBaseResponse
+	err = json.Unmarshal(contents, &response)
+	if err != nil {
+		return models.AccountInfo{}, err
+	}
+	var purchaseData models.AccountInfo
+	if len(response.Data) >= 1 {
+		dataBytes, err := json.Marshal(response.Data[0])
+		if err != nil {
+			return models.AccountInfo{}, err
+		}
+		err = json.Unmarshal(dataBytes, &purchaseData)
+		if err != nil {
+			return models.AccountInfo{}, err
+		}
+		return purchaseData, nil
+	} else {
+		log.Println("GetTransactionInformationV2:: bad response", string(contents))
+		return purchaseData, errors.New("bad response from Bitcou")
+	}
 }
 
 func NewBitcouService(devMode bool, version int) *BitcouRequests {

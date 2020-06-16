@@ -135,9 +135,9 @@ func ApplyRoutes(r *gin.Engine) {
 	}
 	apiV2 := r.Group("/v2/")
 	{
+		apiV2.GET("/status", func(context *gin.Context) { ValidateRequest(context, vouchersCtrlV2.StatusV2) })
 		apiV2.POST("/prepare", func(context *gin.Context) { ValidateRequest(context, vouchersCtrlV2.PrepareV2) })
 		apiV2.POST("/new", func(context *gin.Context) { ValidateRequest(context, vouchersCtrlV2.StoreV2) })
-
 	}
 	r.NoRoute(func(c *gin.Context) {
 		c.String(http.StatusNotFound, "Not Found")
