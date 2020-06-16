@@ -126,6 +126,20 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		purchaseAmountEuro = voucherInfo.Variants[variantIndex].Price / 100
 	}
 
+	balance, err := vc.Bitcou.GetAccountBalanceV2()
+	if err != nil {
+		return nil, err
+	}
+	if purchaseAmountEuro > float64(balance.Amount)/100 {
+		log.Println("not enough balance in floating account to fulfill request")
+		return nil, commonErrors.ErrorNotEnoughDash // TODO RENAME ERROR
+	}
+
+	if 100 > float64(balance.Amount)/100 {
+		log.Println("balance below 100 EURO please refill")
+		// TODO Configure telegram alert || automatic refill
+	}
+
 	// Amounts for amount and fees in float representation
 	paymentAmount := decimal.NewFromFloat(purchaseAmountEuro / euroRate)
 	feePercentage := paymentCoinConfig.Vouchers.FeePercentage / float64(100)
