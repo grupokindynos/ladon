@@ -62,6 +62,41 @@ func (bs *BitcouRequests) GetPhoneTopUpList(phoneNb string) ([]int, error) {
 	return productIDs, nil
 }
 
+func (bs *BitcouRequests) GetPhoneTopUpListV2(phoneNb string) ([]int, error) {
+	url := bs.BitcouURL + "voucher/availableVouchersByPhoneNb"
+	log.Println("url phonetopupv2 ", url)
+	token := "Bearer " + bs.BitcouToken
+	log.Println("url phonetopupv2 ", token)
+	body := models.BitcouPhoneBodyReq{PhoneNumber: phoneNb}
+	byteBody, err := json.Marshal(body)
+	postBody := bytes.NewBuffer(byteBody)
+	req, err := http.NewRequest("POST", url, postBody)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Authorization", token)
+	client := &http.Client{Timeout: 5 * time.Second}
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = res.Body.Close()
+	}()
+	contents, _ := ioutil.ReadAll(res.Body)
+	var response models.BitcouPhoneResponseList
+	err = json.Unmarshal(contents, &response)
+	if err != nil {
+		return nil, err
+	}
+	var productIDs []int
+	for _, product := range response.Data {
+		productIDs = append(productIDs, product.ProductID)
+	}
+	return productIDs, nil
+}
+
+
 func (bs *BitcouRequests) GetTransactionInformation(purchaseInfo models.PurchaseInfo) (models.PurchaseInfoResponse, error) {
 	url := bs.BitcouURL + "voucher/transaction"
 	token := "Bearer " + bs.BitcouToken

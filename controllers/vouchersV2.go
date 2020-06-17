@@ -32,7 +32,7 @@ type VouchersControllerV2 struct {
 }
 
 func (vc *VouchersControllerV2) StatusV2(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
-	if uid == "gwY3fy79LZMtUbSNBDoom7llGfh2" || uid == "yEF8YP4Ou9aCEqSPQPqDslviGfT2" || uid == "TO3FrEneQcf2RN2QdL8paY6IvBF2" || uid == "YIrr2a42lcZi9djePQH7OrLbGzs1"{
+	if uid == "gwY3fy79LZMtUbSNBDoom7llGfh2" || uid == "yEF8YP4Ou9aCEqSPQPqDslviGfT2" || uid == "TO3FrEneQcf2RN2QdL8paY6IvBF2" || uid == "YIrr2a42lcZi9djePQH7OrLbGzs1" {
 		return true, nil
 	}
 	status, err := vc.Hestia.GetVouchersStatus()
@@ -287,6 +287,14 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 	}
 	go vc.decodeAndCheckTxV2(voucher, storedVoucher, voucherPayments.RawTx)
 	return voucherId, nil
+}
+
+func (vc *VouchersControllerV2) GetListForPhoneV2(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
+	vouchersAvailable, err := vc.Bitcou.GetPhoneTopUpListV2(phoneNb)
+	if err != nil {
+		return nil, err
+	}
+	return vouchersAvailable, nil
 }
 
 func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2, storedVoucherData models.PrepareVoucherInfoV2, rawTx string) {
