@@ -32,7 +32,7 @@ type VouchersControllerV2 struct {
 }
 
 func (vc *VouchersControllerV2) StatusV2(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
-	if uid == "gwY3fy79LZMtUbSNBDoom7llGfh2" || uid == "yEF8YP4Ou9aCEqSPQPqDslviGfT2" || uid == "TO3FrEneQcf2RN2QdL8paY6IvBF2" || uid == "YIrr2a42lcZi9djePQH7OrLbGzs1" || uid == "Egc6XKdkmigtWzuyq0YordjWODq1" {
+	if uid == "gwY3fy79LZMtUbSNBDoom7llGfh2" || uid == "yEF8YP4Ou9aCEqSPQPqDslviGfT2" || uid == "TO3FrEneQcf2RN2QdL8paY6IvBF2" || uid == "YIrr2a42lcZi9djePQH7OrLbGzs1" || uid == "Egc6XKdkmigtWzuyq0YordjWODq1" || uid == "HMOXcoZJxfMKFca9IukZIaqI2Z02" {
 		return true, nil
 	}
 	status, err := vc.Hestia.GetVouchersStatus()
