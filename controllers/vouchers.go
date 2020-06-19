@@ -18,6 +18,7 @@ import (
 
 	"github.com/grupokindynos/common/blockbook"
 
+	amount "github.com/btcsuite/btcutil"
 	"github.com/gin-gonic/gin"
 	coinfactory "github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/common/coin-factory/coins"
@@ -31,7 +32,6 @@ import (
 	"github.com/grupokindynos/common/utils"
 	"github.com/grupokindynos/ladon/models"
 	"github.com/grupokindynos/ladon/services"
-	"github.com/olympus-protocol/ogen/utils/amount"
 )
 
 type VouchersController struct {
@@ -45,7 +45,7 @@ type VouchersController struct {
 }
 
 func (vc *VouchersController) Status(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
-	if uid == "gwY3fy79LZMtUbSNBDoom7llGfh2" || uid == "yEF8YP4Ou9aCEqSPQPqDslviGfT2"{
+	if uid == "gwY3fy79LZMtUbSNBDoom7llGfh2" || uid == "yEF8YP4Ou9aCEqSPQPqDslviGfT2" || uid == "TO3FrEneQcf2RN2QdL8paY6IvBF2" || uid == "YIrr2a42lcZi9djePQH7OrLbGzs1"{
 		return true, nil
 
 	}
@@ -136,8 +136,6 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		log.Println("ERROR::Prepare::GetTransactionInformation::", err, " ", bitcouPrepareTx)
 		return nil, err
 	}
-	log.Println("COINPAYMENTS ADDRESS", purchaseRes.Address)
-	// purchaseRes.Address = "XjeoLasq8Lw3CL4qY7v6LEqG9Prvnkzg1C"
 
 	purchaseAmount, err := amount.NewAmount(purchaseRes.Amount)
 	if err != nil {
@@ -150,7 +148,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	}
 
 	purchaseAmountEuro = purchaseAmountEuro / 100
-	euroRate := purchaseAmountEuro / purchaseAmount.ToNormalUnit()
+	euroRate := purchaseAmountEuro / purchaseAmount.ToBTC()
 
 	// Get the paying coin rates
 	var paymentCoinRate float64
@@ -170,7 +168,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 	}
 	// Converted amount of the total payed amount on dash to the other crypto.
 	// For user usage.
-	paymentAmount, err := amount.NewAmount(purchaseAmount.ToNormalUnit() / paymentCoinRateAmount.ToNormalUnit())
+	paymentAmount, err := amount.NewAmount(purchaseAmount.ToBTC() / paymentCoinRateAmount.ToBTC())
 	if err != nil {
 		return nil, err
 	}
@@ -181,16 +179,16 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		return nil, err
 	}
 	if coinConfig.Info.Token && coinConfig.Info.Tag != "ETH" {
-		paymentAmount, err = amount.NewAmount(roundTo(paymentAmount.ToNormalUnit(), coinConfig.Info.Decimals))
+		paymentAmount, err = amount.NewAmount(roundTo(paymentAmount.ToBTC(), coinConfig.Info.Decimals))
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	paymentInfo := models.PaymentInfo{Address: paymentAddr, Amount: int64(paymentAmount.ToUnit(amount.AmountSats))}
+	paymentInfo := models.PaymentInfo{Address: paymentAddr, Amount: int64(paymentAmount.ToUnit(amount.AmountSatoshi))}
 	// DASH amount on sats to pay Bitcou.
 	// For internal usage
-	bitcouPaymentInfo := models.PaymentInfo{Address: purchaseRes.Address, Amount: int64(purchaseAmount.ToUnit(amount.AmountSats))}
+	bitcouPaymentInfo := models.PaymentInfo{Address: purchaseRes.Address, Amount: int64(purchaseAmount.ToUnit(amount.AmountSatoshi))}
 
 	// Get our current dash balance
 	balance, err := vc.Plutus.GetWalletBalance("DASH")
@@ -204,7 +202,7 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 		return nil, err
 	}
 
-	dashBalance := int64(dashAmount.ToUnit(amount.AmountSats))
+	dashBalance := int64(dashAmount.ToUnit(amount.AmountSatoshi))
 
 	// Check if we have enough dash to pay the voucher to bitcou
 	if PrepareVoucher.Coin != "DASH" && dashBalance < bitcouPaymentInfo.Amount {
@@ -226,19 +224,19 @@ func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid stri
 			return nil, err
 		}
 		feePercentage := paymentCoinConfig.Vouchers.FeePercentage / float64(100)
-		feeAmount, err := amount.NewAmount((purchaseAmount.ToNormalUnit() / polisRateAmount.ToNormalUnit()) * feePercentage) // purchaseAmount in DASH gets converted to Polis. This is the fee payment in Polis.
+		feeAmount, err := amount.NewAmount((purchaseAmount.ToBTC() / polisRateAmount.ToBTC()) * feePercentage) // purchaseAmount in DASH gets converted to Polis. This is the fee payment in Polis.
 		if err != nil {
 			return nil, err
 		}
-		feeAmountEuro = feeAmount.ToNormalUnit() * polisRateAmount.ToNormalUnit() * euroRate
+		feeAmountEuro = feeAmount.ToBTC() * polisRateAmount.ToBTC() * euroRate
 
 		// POLIS amount on sats to pay the total fee, this must be at least 4% of the purchased amount for all coins except for Polis.
 		// For user usage.
-		feeInfo = models.PaymentInfo{Address: feePaymentAddr, Amount: int64(feeAmount.ToUnit(amount.AmountSats))}
+		feeInfo = models.PaymentInfo{Address: feePaymentAddr, Amount: int64(feeAmount.ToUnit(amount.AmountSatoshi))}
 		// POLIS amount on sats to pay for the voucher, this must be 4% of the purchased amount for all coins except for Polis.
 		// For internal usage
 		bitcouFeePercentageOfTotalFee := float64(4) / float64(paymentCoinConfig.Vouchers.FeePercentage)
-		bitcouFeePaymentInfo = models.PaymentInfo{Address: "PNTh62FHi2hnSuFwQyjL3ofiVLvrZ9Gzph", Amount: int64(feeAmount.ToUnit(amount.AmountSats) * bitcouFeePercentageOfTotalFee)}
+		bitcouFeePaymentInfo = models.PaymentInfo{Address: "PNTh62FHi2hnSuFwQyjL3ofiVLvrZ9Gzph", Amount: int64(feeAmount.ToUnit(amount.AmountSatoshi) * bitcouFeePercentageOfTotalFee)}
 		// bitcouFeePaymentInfo.Address = "PKrYkpxV4qWgCKkiK3ubyCGsRa8MLQW4yu"
 	} else {
 		// No Fee if user is paying with POLIS
@@ -516,11 +514,11 @@ func (vc *VouchersController) Update(c *gin.Context) {
 	}
 	// Submit Bitcou Fee
 	if storedVoucherInfo.PaymentData.Coin != "POLIS" {
-		amountHand := amount.AmountType(storedVoucherInfo.BitcouFeePaymentData.Amount)
+		amountHand, _ := amount.NewAmount(float64(storedVoucherInfo.BitcouFeePaymentData.Amount))
 		bitcouPayment := plutus.SendAddressBodyReq{
 			Address: storedVoucherInfo.BitcouFeePaymentData.Address,
 			Coin:    "POLIS",
-			Amount:  amountHand.ToNormalUnit(),
+			Amount:  amountHand.ToBTC(),
 		}
 		txid, err := vc.Plutus.SubmitPayment(bitcouPayment)
 		if err != nil {

@@ -10,7 +10,7 @@ import (
 	"github.com/grupokindynos/common/tokens/mrt"
 	"github.com/grupokindynos/common/tokens/mvt"
 	"github.com/grupokindynos/ladon/services"
-	"github.com/olympus-protocol/ogen/utils/amount"
+	"github.com/shopspring/decimal"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -61,6 +61,7 @@ func (p *Processor) handlePendingVouchers(wg *sync.WaitGroup) {
 	for _, v := range vouchers {
 		if v.Timestamp+timeoutAwaiting < time.Now().Unix() {
 			v.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusError)
+			v.Message = "Timeout Pending Vouchers"
 			_, err = p.Hestia.UpdateVoucher(v)
 			if err != nil {
 				fmt.Println("Unable to update voucher confirmations: " + err.Error())
@@ -91,6 +92,7 @@ func (p *Processor) handleConfirmedVouchers(wg *sync.WaitGroup) {
 			log.Println("handleConfirmingVouchers::submitBitcouPayment::", err)
 			fmt.Println("Unable to submit bitcou payment, should refund the user: " + err.Error())
 			v.Status = hestia.GetVoucherStatusString(hestia.VoucherStatusRefundTotal)
+			v.Message = "error paying bitcou " + err.Error()
 			_, err = p.Hestia.UpdateVoucher(v)
 			if err != nil {
 				fmt.Println("Unable to update voucher bitcou payment: " + err.Error())
@@ -144,12 +146,12 @@ func (p *Processor) handleConfirmingVouchers(wg *sync.WaitGroup) {
 			}
 			err = checkTxId(&v.FeePayment)
 			if err != nil {
-				fmt.Println("Unable to get fee txId " + err.Error())
+				log.Println("Processor::handlePaymentProcessing::checkTxId::", v.PaymentData, " ", v.ID, " ", err.Error())
 				continue
 			}
 			feeConfirmations, err := getConfirmations(feeCoinConfig, v.FeePayment.Txid)
 			if err != nil {
-				fmt.Println("Unable to get fee coin confirmations: " + err.Error())
+				log.Println("Processor::handlePaymentProcessing::getConfirmations::", v.PaymentData, " ", err.Error())
 				continue
 			}
 			v.FeePayment.Confirmations = int32(feeConfirmations)
@@ -166,12 +168,12 @@ func (p *Processor) handleConfirmingVouchers(wg *sync.WaitGroup) {
 		}
 		err = checkTxId(&v.PaymentData)
 		if err != nil {
-			fmt.Println("Unable to get txId " + err.Error())
+			log.Println("Processor::handlePaymentProcessing::checkTxId::", v.PaymentData, " ", v.ID, " ", err.Error())
 			continue
 		}
 		paymentConfirmations, err := getConfirmations(paymentCoinConfig, v.PaymentData.Txid)
 		if err != nil {
-			fmt.Println("Unable to get payment coin confirmations: " + err.Error())
+			log.Println("Processor::handlePaymentProcessing::getConfirmations::", v.PaymentData, " ", err.Error())
 			continue
 		}
 		v.PaymentData.Confirmations = int32(paymentConfirmations)
@@ -190,14 +192,15 @@ func (p *Processor) handleRefundFeeVouchers(wg *sync.WaitGroup) {
 	defer wg.Done()
 	vouchers, err := p.getRefundFeeVouchers()
 	if err != nil {
-		fmt.Println("Refund Fee vouchers processor finished with errors: " + err.Error())
+		log.Println("Processor::handlePaymentProcessing::getRefundFeeVouchers::", err.Error())
 		return
 	}
 	for _, voucher := range vouchers {
+		am, _ := decimal.NewFromInt(voucher.PaymentData.Amount).DivRound(decimal.NewFromInt(1e8), 8).Float64()
 		paymentBody := plutus.SendAddressBodyReq{
 			Address: voucher.RefundFeeAddr,
 			Coin:    "POLIS",
-			Amount:  amount.AmountType(voucher.FeePayment.Amount).ToNormalUnit(),
+			Amount:  am,
 		}
 		_, err := p.Plutus.SubmitPayment(paymentBody)
 		if err != nil {
@@ -221,11 +224,12 @@ func (p *Processor) handleRefundTotalVouchers(wg *sync.WaitGroup) {
 		return
 	}
 	for _, voucher := range vouchers {
+		am, _ := decimal.NewFromInt(voucher.PaymentData.Amount).DivRound(decimal.NewFromInt(1e8), 8).Float64()
 		if voucher.PaymentData.Coin == "POLIS" {
 			paymentBody := plutus.SendAddressBodyReq{
 				Address: voucher.RefundAddr,
 				Coin:    voucher.PaymentData.Coin,
-				Amount:  amount.AmountType(voucher.PaymentData.Amount).ToNormalUnit(),
+				Amount:  am,
 			}
 			_, err = p.Plutus.SubmitPayment(paymentBody)
 			if err != nil {
@@ -239,10 +243,11 @@ func (p *Processor) handleRefundTotalVouchers(wg *sync.WaitGroup) {
 				continue
 			}
 		} else {
+			am, _ := decimal.NewFromInt(voucher.FeePayment.Amount).DivRound(decimal.NewFromInt(1e8), 8).Float64()
 			feePaymentBody := plutus.SendAddressBodyReq{
 				Address: voucher.RefundFeeAddr,
 				Coin:    "POLIS",
-				Amount:  amount.AmountType(voucher.FeePayment.Amount).ToNormalUnit(),
+				Amount:  am,
 			}
 			_, err := p.Plutus.SubmitPayment(feePaymentBody)
 			if err != nil {
@@ -255,10 +260,11 @@ func (p *Processor) handleRefundTotalVouchers(wg *sync.WaitGroup) {
 				fmt.Println("unable to update voucher")
 				continue
 			}
+			am, _ = decimal.NewFromInt(voucher.PaymentData.Amount).DivRound(decimal.NewFromInt(1e8), 8).Float64()
 			paymentBody := plutus.SendAddressBodyReq{
 				Address: voucher.RefundAddr,
 				Coin:    voucher.PaymentData.Coin,
-				Amount:  amount.AmountType(voucher.PaymentData.Amount).ToNormalUnit(),
+				Amount:  am,
 			}
 			_, err = p.Plutus.SubmitPayment(paymentBody)
 			if err != nil {

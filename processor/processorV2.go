@@ -5,7 +5,7 @@ import (
 	amodels "github.com/grupokindynos/adrestia-go/models"
 	coinfactory "github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/common/hestia"
-	models "github.com/grupokindynos/ladon/models"
+	"github.com/grupokindynos/ladon/models"
 	"github.com/grupokindynos/ladon/services"
 	"log"
 	"strconv"
@@ -24,14 +24,14 @@ type ProcessorV2 struct {
 
 func (p *ProcessorV2) Start() {
 	var wg sync.WaitGroup
-	fmt.Println("Starting Processor")
+	fmt.Println("Starting ProcessorV2")
 	wg.Add(5)
 	go p.handlePaymentProcessing(&wg)
 	go p.handleRedeemed(&wg)
 	go p.handlePerformingTrade(&wg)
 	go p.handleNeedsRefund(&wg)
 	go p.handleWaitingRefundTxId(&wg)
-	fmt.Println("Ending Processor")
+	fmt.Println("Ending ProcessorV2")
 	wg.Wait()
 }
 
@@ -47,21 +47,28 @@ func (p *ProcessorV2) handlePaymentProcessing(wg *sync.WaitGroup) {
 		}
 		err = checkTxId(&voucher.UserPayment)
 		if err != nil {
-			log.Println("ProcessorV2::handlePaymentProcessing::checkTxId::", voucher.UserPayment, " ", err.Error())
+			log.Println("ProcessorV2::handlePaymentProcessing::checkTxId::", voucher.Id, " ", voucher.UserPayment, " ", err.Error())
 			continue
 		}
 		confirmations, err := getConfirmations(coinInfo, voucher.UserPayment.Txid)
 		if err != nil {
-			log.Println("handlePaymentProcessing - getConfirmations - " + err.Error())
+			log.Println("handlePaymentProcessing - getConfirmations - ", voucher.Id, " ", err.Error())
 			continue
 		}
+		// log.Println("SIMULATING BITCOU PROCESS FOR ", voucher.Id)
 		if confirmations >= coinInfo.BlockchainInfo.MinConfirmations {
+			/*res := models.PurchaseInfoResponseV2{
+				TxId:       "TEST-TXID",
+				AmountEuro: "3",
+				RedeemData: "YOU WILL RECEIVE THIS CODE VIA TBD",
+			}
+			err = nil*/
 			res, err := p.Bitcou.GetTransactionInformationV2(models.PurchaseInfo{
 				TransactionID: voucher.Id,
 				ProductID:     int32(voucher.VoucherId),
 				VariantID:     int32(voucher.VariantId),
 				PhoneNB:       voucher.PhoneNumber,
-				Email:         "luiscorrea9614@gmail.com", // TODO REPLACE WITH USER'S EMAIL
+				Email:         voucher.Email,
 				KYC:           false,
 			})
 			if err != nil {
@@ -73,6 +80,7 @@ func (p *ProcessorV2) handlePaymentProcessing(wg *sync.WaitGroup) {
 				voucher.BitcouTxId = res.TxId
 				voucher.RedeemCode = res.RedeemData
 				voucher.AmountEuro = amountEuro
+				voucher.FulfilledTime = time.Now().Unix()
 				voucher.Status = hestia.VoucherStatusV2Redeemed
 			}
 			_, err = p.Hestia.UpdateVoucherV2(voucher)
@@ -93,8 +101,8 @@ func (p *ProcessorV2) handleRedeemed(wg *sync.WaitGroup) {
 			Address: voucher.UserPayment.Address,
 		})
 		if err != nil {
-
-			log.Println("handleRedeemed - DepositInfo - " + err.Error())
+			log.Println(voucher.Id)
+			log.Println("ProcessorV2::handleRedeemed::DepositInfo::", voucher.UserPayment.Txid, " ", voucher.UserPayment.Coin, " ", voucher.UserPayment.Address, err.Error())
 			continue
 		}
 		if res.DepositInfo.Status == hestia.ExchangeOrderStatusCompleted {
@@ -108,7 +116,7 @@ func (p *ProcessorV2) handleRedeemed(wg *sync.WaitGroup) {
 			voucher.ReceivedAmount = res.DepositInfo.ReceivedAmount // Esto se va a sobreescribir si se necesitan trades
 			_, err := p.Hestia.UpdateVoucherV2(voucher)
 			if err != nil {
-				log.Println("handleRedeemed - UpdateVoucherV2 - " + err.Error())
+				log.Println("ProcessorV2::handleRedeemed::UpdateVoucherV2::" + err.Error())
 			}
 		}
 	}

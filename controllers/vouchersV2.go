@@ -3,17 +3,18 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/grupokindynos/common/blockbook"
 	coinfactory "github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/common/coin-factory/coins"
 	commonErrors "github.com/grupokindynos/common/errors"
 	"github.com/grupokindynos/common/hestia"
 	"github.com/grupokindynos/common/obol"
-	"github.com/grupokindynos/common/plutus"
 	"github.com/grupokindynos/common/utils"
 	"github.com/grupokindynos/ladon/models"
 	"github.com/grupokindynos/ladon/services"
-	"github.com/olympus-protocol/ogen/utils/amount"
+	"github.com/shopspring/decimal"
+	"log"
 	"strconv"
 	"sync"
 	"time"
@@ -30,8 +31,18 @@ type VouchersControllerV2 struct {
 	Adrestia         services.AdrestiaService
 }
 
+func (vc *VouchersControllerV2) StatusV2(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
+	if uid == "gwY3fy79LZMtUbSNBDoom7llGfh2" || uid == "yEF8YP4Ou9aCEqSPQPqDslviGfT2" || uid == "TO3FrEneQcf2RN2QdL8paY6IvBF2" || uid == "YIrr2a42lcZi9djePQH7OrLbGzs1" || uid == "Egc6XKdkmigtWzuyq0YordjWODq1" || uid == "HMOXcoZJxfMKFca9IukZIaqI2Z02" {
+		return true, nil
+	}
+	status, err := vc.Hestia.GetVouchersStatus()
+	if err != nil {
+		return nil, err
+	}
+	return status.Vouchers.Service, nil
+}
+
 func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
-	// Get the vouchers percentage fee for PolisPay
 	/*config, err := vc.Hestia.GetVouchersStatus()
 	if err != nil {
 		return nil, err
@@ -61,11 +72,14 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	// Create a VoucherID
 	newVoucherID := utils.RandomString()
 	// Get a payment address from the hot-wallets
-	paymentAddr, err := vc.Plutus.GetNewPaymentAddress(PrepareVoucher.Coin)
+	// exchange path
+	pathInfo, err := vc.Adrestia.GetPath(PrepareVoucher.Coin)
 	if err != nil {
+		err = commonErrors.ErrorFillingPaymentInformation
 		return nil, err
 	}
-	feePaymentAddr := paymentAddr
+	paymentAddr := pathInfo.Address
+	feePaymentAddr := pathInfo.Address
 
 	//get email
 	email, err := vc.Hestia.GetUserInfo(uid)
@@ -84,54 +98,64 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		return nil, err
 	}
 
-	/*bitcouPrepareTx := models.PurchaseInfo{
-		TransactionID: newVoucherID,
-		ProductID:     int32(PrepareVoucher.VoucherType),
-		VariantID:     int32(voucherVariantInt),
-		PhoneNB:       int64(phoneNumber),
-	}
-
-	// get info from new bitcou voucher variant
-	/*voucherDetails, err := vc.Bitcou.GetTransactionInformationV2(bitcouPrepareTx)
+	voucherInfo, err := vc.Hestia.GetVoucherInfoV2(PrepareVoucher.Country, strconv.Itoa(int(PrepareVoucher.ProductId)))
 	if err != nil {
 		return nil, err
-	}*/
+	}
 
+	variantIndex := -1
+	for i, variant := range voucherInfo.Variants {
+		if PrepareVoucher.VoucherVariant == variant.VariantID {
+			variantIndex = i
+			break
+		}
+	}
+	fmt.Println(variantIndex)
+	PrepareVoucher.Valid = int32(voucherInfo.Valid)
+
+	// TODO VALIDATE PRICE IS ALWAYS IN EURO
 	euroRate, err := vc.Obol.GetCoin2FIATRate(PrepareVoucher.Coin, "EUR")
 	if err != nil {
 		return nil, err
 	}
 
-	//purchaseAmountEuro := voucherDetails.AmountEuro / 100
-	//test
-	purchaseAmountEuro := float64(110) / 100
-	// amount for the voucher in the coin
-	paymentAmountCoin := purchaseAmountEuro / euroRate
-	paymentAmount, err := amount.NewAmount(paymentAmountCoin)
-	if err != nil {
-		return nil, err
-	}
-	// fee
-	feePercentage := paymentCoinConfig.Vouchers.FeePercentage / float64(100)
-	feeAmount, err := amount.NewAmount(paymentAmount.ToNormalUnit() * feePercentage)
-	if err != nil {
-		return nil, err
+	var purchaseAmountEuro float64
+	if uid == "gwY3fy79LZMtUbSNBDoom7llGfh2" {
+		purchaseAmountEuro = float64(110) / 100
+	} else {
+		purchaseAmountEuro = voucherInfo.Variants[variantIndex].Price / 100
 	}
 
+	balance, err := vc.Bitcou.GetAccountBalanceV2()
+	if err != nil {
+		return nil, err
+	}
+	if purchaseAmountEuro > float64(balance.Amount)/100 {
+		log.Println("not enough balance in floating account to fulfill request")
+		return nil, commonErrors.ErrorNotEnoughDash // TODO RENAME ERROR
+	}
+
+	if 100 > float64(balance.Amount)/100 {
+		log.Println("balance below 100 EURO please refill")
+		// TODO Configure telegram alert || automatic refill
+	}
+
+	// Amounts for amount and fees in float representation
+	paymentAmount := decimal.NewFromFloat(purchaseAmountEuro / euroRate)
+	feePercentage := paymentCoinConfig.Vouchers.FeePercentage / float64(100)
+	feeAmount := paymentAmount.Mul(decimal.NewFromFloat(feePercentage))
 	// check if its a token to adjust to the amount
 	coinConfig, err := coinfactory.GetCoin(PrepareVoucher.Coin)
 	if err != nil {
 		return nil, err
 	}
 	if coinConfig.Info.Token && coinConfig.Info.Tag != "ETH" {
-		paymentAmount, err = amount.NewAmount(roundTo(paymentAmount.ToNormalUnit(), coinConfig.Info.Decimals))
-		if err != nil {
-			return nil, err
-		}
+		aux, _ := paymentAmount.Float64()
+		paymentAmount = decimal.NewFromFloat(roundTo(aux, coinConfig.Info.Decimals))
 	}
 
-	paymentInfo := models.PaymentInfo{Address: paymentAddr, Amount: int64(paymentAmount.ToUnit(amount.AmountSats))}
-	feeInfo := models.PaymentInfo{Address: feePaymentAddr, Amount: int64(feeAmount.ToUnit(amount.AmountSats))}
+	paymentInfo := models.PaymentInfo{Address: paymentAddr, Amount: paymentAmount.Mul(decimal.NewFromInt(1e8)).IntPart()}
+	feeInfo := models.PaymentInfo{Address: feePaymentAddr, Amount: feeAmount.Mul(decimal.NewFromInt(1e8)).IntPart()}
 	userPaymentInfo := models.PaymentInfo{Address: paymentAddr, Amount: paymentInfo.Amount + feeInfo.Amount}
 
 	// Validate that users hasn't bought more than 210 euro in vouchers on the last 24 hours.
@@ -155,18 +179,6 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		return nil, commonErrors.ErrorVoucherLimit
 	}
 
-	// exchange path
-	pathInfo, err := vc.Adrestia.GetPath(PrepareVoucher.Coin)
-	if err != nil {
-		err = commonErrors.ErrorFillingPaymentInformation
-		return nil, err
-	}
-
-	voucherInfo, err := vc.Hestia.GetVoucherInfoV2(PrepareVoucher.Country, strconv.Itoa(int(PrepareVoucher.ProductId)))
-	if err != nil {
-		return nil, err
-	}
-
 	// Build the response
 	res := models.PrepareVoucherResponse{
 		Payment: paymentInfo,
@@ -187,6 +199,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		ProviderId:     providerIdInt,
 		Email:          email,
 		ShippingMethod: voucherInfo.Shipping.GetEnum(),
+		Valid: PrepareVoucher.Valid,
 	}
 
 	vc.AddVoucherToMapV2(uid, prepareVoucher)
@@ -229,7 +242,7 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 		inTrade = append(inTrade, newTrade)
 	}
 	if len(inTrade) > 0 {
-		inTrade[0].Amount = amount.AmountType(storedVoucher.UserPayment.Amount).ToNormalUnit()
+		inTrade[0].Amount, _ = decimal.NewFromInt(storedVoucher.UserPayment.Amount).DivRound(decimal.NewFromInt(1e8), 8).Float64()
 	}
 
 	voucher := hestia.VoucherV2{
@@ -263,6 +276,8 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 		},
 		Email:          storedVoucher.Email,
 		ShippingMethod: storedVoucher.ShippingMethod,
+		Message: "",
+		Valid: storedVoucher.Valid,
 	}
 
 	vc.RemoveVoucherFromMapV2(uid)
@@ -274,27 +289,43 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 	return voucherId, nil
 }
 
+func (vc *VouchersControllerV2) GetListForPhoneV2(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
+	vouchersAvailable, err := vc.Bitcou.GetPhoneTopUpListV2(phoneNb)
+	if err != nil {
+		return nil, err
+	}
+	return vouchersAvailable, nil
+}
+
 func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2, storedVoucherData models.PrepareVoucherInfoV2, rawTx string) {
 	// Validate Payment RawTx
-	body := plutus.ValidateRawTxReq{
+	/*body := plutus.ValidateRawTxReq{
 		Coin:    voucherData.UserPayment.Coin,
 		RawTx:   rawTx,
 		Amount:  voucherData.UserPayment.Amount,
 		Address: voucherData.UserPayment.Address,
-	}
-	valid, err := vc.Plutus.ValidateRawTx(body)
+	}*/
+	/*valid, err := vc.Plutus.ValidateRawTx(body)
 	if err != nil || !valid {
 		// If fail and coin is POLIS mark as error
+		if err != nil {
+			voucherData.Message = "decode&checkTxV2:: could not validate RawTx: " + err.Error()
+		} else {
+			voucherData.Message = "decode&checkTxV2:: could not validate RawTx: tx not valid"
+		}
+		log.Println(voucherData.Message)
 		voucherData.Status = hestia.VoucherStatusV2Error
 		_, err = vc.Hestia.UpdateVoucherV2(voucherData)
 		if err != nil {
 			return
 		}
 		return
-	}
+	}*/
 	// Broadcast rawTx
 	coinConfig, err := coinfactory.GetCoin(voucherData.UserPayment.Coin)
 	if err != nil {
+		voucherData.Message = "error getting payment coin info: " + err.Error()
+		log.Println(voucherData.Message)
 		voucherData.Status = hestia.VoucherStatusV2Error
 		_, err = vc.Hestia.UpdateVoucherV2(voucherData)
 		if err != nil {
@@ -304,6 +335,8 @@ func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2,
 	}
 	paymentTxid, err, _ := vc.broadCastTxV2(coinConfig, rawTx)
 	if err != nil {
+		voucherData.Message = "error broadcasting transaction: " + err.Error()
+		log.Println(voucherData.Message)
 		voucherData.Status = hestia.VoucherStatusV2Error
 		_, err = vc.Hestia.UpdateVoucherV2(voucherData)
 		if err != nil {

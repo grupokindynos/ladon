@@ -3,9 +3,11 @@ package services
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/grupokindynos/ladon/models"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -59,6 +61,41 @@ func (bs *BitcouRequests) GetPhoneTopUpList(phoneNb string) ([]int, error) {
 	}
 	return productIDs, nil
 }
+
+func (bs *BitcouRequests) GetPhoneTopUpListV2(phoneNb string) ([]int, error) {
+	url := bs.BitcouURL + "voucher/availableVouchersByPhoneNb"
+	log.Println("url phonetopupv2 ", url)
+	token := "Bearer " + bs.BitcouToken
+	log.Println("url phonetopupv2 ", token)
+	body := models.BitcouPhoneBodyReq{PhoneNumber: phoneNb}
+	byteBody, err := json.Marshal(body)
+	postBody := bytes.NewBuffer(byteBody)
+	req, err := http.NewRequest("POST", url, postBody)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Authorization", token)
+	client := &http.Client{Timeout: 5 * time.Second}
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = res.Body.Close()
+	}()
+	contents, _ := ioutil.ReadAll(res.Body)
+	var response models.BitcouPhoneResponseList
+	err = json.Unmarshal(contents, &response)
+	if err != nil {
+		return nil, err
+	}
+	var productIDs []int
+	for _, product := range response.Data {
+		productIDs = append(productIDs, product.ProductID)
+	}
+	return productIDs, nil
+}
+
 
 func (bs *BitcouRequests) GetTransactionInformation(purchaseInfo models.PurchaseInfo) (models.PurchaseInfoResponse, error) {
 	url := bs.BitcouURL + "voucher/transaction"
@@ -123,15 +160,59 @@ func (bs *BitcouRequests) GetTransactionInformationV2(purchaseInfo models.Purcha
 		return models.PurchaseInfoResponseV2{}, err
 	}
 	var purchaseData models.PurchaseInfoResponseV2
-	dataBytes, err := json.Marshal(response.Data[0])
-	if err != nil {
-		return models.PurchaseInfoResponseV2{}, err
+	if len(response.Data) >= 1 {
+		dataBytes, err := json.Marshal(response.Data[0])
+		if err != nil {
+			return models.PurchaseInfoResponseV2{}, err
+		}
+		err = json.Unmarshal(dataBytes, &purchaseData)
+		if err != nil {
+			return models.PurchaseInfoResponseV2{}, err
+		}
+		return purchaseData, nil
+	} else {
+		log.Println("GetTransactionInformationV2:: bad response", string(contents))
+		return purchaseData, errors.New("bad response from Bitcou")
 	}
-	err = json.Unmarshal(dataBytes, &purchaseData)
+}
+
+func (bs *BitcouRequests) GetAccountBalanceV2() (models.AccountInfo, error) {
+	url := bs.BitcouURL + "account/balance"
+	token := "Bearer " + bs.BitcouToken
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return models.PurchaseInfoResponseV2{}, err
+		return models.AccountInfo{}, err
 	}
-	return purchaseData, nil
+	req.Header.Add("Authorization", token)
+	client := &http.Client{Timeout: 60 * time.Second}
+	res, err := client.Do(req)
+	if err != nil {
+		return models.AccountInfo{}, err
+	}
+	defer func() {
+		_ = res.Body.Close()
+	}()
+	contents, _ := ioutil.ReadAll(res.Body)
+	var response models.BitcouBaseResponse
+	err = json.Unmarshal(contents, &response)
+	if err != nil {
+		return models.AccountInfo{}, err
+	}
+	var purchaseData models.AccountInfo
+	if len(response.Data) >= 1 {
+		dataBytes, err := json.Marshal(response.Data[0])
+		if err != nil {
+			return models.AccountInfo{}, err
+		}
+		err = json.Unmarshal(dataBytes, &purchaseData)
+		if err != nil {
+			return models.AccountInfo{}, err
+		}
+		return purchaseData, nil
+	} else {
+		log.Println("GetTransactionInformationV2:: bad response", string(contents))
+		return purchaseData, errors.New("bad response from Bitcou")
+	}
 }
 
 func NewBitcouService(devMode bool, version int) *BitcouRequests {

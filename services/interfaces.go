@@ -31,8 +31,10 @@ type HestiaService interface {
 
 type BitcouService interface {
 	GetPhoneTopUpList(phoneNb string) ([]int, error)
+	GetPhoneTopUpListV2(phoneNb string) ([]int, error)
 	GetTransactionInformation(purchaseInfo models.PurchaseInfo) (models.PurchaseInfoResponse, error)
 	GetTransactionInformationV2(purchaseInfo models.PurchaseInfo) (models.PurchaseInfoResponseV2, error)
+	GetAccountBalanceV2() (models.AccountInfo, error)
 }
 
 type AdrestiaService interface {
