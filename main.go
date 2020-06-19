@@ -87,7 +87,6 @@ func main() {
 
 	if !config.Vouchers.Service {
 		log.Println("Vouchers service not available")
-		return
 	}
 
 	if !*stopProcessor && config.Vouchers.Processor {
