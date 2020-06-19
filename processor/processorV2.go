@@ -110,6 +110,7 @@ func (p *ProcessorV2) handleRedeemed(wg *sync.WaitGroup) {
 				voucher.Status = hestia.VoucherStatusV2Complete
 			} else {
 				voucher.Conversion.Conversions[0].Amount = res.DepositInfo.ReceivedAmount
+				voucher.Conversion.Status = hestia.ShiftV2TradeStatusCreated
 				voucher.Status = hestia.VoucherStatusV2PerformingTrade
 			}
 
