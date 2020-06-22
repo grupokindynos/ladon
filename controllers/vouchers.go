@@ -16,7 +16,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grupokindynos/common/blockbook"
+	"github.com/grupokindynos/common/explorer"
 
 	amount "github.com/btcsuite/btcutil"
 	"github.com/gin-gonic/gin"
@@ -45,7 +45,7 @@ type VouchersController struct {
 }
 
 func (vc *VouchersController) Status(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
-	if uid == "gwY3fy79LZMtUbSNBDoom7llGfh2" || uid == "yEF8YP4Ou9aCEqSPQPqDslviGfT2" || uid == "TO3FrEneQcf2RN2QdL8paY6IvBF2" || uid == "YIrr2a42lcZi9djePQH7OrLbGzs1"{
+	if uid == "gwY3fy79LZMtUbSNBDoom7llGfh2" || uid == "yEF8YP4Ou9aCEqSPQPqDslviGfT2" || uid == "TO3FrEneQcf2RN2QdL8paY6IvBF2" || uid == "YIrr2a42lcZi9djePQH7OrLbGzs1" {
 		return true, nil
 
 	}
@@ -477,8 +477,8 @@ func (vc *VouchersController) broadCastTx(coinConfig *coins.Coin, rawTx string) 
 	if coinConfig.Info.Token {
 		coinConfig, _ = coinfactory.GetCoin("ETH")
 	}
-	blockbookWrapper := blockbook.NewBlockBookWrapper(coinConfig.Info.Blockbook)
-	return blockbookWrapper.SendTxWithMessage(rawTx)
+	explorerWrapper, _ := explorer.NewExplorerFactory().GetExplorerByCoin(*coinConfig)
+	return explorerWrapper.SendTxWithMessage(rawTx)
 }
 
 func (vc *VouchersController) Update(c *gin.Context) {

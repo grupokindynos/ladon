@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/grupokindynos/common/blockbook"
 	coinfactory "github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/common/coin-factory/coins"
 	commonErrors "github.com/grupokindynos/common/errors"
+	"github.com/grupokindynos/common/explorer"
 	"github.com/grupokindynos/common/hestia"
 	"github.com/grupokindynos/common/obol"
 	"github.com/grupokindynos/common/utils"
@@ -199,7 +199,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		ProviderId:     providerIdInt,
 		Email:          email,
 		ShippingMethod: voucherInfo.Shipping.GetEnum(),
-		Valid: PrepareVoucher.Valid,
+		Valid:          PrepareVoucher.Valid,
 	}
 
 	vc.AddVoucherToMapV2(uid, prepareVoucher)
@@ -276,8 +276,8 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 		},
 		Email:          storedVoucher.Email,
 		ShippingMethod: storedVoucher.ShippingMethod,
-		Message: "",
-		Valid: storedVoucher.Valid,
+		Message:        "",
+		Valid:          storedVoucher.Valid,
 	}
 
 	vc.RemoveVoucherFromMapV2(uid)
@@ -381,6 +381,6 @@ func (vc *VouchersControllerV2) broadCastTxV2(coinConfig *coins.Coin, rawTx stri
 	if coinConfig.Info.Token {
 		coinConfig, _ = coinfactory.GetCoin("ETH")
 	}
-	blockbookWrapper := blockbook.NewBlockBookWrapper(coinConfig.Info.Blockbook)
+	blockbookWrapper, _ := explorer.NewExplorerFactory().GetExplorerByCoin(*coinConfig)
 	return blockbookWrapper.SendTxWithMessage(rawTx)
 }
