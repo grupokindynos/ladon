@@ -77,9 +77,23 @@ func main() {
 		}
 	}
 
-	if !*stopProcessor {
+	// check processor availability
+	h := services.HestiaRequests{HestiaURL:os.Getenv("HESTIA_PRODUCTION_URL")}
+	config, err := h.GetVoucherStatus()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	if !config.Vouchers.Service {
+		log.Println("Vouchers service not available")
+	}
+
+	if !*stopProcessor && config.Vouchers.Processor {
 		go runProcessor()
 		go runProcessorV2()
+	} else {
+		log.Println("Processor not available")
 	}
 
 	devMode = *devApi
