@@ -172,7 +172,7 @@ func (bs *BitcouRequests) GetTransactionInformationV2(purchaseInfo models.Purcha
 		return purchaseData, nil
 	} else {
 		log.Println("GetTransactionInformationV2:: bad response", string(contents))
-		return purchaseData, errors.New("bad response from Bitcou")
+		return purchaseData, errors.New("bad response from Bitcou::" + string(contents))
 	}
 }
 
