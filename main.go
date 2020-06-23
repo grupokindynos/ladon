@@ -90,7 +90,7 @@ func main() {
 	}
 
 	if !*stopProcessor && config.Vouchers.Processor {
-		go runProcessor()
+		// go runProcessor()
 		go runProcessorV2()
 	} else {
 		log.Println("Processor not available")
