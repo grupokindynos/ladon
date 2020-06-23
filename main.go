@@ -139,10 +139,10 @@ func ApplyRoutes(r *gin.Engine) {
 	go checkAndRemoveVouchers(vouchersCtrl)
 	api := r.Group("/")
 	{
-		api.POST("/prepare", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.Prepare) })
-		api.POST("/new", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.Store) })
-		api.GET("/status", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.Status) })
-		api.GET("/phone/:phone", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetListForPhone) })
+		//api.POST("/prepare", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.Prepare) })
+		//api.POST("/new", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.Store) })
+		//api.GET("/status", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.Status) })
+		//api.GET("/phone/:phone", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.GetListForPhone) })
 
 		// Bitcou endpoint for a voucher redeem
 		api.POST("/redeem", vouchersCtrl.Update)
