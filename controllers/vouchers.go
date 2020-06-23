@@ -45,15 +45,7 @@ type VouchersController struct {
 }
 
 func (vc *VouchersController) Status(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
-	if uid == "gwY3fy79LZMtUbSNBDoom7llGfh2" || uid == "yEF8YP4Ou9aCEqSPQPqDslviGfT2" || uid == "TO3FrEneQcf2RN2QdL8paY6IvBF2" || uid == "YIrr2a42lcZi9djePQH7OrLbGzs1"{
-		return true, nil
-
-	}
-	status, err := vc.Hestia.GetVouchersStatus()
-	if err != nil {
-		return nil, err
-	}
-	return status.Vouchers.Service, nil
+	return false, nil
 }
 
 func (vc *VouchersController) GetListForPhone(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
