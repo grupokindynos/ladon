@@ -132,7 +132,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	}
 
 	var purchaseAmountEuro float64
-	if uid == "gwY3fy79LZMtUbSNBDoom7llGfh2" {
+	if uid == "NA" {
 		purchaseAmountEuro = float64(110) / 100
 	} else {
 		purchaseAmountEuro = voucherInfo.Variants[variantIndex].Price / 100
