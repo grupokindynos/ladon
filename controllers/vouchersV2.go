@@ -71,15 +71,6 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	}
 	// Create a VoucherID
 	newVoucherID := utils.RandomString()
-	// Get a payment address from the hot-wallets
-	// exchange path
-	pathInfo, err := vc.Adrestia.GetPath(PrepareVoucher.Coin)
-	if err != nil {
-		err = commonErrors.ErrorFillingPaymentInformation
-		return nil, err
-	}
-	paymentAddr := pathInfo.Address
-	feePaymentAddr := pathInfo.Address
 
 	//get email
 	email, err := vc.Hestia.GetUserInfo(uid)
@@ -112,6 +103,21 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	}
 	fmt.Println(variantIndex)
 	PrepareVoucher.Valid = int32(voucherInfo.Valid)
+
+	// Exchange Path
+	pathInfo, err := vc.Adrestia.GetPath(PrepareVoucher.Coin, voucherInfo.Variants[variantIndex].Price / 100)
+	if err != nil {
+		if err == commonErrors.ErrorNotSupportedAmount {
+			return nil, err
+		}
+
+		err = commonErrors.ErrorFillingPaymentInformation
+		return nil, err
+	}
+
+	paymentAddr := pathInfo.Address
+	feePaymentAddr := pathInfo.Address
+
 
 	// TODO VALIDATE PRICE IS ALWAYS IN EURO
 	euroRate, err := vc.Obol.GetCoin2FIATRate(PrepareVoucher.Coin, "EUR")

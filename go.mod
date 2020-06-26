@@ -11,8 +11,8 @@ require (
 	github.com/go-playground/validator/v10 v10.3.0 // indirect
 	github.com/golang/mock v1.4.3
 	github.com/golang/protobuf v1.4.2 // indirect
-	github.com/grupokindynos/adrestia-go v0.0.0-20200521181822-539d70e5cd84
-	github.com/grupokindynos/common v0.0.0-20200619185304-8fedea8c9dcd
+	github.com/grupokindynos/adrestia-go v0.0.0-20200626200029-111f7d64be07
+	github.com/grupokindynos/common v0.0.0-20200626195125-983554e88962
 	github.com/joho/godotenv v1.3.0
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/magiconair/properties v1.8.1
