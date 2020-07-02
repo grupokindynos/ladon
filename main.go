@@ -136,7 +136,7 @@ func ApplyRoutes(r *gin.Engine) {
 		Adrestia:         &services.AdrestiaRequests{AdrestiaUrl: adrestiaEnv},
 	}
 
-	go checkAndRemoveVouchers(vouchersCtrl)
+	go checkAndRemoveVouchersV2(vouchersCtrlV2)
 	api := r.Group("/")
 	{
 		//api.POST("/prepare", func(context *gin.Context) { ValidateRequest(context, vouchersCtrl.Prepare) })
@@ -233,6 +233,20 @@ func checkAndRemoveVouchers(ctrl *controllers.VouchersController) {
 			if time.Now().Unix() > v.Timestamp+prepareVoucherTimeframe {
 				count += 1
 				ctrl.RemoveVoucherFromMap(k)
+			}
+		}
+		log.Printf("Removed %v vouchers", count)
+	}
+}
+func checkAndRemoveVouchersV2(ctrl *controllers.VouchersControllerV2) {
+	for {
+		time.Sleep(time.Second * 60)
+		log.Print("Removing obsolete vouchers request")
+		count := 0
+		for k, v := range ctrl.PreparesVouchers {
+			if time.Now().Unix() > v.Timestamp+prepareVoucherTimeframe {
+				count += 1
+				ctrl.RemoveVoucherFromMapV2(k)
 			}
 		}
 		log.Printf("Removed %v vouchers", count)

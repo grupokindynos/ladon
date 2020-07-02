@@ -3,7 +3,6 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/grupokindynos/common/blockbook"
 	coinfactory "github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/common/coin-factory/coins"
@@ -14,6 +13,7 @@ import (
 	"github.com/grupokindynos/ladon/models"
 	"github.com/grupokindynos/ladon/services"
 	"github.com/shopspring/decimal"
+	"github.com/spf13/cast"
 	"log"
 	"strconv"
 	"sync"
@@ -55,16 +55,17 @@ func (vc *VouchersControllerV2) StatusV2(payload []byte, uid string, voucherid s
 }
 
 func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
-	/*config, err := vc.Hestia.GetVouchersStatus()
+	config, err := vc.StatusV2(payload, uid, voucherid, phoneNb)
 	if err != nil {
 		return nil, err
 	}
-	if !config.Vouchers.Service {
+	service := cast.ToBool(config)
+	if !service {
 		return nil, err
-	}*/
+	}
 	// Grab information on the payload
 	var PrepareVoucher models.PrepareVoucher
-	err := json.Unmarshal(payload, &PrepareVoucher)
+	err = json.Unmarshal(payload, &PrepareVoucher)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +123,6 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 			break
 		}
 	}
-	fmt.Println(variantIndex)
 	PrepareVoucher.Valid = int32(voucherInfo.Valid)
 
 	// TODO VALIDATE PRICE IS ALWAYS IN EURO
