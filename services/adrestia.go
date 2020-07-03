@@ -113,17 +113,18 @@ func (a *AdrestiaRequests) GetTradeStatus(tradeParams hestia.Trade) (tradeInfo h
 	}
 	defer res.Body.Close()
 	tokenResponse, err := ioutil.ReadAll(res.Body)
-	log.Println(string(tokenResponse))
 	if err != nil {
 		return
 	}
 	var tokenString string
 	err = json.Unmarshal(tokenResponse, &tokenString)
 	if err != nil {
+		log.Println("ERROR::GetTradeStatus::Unmarshall of token string::", string(tokenResponse))
 		return
 	}
 	headerSignature := res.Header.Get("service")
 	if headerSignature == "" {
+		log.Println("ERROR::GetTradeStatus:: no header signature")
 		err = errors.New("no header signature")
 		return
 	}
@@ -133,6 +134,7 @@ func (a *AdrestiaRequests) GetTradeStatus(tradeParams hestia.Trade) (tradeInfo h
 	}
 	err = json.Unmarshal(payload, &tradeInfo)
 	if err != nil {
+		log.Println("ERROR::GetTradeStatus::Unmarshall of payload::", payload)
 		return
 	}
 	return

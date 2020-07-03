@@ -3,7 +3,12 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
+
+	"log"
+	"strconv"
+	"sync"
+	"time"
+
 	coinfactory "github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/common/coin-factory/coins"
 	commonErrors "github.com/grupokindynos/common/errors"
@@ -14,10 +19,7 @@ import (
 	"github.com/grupokindynos/ladon/models"
 	"github.com/grupokindynos/ladon/services"
 	"github.com/shopspring/decimal"
-	"log"
-	"strconv"
-	"sync"
-	"time"
+	"github.com/spf13/cast"
 )
 
 type VouchersControllerV2 struct {
@@ -31,9 +33,21 @@ type VouchersControllerV2 struct {
 	Adrestia         services.AdrestiaService
 }
 
+var (
+	Whitelist map[string]bool = make(map[string]bool)
+)
+
 func (vc *VouchersControllerV2) StatusV2(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
-	if uid == "gwY3fy79LZMtUbSNBDoom7llGfh2" || uid == "yEF8YP4Ou9aCEqSPQPqDslviGfT2" || uid == "TO3FrEneQcf2RN2QdL8paY6IvBF2" || uid == "YIrr2a42lcZi9djePQH7OrLbGzs1" || uid == "Egc6XKdkmigtWzuyq0YordjWODq1" || uid == "HMOXcoZJxfMKFca9IukZIaqI2Z02" {
-		return true, nil
+	Whitelist["gwY3fy79LZMtUbSNBDoom7llGfh2"] = true
+	Whitelist["yEF8YP4Ou9aCEqSPQPqDslviGfT2"] = true
+	Whitelist["TO3FrEneQcf2RN2QdL8paY6IvBF2"] = true
+	Whitelist["YIrr2a42lcZi9djePQH7OrLbGzs1"] = true
+	Whitelist["Egc6XKdkmigtWzuyq0YordjWODq1"] = true
+	Whitelist["HMOXcoZJxfMKFca9IukZIaqI2Z02"] = true
+	Whitelist["fENeiyOGJURJK9qielqR7OrxciJ3"] = true
+
+	if val, ok := Whitelist[uid]; ok {
+		return val, nil
 	}
 	status, err := vc.Hestia.GetVouchersStatus()
 	if err != nil {
@@ -43,16 +57,17 @@ func (vc *VouchersControllerV2) StatusV2(payload []byte, uid string, voucherid s
 }
 
 func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
-	/*config, err := vc.Hestia.GetVouchersStatus()
+	config, err := vc.StatusV2(payload, uid, voucherid, phoneNb)
 	if err != nil {
 		return nil, err
 	}
-	if !config.Vouchers.Service {
+	service := cast.ToBool(config)
+	if !service {
 		return nil, err
-	}*/
+	}
 	// Grab information on the payload
 	var PrepareVoucher models.PrepareVoucher
-	err := json.Unmarshal(payload, &PrepareVoucher)
+	err = json.Unmarshal(payload, &PrepareVoucher)
 	if err != nil {
 		return nil, err
 	}
@@ -101,11 +116,10 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 			break
 		}
 	}
-	fmt.Println(variantIndex)
 	PrepareVoucher.Valid = int32(voucherInfo.Valid)
 
 	// Exchange Path
-	pathInfo, err := vc.Adrestia.GetPath(PrepareVoucher.Coin, voucherInfo.Variants[variantIndex].Price / 100)
+	pathInfo, err := vc.Adrestia.GetPath(PrepareVoucher.Coin, voucherInfo.Variants[variantIndex].Price/100)
 	if err != nil {
 		if err == commonErrors.ErrorNotSupportedAmount {
 			return nil, err
@@ -118,7 +132,6 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	paymentAddr := pathInfo.Address
 	feePaymentAddr := pathInfo.Address
 
-
 	// TODO VALIDATE PRICE IS ALWAYS IN EURO
 	euroRate, err := vc.Obol.GetCoin2FIATRate(PrepareVoucher.Coin, "EUR")
 	if err != nil {
@@ -126,11 +139,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	}
 
 	var purchaseAmountEuro float64
-	if uid == "gwY3fy79LZMtUbSNBDoom7llGfh2" {
-		purchaseAmountEuro = float64(110) / 100
-	} else {
-		purchaseAmountEuro = voucherInfo.Variants[variantIndex].Price / 100
-	}
+	purchaseAmountEuro = voucherInfo.Variants[variantIndex].Price / 100
 
 	balance, err := vc.Bitcou.GetAccountBalanceV2()
 	if err != nil {

@@ -109,11 +109,11 @@ func (p *ProcessorV2) handleRedeemed(wg *sync.WaitGroup) {
 			if voucher.Conversion.Status == hestia.ShiftV2TradeStatusCompleted { // User payed with stable coin.
 				voucher.Status = hestia.VoucherStatusV2Complete
 			} else {
-				voucher.Conversion.Conversions[0].Amount = res.DepositInfo.ReceivedAmount
 				voucher.Conversion.Status = hestia.ShiftV2TradeStatusCreated
 				voucher.Status = hestia.VoucherStatusV2PerformingTrade
 			}
 
+			voucher.Conversion.Conversions[0].Amount = res.DepositInfo.ReceivedAmount
 			voucher.ReceivedAmount = res.DepositInfo.ReceivedAmount // Esto se va a sobreescribir si se necesitan trades
 			_, err := p.Hestia.UpdateVoucherV2(voucher)
 			if err != nil {
@@ -237,7 +237,7 @@ func (p *ProcessorV2) handleDirectionalTradePerforming(voucher *hestia.VoucherV2
 				dt.Conversions[1].Amount = res.ReceivedAmount
 				res, err := p.Adrestia.Trade(dt.Conversions[1])
 				if err != nil {
-					log.Println("handleDirectionalTradePerforming - Trade - " + err.Error())
+					log.Println("handleDirectionalTradePerforming::Trade::", voucher.Id + " " + err.Error())
 					return
 				}
 				dt.Conversions[1].OrderId = res
