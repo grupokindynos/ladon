@@ -119,7 +119,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	PrepareVoucher.Valid = int32(voucherInfo.Valid)
 
 	// Exchange Path
-	pathInfo, err := vc.Adrestia.GetPath(PrepareVoucher.Coin, voucherInfo.Variants[variantIndex].Price/100)
+	pathInfo, err := vc.Adrestia.GetPath(PrepareVoucher.Coin, voucherInfo.Variants[variantIndex].Price / 100)
 	if err != nil {
 		if err == commonErrors.ErrorNotSupportedAmount {
 			return nil, err
