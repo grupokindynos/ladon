@@ -3,16 +3,10 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
-
-	"log"
-	"strconv"
-	"sync"
-	"time"
-
+	"github.com/grupokindynos/common/blockbook"
 	coinfactory "github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/common/coin-factory/coins"
 	commonErrors "github.com/grupokindynos/common/errors"
-	"github.com/grupokindynos/common/explorer"
 	"github.com/grupokindynos/common/hestia"
 	"github.com/grupokindynos/common/obol"
 	"github.com/grupokindynos/common/utils"
@@ -20,6 +14,10 @@ import (
 	"github.com/grupokindynos/ladon/services"
 	"github.com/shopspring/decimal"
 	"github.com/spf13/cast"
+	"log"
+	"strconv"
+	"sync"
+	"time"
 )
 
 type VouchersControllerV2 struct {
@@ -86,6 +84,15 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	}
 	// Create a VoucherID
 	newVoucherID := utils.RandomString()
+	// Get a payment address from the hot-wallets
+	// exchange path
+	pathInfo, err := vc.Adrestia.GetPath(PrepareVoucher.Coin)
+	if err != nil {
+		err = commonErrors.ErrorFillingPaymentInformation
+		return nil, err
+	}
+	paymentAddr := pathInfo.Address
+	feePaymentAddr := pathInfo.Address
 
 	//get email
 	email, err := vc.Hestia.GetUserInfo(uid)
@@ -140,6 +147,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 
 	var purchaseAmountEuro float64
 	purchaseAmountEuro = voucherInfo.Variants[variantIndex].Price / 100
+
 
 	balance, err := vc.Bitcou.GetAccountBalanceV2()
 	if err != nil {
@@ -214,7 +222,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		ProviderId:     providerIdInt,
 		Email:          email,
 		ShippingMethod: voucherInfo.Shipping.GetEnum(),
-		Valid:          PrepareVoucher.Valid,
+		Valid: PrepareVoucher.Valid,
 	}
 
 	vc.AddVoucherToMapV2(uid, prepareVoucher)
@@ -291,8 +299,8 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 		},
 		Email:          storedVoucher.Email,
 		ShippingMethod: storedVoucher.ShippingMethod,
-		Message:        "",
-		Valid:          storedVoucher.Valid,
+		Message: "",
+		Valid: storedVoucher.Valid,
 	}
 
 	vc.RemoveVoucherFromMapV2(uid)
@@ -396,6 +404,6 @@ func (vc *VouchersControllerV2) broadCastTxV2(coinConfig *coins.Coin, rawTx stri
 	if coinConfig.Info.Token {
 		coinConfig, _ = coinfactory.GetCoin("ETH")
 	}
-	blockbookWrapper, _ := explorer.NewExplorerFactory().GetExplorerByCoin(*coinConfig)
+	blockbookWrapper := blockbook.NewBlockBookWrapper(coinConfig.Info.Blockbook)
 	return blockbookWrapper.SendTxWithMessage(rawTx)
 }
