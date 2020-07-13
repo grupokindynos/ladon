@@ -12,7 +12,7 @@ require (
 	github.com/golang/mock v1.4.3
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/grupokindynos/adrestia-go v0.0.0-20200521181822-539d70e5cd84
-	github.com/grupokindynos/common v0.0.0-20200610165125-1573e4cc660a
+	github.com/grupokindynos/common v0.0.0-20200710022953-b5838f374859
 	github.com/joho/godotenv v1.3.0
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/magiconair/properties v1.8.1

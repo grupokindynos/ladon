@@ -3,7 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
-	"github.com/grupokindynos/common/blockbook"
+	"github.com/grupokindynos/common/explorer"
 	coinfactory "github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/common/coin-factory/coins"
 	commonErrors "github.com/grupokindynos/common/errors"
@@ -84,15 +84,6 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	}
 	// Create a VoucherID
 	newVoucherID := utils.RandomString()
-	// Get a payment address from the hot-wallets
-	// exchange path
-	pathInfo, err := vc.Adrestia.GetPath(PrepareVoucher.Coin)
-	if err != nil {
-		err = commonErrors.ErrorFillingPaymentInformation
-		return nil, err
-	}
-	paymentAddr := pathInfo.Address
-	feePaymentAddr := pathInfo.Address
 
 	//get email
 	email, err := vc.Hestia.GetUserInfo(uid)
@@ -404,6 +395,6 @@ func (vc *VouchersControllerV2) broadCastTxV2(coinConfig *coins.Coin, rawTx stri
 	if coinConfig.Info.Token {
 		coinConfig, _ = coinfactory.GetCoin("ETH")
 	}
-	blockbookWrapper := blockbook.NewBlockBookWrapper(coinConfig.Info.Blockbook)
+	blockbookWrapper := explorer.NewBlockBookWrapper(coinConfig.Info.Blockbook)
 	return blockbookWrapper.SendTxWithMessage(rawTx)
 }
