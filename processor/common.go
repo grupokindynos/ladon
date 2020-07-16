@@ -1,7 +1,7 @@
 package processor
 
 import (
-	"github.com/grupokindynos/common/blockbook"
+	"github.com/grupokindynos/common/explorer"
 	coinfactory "github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/common/coin-factory/coins"
 	"github.com/grupokindynos/common/hestia"
@@ -12,7 +12,7 @@ func getMissingTxId(coin string, address string, amount int64) (string, error) {
 	if coinConfig.Info.Token {
 		coinConfig, _ = coinfactory.GetCoin("ETH")
 	}
-	blockBook := blockbook.NewBlockBookWrapper(coinConfig.Info.Blockbook)
+	blockBook := explorer.NewBlockBookWrapper(coinConfig.Info.Blockbook)
 	return blockBook.FindDepositTxId(address, amount)
 }
 
@@ -32,7 +32,7 @@ func getConfirmations(coinConfig *coins.Coin, txid string) (int, error) {
 	if coinConfig.Info.Token {
 		coinConfig, _ = coinfactory.GetCoin("ETH")
 	}
-	blockbookWrapper := blockbook.NewBlockBookWrapper(coinConfig.Info.Blockbook)
+	blockbookWrapper := explorer.NewBlockBookWrapper(coinConfig.Info.Blockbook)
 	txData, err := blockbookWrapper.GetTx(txid)
 	if err != nil {
 		return 0, err

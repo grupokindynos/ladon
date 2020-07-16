@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grupokindynos/common/explorer"
 	"github.com/spf13/cast"
 	"io/ioutil"
 	"log"
@@ -15,8 +16,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/grupokindynos/common/blockbook"
 
 	amount "github.com/btcsuite/btcutil"
 	"github.com/gin-gonic/gin"
@@ -469,7 +468,7 @@ func (vc *VouchersController) broadCastTx(coinConfig *coins.Coin, rawTx string) 
 	if coinConfig.Info.Token {
 		coinConfig, _ = coinfactory.GetCoin("ETH")
 	}
-	blockbookWrapper := blockbook.NewBlockBookWrapper(coinConfig.Info.Blockbook)
+	blockbookWrapper := explorer.NewBlockBookWrapper(coinConfig.Info.Blockbook)
 	return blockbookWrapper.SendTxWithMessage(rawTx)
 }
 
