@@ -3,10 +3,10 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
-	"github.com/grupokindynos/common/explorer"
 	coinfactory "github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/common/coin-factory/coins"
 	commonErrors "github.com/grupokindynos/common/errors"
+	"github.com/grupokindynos/common/explorer"
 	"github.com/grupokindynos/common/hestia"
 	"github.com/grupokindynos/common/obol"
 	"github.com/grupokindynos/common/utils"
@@ -395,6 +395,6 @@ func (vc *VouchersControllerV2) broadCastTxV2(coinConfig *coins.Coin, rawTx stri
 	if coinConfig.Info.Token {
 		coinConfig, _ = coinfactory.GetCoin("ETH")
 	}
-	blockbookWrapper := explorer.NewBlockBookWrapper(coinConfig.Info.Blockbook)
-	return blockbookWrapper.SendTxWithMessage(rawTx)
+	explorerWrapper, _ := explorer.NewExplorerFactory().GetExplorerByCoin(*coinConfig)
+	return explorerWrapper.SendTxWithMessage(rawTx)
 }
