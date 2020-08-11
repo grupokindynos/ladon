@@ -35,7 +35,6 @@ func (a *AdrestiaRequests) DepositInfo(depositParams models.DepositParams) (depo
 	}
 	defer res.Body.Close()
 	tokenResponse, err := ioutil.ReadAll(res.Body)
-	log.Println(string(tokenResponse))
 	if err != nil {
 		return
 	}
@@ -75,7 +74,6 @@ func (a *AdrestiaRequests) Trade(tradeParams hestia.Trade) (txId string, err err
 	}
 	defer res.Body.Close()
 	tokenResponse, err := ioutil.ReadAll(res.Body)
-	log.Println(string(tokenResponse))
 	if err != nil {
 		return
 	}
@@ -155,7 +153,6 @@ func (a *AdrestiaRequests) Withdraw(withdrawParams models.WithdrawParams) (withd
 	}
 	defer res.Body.Close()
 	tokenResponse, err := ioutil.ReadAll(res.Body)
-	log.Println(string(tokenResponse))
 	if err != nil {
 		return
 	}
@@ -195,7 +192,6 @@ func (a *AdrestiaRequests) GetWithdrawalTxHash(withdrawParams models.WithdrawInf
 	}
 	defer res.Body.Close()
 	tokenResponse, err := ioutil.ReadAll(res.Body)
-	log.Println(string(tokenResponse))
 	if err != nil {
 		return
 	}
@@ -236,7 +232,6 @@ func (a *AdrestiaRequests) GetPath(fromCoin string, amount float64) (path models
 	}
 	defer res.Body.Close()
 	tokenResponse, err := ioutil.ReadAll(res.Body)
-	log.Println(string(tokenResponse))
 	if err != nil {
 		return
 	}
