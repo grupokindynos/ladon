@@ -131,6 +131,7 @@ func ApplyRoutes(r *gin.Engine) {
 		PreparesVouchers: prepareVouchersMapV2,
 		Plutus:           &services.PlutusRequests{PlutusURL: os.Getenv(plutusEnv)},
 		Hestia:           &services.HestiaRequests{HestiaURL: hestiaEnv},
+		HestiaTest:       &services.HestiaRequests{HestiaURL: hestiaEnv, TestingDb: true},
 		Bitcou:           services.NewBitcouService(devMode, 2),
 		Obol:             &obol.ObolRequest{ObolURL: os.Getenv("OBOL_PRODUCTION_URL")},
 		Adrestia:         &services.AdrestiaRequests{AdrestiaUrl: adrestiaEnv},
@@ -159,10 +160,15 @@ func ApplyRoutes(r *gin.Engine) {
 	})
 }
 
-func ValidateRequest(c *gin.Context, method func(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error)) {
+func ValidateRequest(c *gin.Context, method func(payload []byte, uid string, voucherid string, phoneNb string, test bool) (interface{}, error)) {
+	testingMode := false
 	fbToken := c.GetHeader("token")
 	voucherid := c.Param("voucherid")
 	phoneNb := c.Param("phone")
+	t := c.Param("test")
+	if t == "1" {
+		testingMode = true
+	}
 	if fbToken == "" {
 		responses.GlobalResponseNoAuth(c)
 		return
@@ -181,7 +187,7 @@ func ValidateRequest(c *gin.Context, method func(payload []byte, uid string, vou
 		responses.GlobalResponseNoAuth(c)
 		return
 	}
-	response, err := method(payload, uid, voucherid, phoneNb)
+	response, err := method(payload, uid, voucherid, phoneNb, testingMode)
 	if err != nil {
 		log.Println("user: ", uid, "\nerror: ", err, "\nvoucher", voucherid)
 		responses.GlobalResponseError(nil, err, c)

@@ -44,7 +44,7 @@ type VouchersController struct {
 	Obol             obol.ObolService
 }
 
-func (vc *VouchersController) Status(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
+func (vc *VouchersController) Status(payload []byte, uid string, voucherid string, phoneNb string, _ bool) (interface{}, error) {
 	return false, nil
 }
 
@@ -58,7 +58,7 @@ func (vc *VouchersController) GetListForPhone(payload []byte, uid string, vouche
 
 func (vc *VouchersController) Prepare(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
 	// Get the vouchers percentage fee for PolisPay
-	status, err := vc.Status(nil, uid, "", "")
+	status, err := vc.Status(nil, uid, "", "", false)
 	statusBool := cast.ToBool(status)
 	if !statusBool {
 		if err != nil {
