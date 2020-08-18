@@ -63,6 +63,7 @@ type PrepareVoucherInfoV2 struct {
 	Email          string                       `json:"email"`
 	ShippingMethod hestia.VoucherShippingMethod `json:"shipping_method"`
 	Valid          int32                        `json:"valid"`
+	Country        string						`json:"country"`
 }
 
 type StoreVoucher struct {

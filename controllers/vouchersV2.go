@@ -214,6 +214,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		Email:          email,
 		ShippingMethod: voucherInfo.Shipping.GetEnum(),
 		Valid: PrepareVoucher.Valid,
+		Country: PrepareVoucher.Country,
 	}
 
 	vc.AddVoucherToMapV2(uid, prepareVoucher)
@@ -292,6 +293,7 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 		ShippingMethod: storedVoucher.ShippingMethod,
 		Message: "",
 		Valid: storedVoucher.Valid,
+		Country: storedVoucher.Country,
 	}
 
 	vc.RemoveVoucherFromMapV2(uid)
