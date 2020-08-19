@@ -271,7 +271,6 @@ func runProcessorV2() {
 	for range ticker.C {
 		proc2.Start()
 	}
-
 }
 
 func checkAndRemoveVouchers(ctrl *controllers.VouchersController) {
