@@ -273,20 +273,6 @@ func runProcessorV2() {
 	}
 }
 
-func checkAndRemoveVouchers(ctrl *controllers.VouchersController) {
-	for {
-		time.Sleep(time.Second * 60)
-		log.Print("Removing obsolete vouchers request")
-		count := 0
-		for k, v := range ctrl.PreparesVouchers {
-			if time.Now().Unix() > v.Timestamp+prepareVoucherTimeframe {
-				count += 1
-				ctrl.RemoveVoucherFromMap(k)
-			}
-		}
-		log.Printf("Removed %v vouchers", count)
-	}
-}
 func checkAndRemoveVouchersV2(ctrl *controllers.VouchersControllerV2) {
 	for {
 		time.Sleep(time.Second * 60)

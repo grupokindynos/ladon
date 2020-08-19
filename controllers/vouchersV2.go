@@ -3,10 +3,10 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
-	"github.com/grupokindynos/common/blockbook"
 	coinfactory "github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/common/coin-factory/coins"
 	commonErrors "github.com/grupokindynos/common/errors"
+	"github.com/grupokindynos/common/explorer"
 	"github.com/grupokindynos/common/hestia"
 	"github.com/grupokindynos/common/obol"
 	"github.com/grupokindynos/common/utils"
@@ -89,15 +89,6 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	}
 	// Create a VoucherID
 	newVoucherID := utils.RandomString()
-	// Get a payment address from the hot-wallets
-	// exchange path
-	pathInfo, err := vc.Adrestia.GetPath(PrepareVoucher.Coin)
-	if err != nil {
-		err = commonErrors.ErrorFillingPaymentInformation
-		return nil, err
-	}
-	paymentAddr := pathInfo.Address
-	feePaymentAddr := pathInfo.Address
 
 	//get email
 	email, err := hestiaDb.GetUserInfo(uid)
@@ -129,6 +120,20 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		}
 	}
 	PrepareVoucher.Valid = int32(voucherInfo.Valid)
+
+	// Exchange Path
+	pathInfo, err := vc.Adrestia.GetPath(PrepareVoucher.Coin, voucherInfo.Variants[variantIndex].Price / 100)
+	if err != nil {
+		if err == commonErrors.ErrorNotSupportedAmount {
+			return nil, err
+		}
+
+		err = commonErrors.ErrorFillingPaymentInformation
+		return nil, err
+	}
+
+	paymentAddr := pathInfo.Address
+	feePaymentAddr := pathInfo.Address
 
 	// TODO VALIDATE PRICE IS ALWAYS IN EURO
 	euroRate, err := vc.Obol.GetCoin2FIATRate(PrepareVoucher.Coin, "EUR")
@@ -214,6 +219,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		Email:          email,
 		ShippingMethod: voucherInfo.Shipping.GetEnum(),
 		Valid: PrepareVoucher.Valid,
+		Country: PrepareVoucher.Country,
 	}
 
 	vc.AddVoucherToMapV2(uid, prepareVoucher)
@@ -292,6 +298,7 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 		ShippingMethod: storedVoucher.ShippingMethod,
 		Message: "",
 		Valid: storedVoucher.Valid,
+		Country: storedVoucher.Country,
 	}
 
 	vc.RemoveVoucherFromMapV2(uid)
@@ -399,8 +406,8 @@ func (vc *VouchersControllerV2) broadCastTxV2(coinConfig *coins.Coin, rawTx stri
 	if coinConfig.Info.Token {
 		coinConfig, _ = coinfactory.GetCoin("ETH")
 	}
-	blockbookWrapper := blockbook.NewBlockBookWrapper(coinConfig.Info.Blockbook)
-	return blockbookWrapper.SendTxWithMessage(rawTx)
+	explorerWrapper, _ := explorer.NewExplorerFactory().GetExplorerByCoin(*coinConfig)
+	return explorerWrapper.SendTxWithMessage(rawTx)
 }
 
 func (vc *VouchersControllerV2) getHestiaDb(test bool) services.HestiaService {
