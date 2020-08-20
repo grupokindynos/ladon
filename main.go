@@ -79,7 +79,7 @@ func main() {
 	}
 
 	// check processor availability
-	h := services.HestiaRequests{HestiaURL:os.Getenv("HESTIA_PRODUCTION_URL")}
+	h := services.HestiaRequests{HestiaURL: os.Getenv("HESTIA_PRODUCTION_URL")}
 	config, err := h.GetVoucherStatus()
 	if err != nil {
 		log.Println(err)
@@ -227,7 +227,7 @@ func ValidateDevRequest(c *gin.Context, method func(payload []byte, uid string, 
 		responses.GlobalResponseNoAuth(c)
 		return
 	}
-	if uid != "gwY3fy79LZMtUbSNBDoom7llGfh2" {
+	if uid != "gwY3fy79LZMtUbSNBDoom7llGfh2" && uid != "vpnEznsjlaYsmc415Ycb1gPKudU2" {
 		responses.GlobalResponseError(nil, errors.New("you have no access for dev mode"), c)
 		return
 	}
@@ -259,8 +259,8 @@ func runProcessor() {
 func runProcessorV2() {
 	proc2 := processor.ProcessorV2{
 		SkipValidations: skipValidations,
-		Hestia:          &services.HestiaRequests{HestiaURL:hestiaEnv},
-		Plutus:          &services.PlutusRequests{PlutusURL:os.Getenv(plutusEnv)},
+		Hestia:          &services.HestiaRequests{HestiaURL: hestiaEnv},
+		Plutus:          &services.PlutusRequests{PlutusURL: os.Getenv(plutusEnv)},
 		Bitcou:          services.NewBitcouService(devMode, 2),
 		Adrestia:        &services.AdrestiaRequests{AdrestiaUrl: adrestiaEnv},
 		HestiaUrl:       hestiaEnv,

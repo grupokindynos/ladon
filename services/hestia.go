@@ -355,7 +355,7 @@ func (h *HestiaRequests) GetVouchersByTimestamp(uid string, timestamp string) (v
 }
 
 func (h *HestiaRequests) GetVouchersByTimestampV2(uid string, timestamp string) (vouchers []hestia.VoucherV2, err error) {
-	req, err := mvt.CreateMVTToken("GET", os.Getenv(h.HestiaURL)+"/voucher2/all_by_timestamp?timestamp="+timestamp+"&userid="+uid+"test="+b2s(h.TestingDb), "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+	req, err := mvt.CreateMVTToken("GET", os.Getenv(h.HestiaURL)+"/voucher2/all_by_timestamp?timestamp="+timestamp+"&userid="+uid+"&test="+b2s(h.TestingDb), "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return vouchers, err
 	}
@@ -391,7 +391,7 @@ func (h *HestiaRequests) GetVouchersByTimestampV2(uid string, timestamp string) 
 }
 
 func (h *HestiaRequests) GetUserInfo(uid string) (info string, err error) {
-	req, err := mvt.CreateMVTToken("GET", os.Getenv(h.HestiaURL)+"/voucher2/user/info?userid="+uid+"test="+b2s(h.TestingDb), "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
+	req, err := mvt.CreateMVTToken("GET", os.Getenv(h.HestiaURL)+"/voucher2/user/info?userid="+uid+"&test="+b2s(h.TestingDb), "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return info, err
 	}
