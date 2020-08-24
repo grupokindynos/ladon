@@ -26,16 +26,20 @@ type VouchersControllerV2 struct {
 	TxsAvailable     bool
 	Plutus           services.PlutusService
 	Hestia           services.HestiaService
+	HestiaTest		 services.HestiaService
 	Bitcou           services.BitcouService
 	Obol             obol.ObolService
 	Adrestia         services.AdrestiaService
 }
 
 var (
-	Whitelist map[string]bool = make(map[string]bool)
+	Whitelist = make(map[string]bool)
 )
 
-func (vc *VouchersControllerV2) StatusV2(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
+func (vc *VouchersControllerV2) StatusV2(_ []byte, uid string, _ string, _ string, test bool) (interface{}, error) {
+	if test {
+		return true, nil
+	}
 	Whitelist["gwY3fy79LZMtUbSNBDoom7llGfh2"] = true
 	Whitelist["yEF8YP4Ou9aCEqSPQPqDslviGfT2"] = true
 	Whitelist["TO3FrEneQcf2RN2QdL8paY6IvBF2"] = true
@@ -54,8 +58,9 @@ func (vc *VouchersControllerV2) StatusV2(payload []byte, uid string, voucherid s
 	return status.Vouchers.Service, nil
 }
 
-func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
-	config, err := vc.StatusV2(payload, uid, voucherid, phoneNb)
+func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid string, phoneNb string, test bool) (interface{}, error) {
+	hestiaDb := vc.getHestiaDb(test)
+	config, err := vc.StatusV2(payload, uid, voucherid, phoneNb, test)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +74,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	if err != nil {
 		return nil, err
 	}
-	coinsConfig, err := vc.Hestia.GetCoinsConfig()
+	coinsConfig, err := hestiaDb.GetCoinsConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +91,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	newVoucherID := utils.RandomString()
 
 	//get email
-	email, err := vc.Hestia.GetUserInfo(uid)
+	email, err := hestiaDb.GetUserInfo(uid)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +107,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		return nil, err
 	}
 
-	voucherInfo, err := vc.Hestia.GetVoucherInfoV2(PrepareVoucher.Country, strconv.Itoa(int(PrepareVoucher.ProductId)))
+	voucherInfo, err := hestiaDb.GetVoucherInfoV2(PrepareVoucher.Country, strconv.Itoa(int(PrepareVoucher.ProductId)))
 	if err != nil {
 		return nil, err
 	}
@@ -144,12 +149,12 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	if err != nil {
 		return nil, err
 	}
-	if purchaseAmountEuro > float64(balance.Amount)/100 {
+	if purchaseAmountEuro > float64(balance.Amount)/100 && !test {
 		log.Println("not enough balance in floating account to fulfill request")
 		return nil, commonErrors.ErrorNotEnoughDash // TODO RENAME ERROR
 	}
 
-	if 100 > float64(balance.Amount)/100 {
+	if 100 > float64(balance.Amount) / 100 {
 		log.Println("balance below 100 EURO please refill")
 		// TODO Configure telegram alert || automatic refill
 	}
@@ -174,7 +179,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 
 	// Validate that users hasn't bought more than 210 euro in vouchers on the last 24 hours.
 	timestamp := strconv.FormatInt(time.Now().Unix()-24*3600, 10)
-	vouchers, err := vc.Hestia.GetVouchersByTimestampV2(uid, timestamp)
+	vouchers, err := hestiaDb.GetVouchersByTimestampV2(uid, timestamp)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +194,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		}
 	}
 
-	if totalAmountEuro > 210.0 {
+	if totalAmountEuro > 210.0 && !test {
 		return nil, commonErrors.ErrorVoucherLimit
 	}
 
@@ -221,7 +226,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	return res, nil
 }
 
-func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId string, phoneNb string) (interface{}, error) {
+func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId string, _ string, test bool) (interface{}, error) {
 	var voucherPayments models.StoreVoucher
 	err := json.Unmarshal(payload, &voucherPayments)
 	if err != nil {
@@ -297,15 +302,19 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 	}
 
 	vc.RemoveVoucherFromMapV2(uid)
-	voucherId, err = vc.Hestia.UpdateVoucherV2(voucher)
+
+	hestiaDb := vc.getHestiaDb(test)
+	voucherId, err = hestiaDb.UpdateVoucherV2(voucher)
 	if err != nil {
 		return nil, err
 	}
-	go vc.decodeAndCheckTxV2(voucher, storedVoucher, voucherPayments.RawTx)
+	if !test {
+		go vc.decodeAndCheckTxV2(voucher, storedVoucher, voucherPayments.RawTx)
+	}
 	return voucherId, nil
 }
 
-func (vc *VouchersControllerV2) GetListForPhoneV2(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error) {
+func (vc *VouchersControllerV2) GetListForPhoneV2(_ []byte, _ string, _ string, phoneNb string, _ bool) (interface{}, error) {
 	vouchersAvailable, err := vc.Bitcou.GetPhoneTopUpListV2(phoneNb)
 	if err != nil {
 		return nil, err
@@ -313,7 +322,7 @@ func (vc *VouchersControllerV2) GetListForPhoneV2(payload []byte, uid string, vo
 	return vouchersAvailable, nil
 }
 
-func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2, storedVoucherData models.PrepareVoucherInfoV2, rawTx string) {
+func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2, _ models.PrepareVoucherInfoV2, rawTx string) {
 	// Validate Payment RawTx
 	/*body := plutus.ValidateRawTxReq{
 		Coin:    voucherData.UserPayment.Coin,
@@ -331,7 +340,7 @@ func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2,
 		}
 		log.Println(voucherData.Message)
 		voucherData.Status = hestia.VoucherStatusV2Error
-		_, err = vc.Hestia.UpdateVoucherV2(voucherData)
+		_, err = hestiaDb.UpdateVoucherV2(voucherData)
 		if err != nil {
 			return
 		}
@@ -399,4 +408,12 @@ func (vc *VouchersControllerV2) broadCastTxV2(coinConfig *coins.Coin, rawTx stri
 	}
 	explorerWrapper, _ := explorer.NewExplorerFactory().GetExplorerByCoin(*coinConfig)
 	return explorerWrapper.SendTxWithMessage(rawTx)
+}
+
+func (vc *VouchersControllerV2) getHestiaDb(test bool) services.HestiaService {
+	if test {
+		return vc.HestiaTest
+	}
+
+	return vc.Hestia
 }

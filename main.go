@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -78,7 +79,7 @@ func main() {
 	}
 
 	// check processor availability
-	h := services.HestiaRequests{HestiaURL:os.Getenv("HESTIA_PRODUCTION_URL")}
+	h := services.HestiaRequests{HestiaURL: os.Getenv("HESTIA_PRODUCTION_URL")}
 	config, err := h.GetVoucherStatus()
 	if err != nil {
 		log.Println(err)
@@ -131,6 +132,7 @@ func ApplyRoutes(r *gin.Engine) {
 		PreparesVouchers: prepareVouchersMapV2,
 		Plutus:           &services.PlutusRequests{PlutusURL: os.Getenv(plutusEnv)},
 		Hestia:           &services.HestiaRequests{HestiaURL: hestiaEnv},
+		HestiaTest:       &services.HestiaRequests{HestiaURL: hestiaEnv, TestingDb: true},
 		Bitcou:           services.NewBitcouService(devMode, 2),
 		Obol:             &obol.ObolRequest{ObolURL: os.Getenv("OBOL_PRODUCTION_URL")},
 		Adrestia:         &services.AdrestiaRequests{AdrestiaUrl: adrestiaEnv},
@@ -157,9 +159,20 @@ func ApplyRoutes(r *gin.Engine) {
 	r.NoRoute(func(c *gin.Context) {
 		c.String(http.StatusNotFound, "Not Found")
 	})
+
+	devApiV2 := r.Group("dev/v2/")
+	{
+		devApiV2.GET("/status", func(context *gin.Context) { ValidateDevRequest(context, vouchersCtrlV2.StatusV2) })
+		devApiV2.POST("/prepare", func(context *gin.Context) { ValidateDevRequest(context, vouchersCtrlV2.PrepareV2) })
+		devApiV2.POST("/new", func(context *gin.Context) { ValidateDevRequest(context, vouchersCtrlV2.StoreV2) })
+		devApiV2.GET("/phone/:phone", func(context *gin.Context) { ValidateDevRequest(context, vouchersCtrlV2.GetListForPhoneV2) })
+	}
+	r.NoRoute(func(c *gin.Context) {
+		c.String(http.StatusNotFound, "Not Found")
+	})
 }
 
-func ValidateRequest(c *gin.Context, method func(payload []byte, uid string, voucherid string, phoneNb string) (interface{}, error)) {
+func ValidateRequest(c *gin.Context, method func(payload []byte, uid string, voucherid string, phoneNb string, test bool) (interface{}, error)) {
 	fbToken := c.GetHeader("token")
 	voucherid := c.Param("voucherid")
 	phoneNb := c.Param("phone")
@@ -181,7 +194,44 @@ func ValidateRequest(c *gin.Context, method func(payload []byte, uid string, vou
 		responses.GlobalResponseNoAuth(c)
 		return
 	}
-	response, err := method(payload, uid, voucherid, phoneNb)
+	response, err := method(payload, uid, voucherid, phoneNb, false)
+	if err != nil {
+		log.Println("user: ", uid, "\nerror: ", err, "\nvoucher", voucherid)
+		responses.GlobalResponseError(nil, err, c)
+		return
+	}
+	encrypted, err := jwt.EncryptJWE(uid, response)
+	responses.GlobalResponseError(encrypted, err, c)
+	return
+}
+
+func ValidateDevRequest(c *gin.Context, method func(payload []byte, uid string, voucherid string, phoneNb string, test bool) (interface{}, error)) {
+	fbToken := c.GetHeader("token")
+	voucherid := c.Param("voucherid")
+	phoneNb := c.Param("phone")
+	if fbToken == "" {
+		responses.GlobalResponseNoAuth(c)
+		return
+	}
+	tokenBytes, _ := c.GetRawData()
+	var ReqBody hestia.BodyReq
+	if len(tokenBytes) > 0 {
+		err := json.Unmarshal(tokenBytes, &ReqBody)
+		if err != nil {
+			responses.GlobalResponseError(nil, err, c)
+			return
+		}
+	}
+	valid, payload, uid, err := ppat.VerifyPPATToken("https://hestia.polispay.com", "ladon", os.Getenv("MASTER_PASSWORD"), fbToken, ReqBody.Payload, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"), os.Getenv("HESTIA_PUBLIC_KEY"))
+	if !valid {
+		responses.GlobalResponseNoAuth(c)
+		return
+	}
+	if uid != "gwY3fy79LZMtUbSNBDoom7llGfh2" && uid != "vpnEznsjlaYsmc415Ycb1gPKudU2" {
+		responses.GlobalResponseError(nil, errors.New("you have no access for dev mode"), c)
+		return
+	}
+	response, err := method(payload, uid, voucherid, phoneNb, true)
 	if err != nil {
 		log.Println("user: ", uid, "\nerror: ", err, "\nvoucher", voucherid)
 		responses.GlobalResponseError(nil, err, c)
@@ -209,8 +259,8 @@ func runProcessor() {
 func runProcessorV2() {
 	proc2 := processor.ProcessorV2{
 		SkipValidations: skipValidations,
-		Hestia:          &services.HestiaRequests{HestiaURL:hestiaEnv},
-		Plutus:          &services.PlutusRequests{PlutusURL:os.Getenv(plutusEnv)},
+		Hestia:          &services.HestiaRequests{HestiaURL: hestiaEnv},
+		Plutus:          &services.PlutusRequests{PlutusURL: os.Getenv(plutusEnv)},
 		Bitcou:          services.NewBitcouService(devMode, 2),
 		Adrestia:        &services.AdrestiaRequests{AdrestiaUrl: adrestiaEnv},
 		HestiaUrl:       hestiaEnv,
@@ -221,7 +271,6 @@ func runProcessorV2() {
 	for range ticker.C {
 		proc2.Start()
 	}
-
 }
 
 func checkAndRemoveVouchersV2(ctrl *controllers.VouchersControllerV2) {
