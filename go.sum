@@ -75,8 +75,6 @@ github.com/dustin/go-humanize v0.0.0-20171111073723-bb3d318650d4/go.mod h1:Htrtb
 github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
 github.com/eabz/btcutil v0.0.0-20200121225113-5a78fc2600d7 h1:wOptPNemN3F0O95x6nYOx/Xf11Gj2wrKcVJxPMG7wVw=
 github.com/eabz/btcutil v0.0.0-20200121225113-5a78fc2600d7/go.mod h1:If/0bFqCxbQJHG1OKA8SlNdkSKDBi0VYPAjta1t1uZM=
-github.com/eabz/btcutil v0.0.0-20200122160855-a9a14a65b356 h1:IOIpDfSDVIvHc7c20jg9PXML4+JciItiIwxAZiJdsn8=
-github.com/eabz/btcutil v0.0.0-20200122160855-a9a14a65b356/go.mod h1:If/0bFqCxbQJHG1OKA8SlNdkSKDBi0VYPAjta1t1uZM=
 github.com/eapache/go-resiliency v1.1.0/go.mod h1:kFI+JgMyC7bLPUVY133qvEBtVayf5mFgVsvEsIPBvNs=
 github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21/go.mod h1:+020luEh2TKB4/GOp8oxxtq0Daoen/Cii55CzbTV6DU=
 github.com/eapache/queue v1.1.0/go.mod h1:6eCeP0CKFpHLu8blIFXhExK/dRa7WDZfr6jVFPTqq+I=
@@ -177,10 +175,8 @@ github.com/grupokindynos/adrestia-go v0.0.0-20200521181822-539d70e5cd84 h1:3SRTJ
 github.com/grupokindynos/adrestia-go v0.0.0-20200521181822-539d70e5cd84/go.mod h1:BbGnoxAx+BR/dzyVAw88NKtRZNvU3t13JzMd9rxBXjs=
 github.com/grupokindynos/common v0.0.0-20200501195405-3604aabfdc29 h1:DhLnj8Ae36sqabpcifXPkddr4gIWn1TBFlL4CyWYqRY=
 github.com/grupokindynos/common v0.0.0-20200501195405-3604aabfdc29/go.mod h1:TmP70nKfgs35046GoB8TIq1r1OFvEHYaaEvaPs6PayM=
-github.com/grupokindynos/common v0.0.0-20200818015303-98c738090270 h1:4XJJnIliEMV1m60ch69QCi534wgzGrUwMQxx++eozl0=
-github.com/grupokindynos/common v0.0.0-20200818015303-98c738090270/go.mod h1:lCXEoFdFmLhbC6bGfhkByFYv6ndS+j+qr+SUBZ4ryx0=
-github.com/grupokindynos/common v0.0.0-20200818153943-4672e360b8cb h1:8dSVv5FAvrtzgPYHM9HATBM5NPbJDgp2rTUgCVGgSKI=
-github.com/grupokindynos/common v0.0.0-20200818153943-4672e360b8cb/go.mod h1:lCXEoFdFmLhbC6bGfhkByFYv6ndS+j+qr+SUBZ4ryx0=
+github.com/grupokindynos/common v0.0.0-20200826181559-a254d58ea8b9 h1:kFQyZf+SFddb4ZoRfDqhuqjEqOB3yQrqkqyrMbxBmWI=
+github.com/grupokindynos/common v0.0.0-20200826181559-a254d58ea8b9/go.mod h1:01s5/fk/NE85VAR6RiFfUWWiy/UnSBRLIltJCAu56Bw=
 github.com/grupokindynos/go-binance v0.0.0-20200521174839-befa530034d2 h1:tR0HXvKN67jYqN7d0w5fHvNqfuGcWWvFk7HQ6PWJEG8=
 github.com/grupokindynos/go-binance v0.0.0-20200521174839-befa530034d2/go.mod h1:t0HMFWanG5UtRfZo/2Hc4KO4sbrJSKQoOrlintfiVTM=
 github.com/hashicorp/consul/api v1.3.0/go.mod h1:MmDNSzIMUjNpY/mQ398R4bk2FnqQLoPndWW5VkKPlCE=
@@ -254,6 +250,8 @@ github.com/martinboehm/btcd v0.0.0-20200313230603-83af86142d93 h1:SBXxF9UMEPAswV
 github.com/martinboehm/btcd v0.0.0-20200313230603-83af86142d93/go.mod h1:rKQj/jGwFruYjpM6vN+syReFoR0DsLQaajhyH/5mwUE=
 github.com/martinboehm/btcutil v0.0.0-20180706230648-ab6388e0c60a/go.mod h1:NIviPmxe43yBgIB4HGB4w4kv9/s5kaDa/pi+wZAAxQo=
 github.com/martinboehm/btcutil v0.0.0-20191023112652-a3d2b8457b77/go.mod h1:NIviPmxe43yBgIB4HGB4w4kv9/s5kaDa/pi+wZAAxQo=
+github.com/martinboehm/btcutil v0.0.0-20200229134221-d7706467ae8f h1:MMI9XvVjNHkqQDDyud0Ll0qd/w4jAhgkLZMY8q6KbR8=
+github.com/martinboehm/btcutil v0.0.0-20200229134221-d7706467ae8f/go.mod h1:NIviPmxe43yBgIB4HGB4w4kv9/s5kaDa/pi+wZAAxQo=
 github.com/mattn/go-colorable v0.0.9/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=
 github.com/mattn/go-isatty v0.0.3/go.mod h1:M+lRXTBqGeGNdLjl/ufCoiOlB5xdOkqRJdNxMWT7Zi4=
 github.com/mattn/go-isatty v0.0.4/go.mod h1:M+lRXTBqGeGNdLjl/ufCoiOlB5xdOkqRJdNxMWT7Zi4=
