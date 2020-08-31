@@ -129,7 +129,7 @@ func (p *ProcessorV2) handlePerformingTrade(wg *sync.WaitGroup) {
 	for _, voucher := range vouchers {
 		switch voucher.Conversion.Status {
 		case hestia.ShiftV2TradeStatusCreated:
-			p.handleDirectionalTradeCreated(&voucher.Conversion)
+			p.handleDirectionalTradeCreated(&voucher.Conversion, voucher.Id)
 		case hestia.ShiftV2TradeStatusPerforming:
 			p.handleDirectionalTradePerforming(&voucher)
 			if voucher.Conversion.Status == hestia.ShiftV2TradeStatusCompleted {
@@ -254,10 +254,10 @@ func (p *ProcessorV2) handleDirectionalTradePerforming(voucher *hestia.VoucherV2
 	}
 }
 
-func (p *ProcessorV2) handleDirectionalTradeCreated(dt *hestia.DirectionalTrade) {
+func (p *ProcessorV2) handleDirectionalTradeCreated(dt *hestia.DirectionalTrade, id string) {
 	res, err := p.Adrestia.Trade(dt.Conversions[0])
 	if err != nil {
-		log.Println("handleDirectionalTradeCreated - Trade - " + err.Error())
+		log.Println("handleDirectionalTradeCreated - Trade - " + id, " ", err.Error())
 		return
 	}
 
