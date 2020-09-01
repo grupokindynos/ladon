@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cast"
 	"log"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -159,8 +160,12 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		// TODO Configure telegram alert || automatic refill
 	}
 
+	securityFactor := 1.0
+	if strings.ToUpper(PrepareVoucher.Coin) == "POLIS" || strings.ToUpper(PrepareVoucher.Coin) == "BITG" {
+		securityFactor = 0.985
+	}
 	// Amounts for amount and fees in float representation
-	paymentAmount := decimal.NewFromFloat(purchaseAmountEuro / euroRate)
+	paymentAmount := decimal.NewFromFloat(purchaseAmountEuro / (euroRate * securityFactor))
 	feePercentage := paymentCoinConfig.Vouchers.FeePercentage / float64(100)
 	feeAmount := paymentAmount.Mul(decimal.NewFromFloat(feePercentage))
 	// check if its a token to adjust to the amount
