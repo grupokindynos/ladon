@@ -160,10 +160,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		// TODO Configure telegram alert || automatic refill
 	}
 
-	securityFactor := 1.0
-	if strings.ToUpper(PrepareVoucher.Coin) == "POLIS" || strings.ToUpper(PrepareVoucher.Coin) == "BITG" {
-		securityFactor = 0.985
-	}
+	securityFactor := getSecurityFactor(strings.ToUpper(PrepareVoucher.Coin))
 	// Amounts for amount and fees in float representation
 	paymentAmount := decimal.NewFromFloat(purchaseAmountEuro / (euroRate * securityFactor))
 	feePercentage := paymentCoinConfig.Vouchers.FeePercentage / float64(100)
@@ -229,6 +226,16 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 
 	vc.AddVoucherToMapV2(uid, prepareVoucher)
 	return res, nil
+}
+
+func getSecurityFactor(coin string) float64 {
+	exCoins := [7]string{"POLIS", "RPD", "TELOS", "FYD", "MW", "BITG", "COLX"}
+	for _, c := range exCoins {
+		if c == coin {
+			return 0.982
+		}
+	}
+	return 1.0
 }
 
 func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId string, _ string, test bool) (interface{}, error) {
