@@ -230,9 +230,15 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 
 func getSecurityFactor(coin string) float64 {
 	exCoins := [7]string{"POLIS", "RPD", "TELOS", "FYD", "MW", "BITG", "COLX"}
+	exHighCoins := [2]string{"IDX", "NULS"}
 	for _, c := range exCoins {
 		if c == coin {
 			return 0.982
+		}
+	}
+	for _, c := range exHighCoins {
+		if c == coin {
+			return 0.92
 		}
 	}
 	return 1.0
