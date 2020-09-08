@@ -208,6 +208,7 @@ func (p *ProcessorV2) getVoucherByStatus(status hestia.VoucherStatusV2) (voucher
 	if err != nil {
 		log.Println("Unable to get vouchers with status " + hestia.GetVoucherStatusV2String(status))
 	}
+	log.Println(hestia.GetVoucherStatusV2String(status), vouchers)
 	return
 }
 
