@@ -9,6 +9,7 @@ import (
 	"github.com/grupokindynos/common/tokens/mvt"
 	"github.com/grupokindynos/ladon/models"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -59,6 +60,7 @@ func (h *HestiaRequests) GetVouchersStatus() (hestia.Config, error) {
 }
 
 func (h *HestiaRequests) GetVouchersByStatusV2(status hestia.VoucherStatusV2) ([]hestia.VoucherV2, error) {
+	log.Println(os.Getenv(h.HestiaURL)+"/voucher2/all?filter=")
 	req, err := mvt.CreateMVTToken("GET", os.Getenv(h.HestiaURL)+"/voucher2/all?filter="+fmt.Sprintf("%d", status)+"test="+b2s(h.TestingDb), "ladon", os.Getenv("MASTER_PASSWORD"), nil, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return nil, err
