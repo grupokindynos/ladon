@@ -208,8 +208,16 @@ func (p *ProcessorV2) getVoucherByStatus(status hestia.VoucherStatusV2) (voucher
 	if err != nil {
 		log.Println("Unable to get vouchers with status " + hestia.GetVoucherStatusV2String(status))
 	}
-	log.Println(hestia.GetVoucherStatusV2String(status), vouchers)
+	log.Println(hestia.GetVoucherStatusV2String(status), getIds(vouchers))
 	return
+}
+
+func getIds(vouchers []hestia.VoucherV2) []string{
+	var ids []string
+	for _, v := range vouchers {
+		ids = append(ids, v.Id)
+	}
+	return ids
 }
 
 func (p *ProcessorV2) handleDirectionalTradePerforming(voucher *hestia.VoucherV2) {
