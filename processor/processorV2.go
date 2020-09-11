@@ -152,16 +152,18 @@ func (p *ProcessorV2) handleNeedsRefund(wg *sync.WaitGroup) {
 			Asset:   voucher.UserPayment.Coin,
 			TxId:    voucher.UserPayment.Txid,
 			Address: voucher.UserPayment.Address,
+			Exchange: voucher.Conversion.Exchange,
 		})
 		if err != nil {
 			log.Println("handleNeedsRefund - DepositInfo - " + err.Error())
 			continue
 		}
 		if res.DepositInfo.Status == hestia.ExchangeOrderStatusCompleted {
-			res, err := p.Adrestia.Withdraw(amodels.WithdrawParams{
+			res, err := p.Adrestia.Withdraw(amodels.WithdrawParamsV2{
 				Asset:   voucher.UserPayment.Coin,
 				Address: voucher.RefundAddress,
 				Amount:  res.DepositInfo.ReceivedAmount,
+				Exchange: res.Exchange,
 			})
 			if err != nil {
 				log.Println("handleNeedsRefund - Withdraw - " + err.Error())

@@ -10,7 +10,7 @@ require (
 	github.com/go-playground/validator/v10 v10.3.0 // indirect
 	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.4.2 // indirect
-	github.com/grupokindynos/adrestia-go v0.0.0-20200908223120-d15cafcbc09e
+	github.com/grupokindynos/adrestia-go v0.0.0-20200911070305-6d05a24df630
 	github.com/grupokindynos/common v0.0.0-20200909173354-11e362c5f8b7
 	github.com/joho/godotenv v1.3.0
 	github.com/json-iterator/go v1.1.10 // indirect
