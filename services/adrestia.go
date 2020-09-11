@@ -216,8 +216,9 @@ func (a *AdrestiaRequests) GetWithdrawalTxHash(withdrawParams models.WithdrawInf
 
 func (a *AdrestiaRequests) GetPath(fromCoin string, amount float64) (path models.VoucherPathResponse, err error) {
 	url := os.Getenv(a.AdrestiaUrl) + "/v2/voucher/path"
-	pathParams := models.VoucherPathParams{
+	pathParams := models.VoucherPathParamsV2{
 		FromCoin: fromCoin,
+		AmountEuro: amount,
 	}
 	req, err := mvt.CreateMVTToken("POST", url, "ladon", os.Getenv("MASTER_PASSWORD"), pathParams, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
