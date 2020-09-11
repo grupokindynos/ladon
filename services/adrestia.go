@@ -138,8 +138,8 @@ func (a *AdrestiaRequests) GetTradeStatus(tradeParams hestia.Trade) (tradeInfo h
 	return
 }
 
-func (a *AdrestiaRequests) Withdraw(withdrawParams models.WithdrawParams) (withdrawal models.WithdrawInfo, err error) {
-	url := os.Getenv(a.AdrestiaUrl) + "/withdraw"
+func (a *AdrestiaRequests) Withdraw(withdrawParams models.WithdrawParamsV2) (withdrawal models.WithdrawInfo, err error) {
+	url := os.Getenv(a.AdrestiaUrl) + "/v2/withdraw"
 	req, err := mvt.CreateMVTToken("POST", url, "ladon", os.Getenv("MASTER_PASSWORD"), withdrawParams, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return
