@@ -99,6 +99,7 @@ func (p *ProcessorV2) handleRedeemed(wg *sync.WaitGroup) {
 			Asset:   voucher.UserPayment.Coin,
 			TxId:    voucher.UserPayment.Txid,
 			Address: voucher.UserPayment.Address,
+			Exchange: voucher.Conversion.Exchange,
 		})
 		if err != nil {
 			log.Println(voucher.Id)
