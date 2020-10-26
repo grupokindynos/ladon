@@ -64,9 +64,7 @@ func (bs *BitcouRequests) GetPhoneTopUpList(phoneNb string) ([]int, error) {
 
 func (bs *BitcouRequests) GetPhoneTopUpListV2(phoneNb string) ([]int, error) {
 	url := bs.BitcouURL + "voucher/availableVouchersByPhoneNb"
-	log.Println("url phonetopupv2 ", url)
 	token := "Bearer " + bs.BitcouToken
-	log.Println("url phonetopupv2 ", token)
 	body := models.BitcouPhoneBodyReq{PhoneNumber: phoneNb}
 	byteBody, err := json.Marshal(body)
 	postBody := bytes.NewBuffer(byteBody)
@@ -75,7 +73,7 @@ func (bs *BitcouRequests) GetPhoneTopUpListV2(phoneNb string) ([]int, error) {
 		return nil, err
 	}
 	req.Header.Add("Authorization", token)
-	client := &http.Client{Timeout: 5 * time.Second}
+	client := &http.Client{Timeout: 15 * time.Second}
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
