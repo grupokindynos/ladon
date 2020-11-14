@@ -86,7 +86,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		}
 	}
 	if paymentCoinConfig.Ticker == "" || !paymentCoinConfig.Vouchers.Available {
-		return nil, err
+		return nil, errors.New("coin not available")
 	}
 	// Create a VoucherID
 	newVoucherID := utils.RandomString()
@@ -144,6 +144,8 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 
 	var purchaseAmountEuro float64
 	purchaseAmountEuro = voucherInfo.Variants[variantIndex].Price / 100
+
+	// purchaseAmountEuro = 1.1
 
 
 	balance, err := vc.Bitcou.GetAccountBalanceV2()
@@ -229,11 +231,17 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 }
 
 func getSecurityFactor(coin string) float64 {
-	exCoins := [5]string{"POLIS", "RPD", "TELOS", "FYD", "MW"}
+	exCoins := [3]string{"RPD", "TELOS", "FYD"}
+	medCoins := [2]string{"POLIS", "MW"}
 	exHighCoins := [6]string{"IDX", "BITG", "NULS", "CRW", "COLX", "GTH"}
 	for _, c := range exCoins {
 		if c == coin {
 			return 0.982
+		}
+	}
+	for _, c := range medCoins {
+		if c == coin {
+			return 0.935
 		}
 	}
 	for _, c := range exHighCoins {
@@ -326,6 +334,7 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 	if err != nil {
 		return nil, err
 	}
+
 	if !test {
 		go vc.decodeAndCheckTxV2(voucher, storedVoucher, voucherPayments.RawTx)
 	}
