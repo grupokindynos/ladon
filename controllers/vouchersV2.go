@@ -335,6 +335,7 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 		return nil, err
 	}
 
+	// Uncomment for local testing
 	if !test {
 		go vc.decodeAndCheckTxV2(voucher, storedVoucher, voucherPayments.RawTx)
 	}
