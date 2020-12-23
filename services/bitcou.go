@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/grupokindynos/ladon/models"
 	"io/ioutil"
 	"log"
@@ -246,6 +245,6 @@ func NewBitcouService(devMode bool, version int) *BitcouRequests {
 		DevMode: devMode,
 	}
 
-	fmt.Print("Using Bitcou URL: ", service.BitcouURL, service.BitcouToken)
+	// fmt.Print("Using Bitcou URL: ", service.BitcouURL, service.BitcouToken)
 	return service
 }

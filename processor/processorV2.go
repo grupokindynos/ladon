@@ -114,6 +114,10 @@ func (p *ProcessorV2) handleRedeemed(wg *sync.WaitGroup) {
 				voucher.Status = hestia.VoucherStatusV2PerformingTrade
 			}
 
+			if voucher.Conversion.Conversions == nil {
+				log.Println(fmt.Sprintf("Voucher will null conversions %s paid with coin %s", voucher.Id, voucher.UserPayment.Coin))
+				continue
+			}
 			voucher.Conversion.Conversions[0].Amount = res.DepositInfo.ReceivedAmount
 			voucher.ReceivedAmount = res.DepositInfo.ReceivedAmount // Esto se va a sobreescribir si se necesitan trades
 			_, err := p.Hestia.UpdateVoucherV2(voucher)
@@ -261,7 +265,7 @@ func (p *ProcessorV2) handleDirectionalTradePerforming(voucher *hestia.VoucherV2
 func (p *ProcessorV2) handleDirectionalTradeCreated(dt *hestia.DirectionalTrade, id string) {
 	res, err := p.Adrestia.Trade(dt.Conversions[0])
 	if err != nil {
-		log.Println("handleDirectionalTradeCreated - Trade - " + id, " ", err.Error())
+		log.Println(fmt.Sprintf("handleDirectionalTradeCreated - Trade - %s - %s", id,  err.Error()))
 		return
 	}
 
