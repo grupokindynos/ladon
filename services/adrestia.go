@@ -215,7 +215,7 @@ func (a *AdrestiaRequests) GetWithdrawalTxHash(withdrawParams models.WithdrawInf
 }
 
 func (a *AdrestiaRequests) GetPath(fromCoin string, amount float64) (path models.VoucherPathResponse, err error) {
-	url := os.Getenv(a.AdrestiaUrl) + "/v2/voucher/path"
+	url := os.Getenv(a.AdrestiaUrl) + "/v2/voucher/path2"
 	pathParams := models.VoucherPathParamsV2{
 		FromCoin: fromCoin,
 		AmountEuro: amount,
