@@ -339,6 +339,7 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 	if !test {
 		go vc.decodeAndCheckTxV2(voucher, storedVoucher, voucherPayments.RawTx)
 	}
+	//go vc.decodeAndCheckTxV2(voucher, storedVoucher, voucherPayments.RawTx)
 	return voucherId, nil
 }
 
@@ -432,7 +433,11 @@ func (vc *VouchersControllerV2) broadCastTxV2(coinConfig *coins.Coin, rawTx stri
 		return "not published due no-txs flag", nil, ""
 	}
 	if coinConfig.Info.Token {
-		coinConfig, _ = coinfactory.GetCoin("ETH")
+		if coinConfig.Info.TokenNetwork == "ethereum" {
+			coinConfig, _ = coinfactory.GetCoin("ETH")
+		} else if coinConfig.Info.TokenNetwork == "binance" {
+			coinConfig, _ = coinfactory.GetCoin("BNB")
+		}
 	}
 	explorerWrapper, _ := explorer.NewExplorerFactory().GetExplorerByCoin(*coinConfig)
 	return explorerWrapper.SendTxWithMessage(rawTx)
