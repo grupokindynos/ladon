@@ -76,7 +76,7 @@ func (p *ProcessorV2) handlePaymentProcessing(wg *sync.WaitGroup) {
 				voucher.RedeemCode = err.Error()
 				voucher.Status = hestia.VoucherStatusV2NeedsRefund
 			} else {
-				amountEuro, _ := strconv.ParseInt(res.AmountEuro, 10, 64)
+				amountEuro, _ := strconv.ParseFloat(res.AmountEuro, 64)
 				voucher.BitcouTxId = res.TxId
 				voucher.RedeemCode = res.RedeemData
 				voucher.AmountEuro = amountEuro

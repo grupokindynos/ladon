@@ -145,7 +145,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	var purchaseAmountEuro float64
 	purchaseAmountEuro = voucherInfo.Variants[variantIndex].Price / 100
 
-	// purchaseAmountEuro = 1.1
+	purchaseAmountEuro = 0.1
 
 
 	balance, err := vc.Bitcou.GetAccountBalanceV2()
@@ -216,7 +216,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		VoucherVariant: voucherVariantInt,
 		Path:           pathInfo,
 		UserPayment:    userPaymentInfo,
-		AmountEuro:     110,
+		AmountEuro:     totalAmountEuro,
 		Name:           PrepareVoucher.VoucherName,
 		PhoneNumber:    int64(phoneNumber),
 		ProviderId:     providerIdInt,
