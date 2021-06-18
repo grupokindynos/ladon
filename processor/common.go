@@ -1,9 +1,9 @@
 package processor
 
 import (
-	"github.com/grupokindynos/common/explorer"
 	coinfactory "github.com/grupokindynos/common/coin-factory"
 	"github.com/grupokindynos/common/coin-factory/coins"
+	"github.com/grupokindynos/common/explorer"
 	"github.com/grupokindynos/common/hestia"
 )
 
@@ -29,13 +29,32 @@ func checkTxId(payment *hestia.Payment) error {
 }
 
 func getConfirmations(coinConfig *coins.Coin, txid string) (int, error) {
-	if coinConfig.Info.Token {
-		coinConfig, _ = coinfactory.GetCoin("ETH")
+	explorerWrapper, err := getBlockExplorerWrapper(coinConfig)
+	if err != nil {
+		return 0, err
 	}
-	blockbookWrapper := explorer.NewBlockBookWrapper(coinConfig.Info.Blockbook)
-	txData, err := blockbookWrapper.GetTx(txid)
+	txData, err := explorerWrapper.GetTx(txid)
 	if err != nil {
 		return 0, err
 	}
 	return txData.Confirmations, nil
+}
+
+func getBlockExplorerWrapper(coinConfig * coins.Coin) (explorer.Explorer, error) {
+	var err error
+	if coinConfig.Info.Token {
+		if coinConfig.Info.TokenNetwork == "ethereum" {
+			coinConfig, err = coinfactory.GetCoin("ETH")
+			if err != nil {
+				return nil, err
+			}
+		} else if coinConfig.Info.TokenNetwork == "binance" {
+			coinConfig, err = coinfactory.GetCoin("BNB")
+			if err != nil {
+				return nil, err
+			}
+			return explorer.NewBscScanWrapper("https://api.bscscan.com"), nil
+		}
+	}
+	return explorer.NewBlockBookWrapper(coinConfig.Info.Blockbook), nil
 }

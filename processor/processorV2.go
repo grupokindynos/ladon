@@ -25,12 +25,12 @@ type ProcessorV2 struct {
 func (p *ProcessorV2) Start() {
 	var wg sync.WaitGroup
 	fmt.Println("Starting ProcessorV2")
-	wg.Add(5)
+	wg.Add(1)
 	go p.handlePaymentProcessing(&wg)
-	go p.handleRedeemed(&wg)
-	go p.handlePerformingTrade(&wg)
-	go p.handleNeedsRefund(&wg)
-	go p.handleWaitingRefundTxId(&wg)
+	//go p.handleRedeemed(&wg)
+	//go p.handlePerformingTrade(&wg)
+	//go p.handleNeedsRefund(&wg)
+	//go p.handleWaitingRefundTxId(&wg)
 	fmt.Println("Ending ProcessorV2")
 	wg.Wait()
 }
@@ -81,6 +81,7 @@ func (p *ProcessorV2) handlePaymentProcessing(wg *sync.WaitGroup) {
 				voucher.RedeemCode = res.RedeemData
 				voucher.AmountEuro = amountEuro
 				voucher.FulfilledTime = time.Now().Unix()
+				voucher.UserPayment.Confirmations = int32(confirmations)
 				voucher.Status = hestia.VoucherStatusV2Redeemed
 			}
 			_, err = p.Hestia.UpdateVoucherV2(voucher)

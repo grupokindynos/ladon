@@ -11,7 +11,7 @@ require (
 	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/grupokindynos/adrestia-go v0.0.0-20200911070305-6d05a24df630
-	github.com/grupokindynos/common v1.1.8
+	github.com/grupokindynos/common v1.1.9-0.20210618032404-336831131acd
 	github.com/joho/godotenv v1.3.0
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/kr/pretty v0.2.0 // indirect
