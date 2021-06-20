@@ -43,7 +43,7 @@ func init() {
 
 func main() {
 	// Read input flag
-	localRun := flag.Bool("local", false, "set this flag to run tyche with local requests")
+	localRun := flag.Bool("local", false, "set this flag to run ladon with local requests")
 	noTxs := flag.Bool("no-txs", false, "set this flag to avoid txs being executed"+
 		"IMPORTANT: -local flag needs to be set in order to use this.")
 	skipVal := flag.Bool("skip-val", false, "set this flag to avoid validations on txs."+

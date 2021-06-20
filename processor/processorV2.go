@@ -76,11 +76,12 @@ func (p *ProcessorV2) handlePaymentProcessing(wg *sync.WaitGroup) {
 				voucher.RedeemCode = err.Error()
 				voucher.Status = hestia.VoucherStatusV2NeedsRefund
 			} else {
-				amountEuro, _ := strconv.ParseInt(res.AmountEuro, 10, 64)
+				amountEuro, _ := strconv.ParseFloat(res.AmountEuro, 64)
 				voucher.BitcouTxId = res.TxId
 				voucher.RedeemCode = res.RedeemData
 				voucher.AmountEuro = amountEuro
 				voucher.FulfilledTime = time.Now().Unix()
+				voucher.UserPayment.Confirmations = int32(confirmations)
 				voucher.Status = hestia.VoucherStatusV2Redeemed
 			}
 			_, err = p.Hestia.UpdateVoucherV2(voucher)
@@ -119,7 +120,7 @@ func (p *ProcessorV2) handleRedeemed(wg *sync.WaitGroup) {
 				continue
 			}
 			voucher.Conversion.Conversions[0].Amount = res.DepositInfo.ReceivedAmount
-			voucher.ReceivedAmount = res.DepositInfo.ReceivedAmount // Esto se va a sobreescribir si se necesitan trades
+			voucher.ReceivedAmount = res.DepositInfo.ReceivedAmount // This will be overwritten as trades are executed
 			_, err := p.Hestia.UpdateVoucherV2(voucher)
 			if err != nil {
 				log.Println("ProcessorV2::handleRedeemed::UpdateVoucherV2::" + err.Error())

@@ -51,7 +51,7 @@ type PrepareVoucherInfo struct {
 type PrepareVoucherInfoV2 struct {
 	ID             string                       `json:"id"`
 	Timestamp      int64                        `json:"timestamp"`
-	AmountEuro     int64                        `json:"amount_euro"`
+	AmountEuro     float64                        `json:"amount_euro"`
 	UserPayment    PaymentInfo                  `json:"user_payment"`
 	Coin           string                       `json:"coin"`
 	VoucherType    int                          `json:"voucher_type"`

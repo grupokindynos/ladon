@@ -41,6 +41,8 @@ func (vc *VouchersControllerV2) StatusV2(_ []byte, uid string, _ string, _ strin
 	if test {
 		return true, nil
 	}
+
+	// TODO Create Whitelisting DB endpoint
 	Whitelist["gwY3fy79LZMtUbSNBDoom7llGfh2"] = true
 	Whitelist["yEF8YP4Ou9aCEqSPQPqDslviGfT2"] = true
 	Whitelist["TO3FrEneQcf2RN2QdL8paY6IvBF2"] = true
@@ -48,6 +50,7 @@ func (vc *VouchersControllerV2) StatusV2(_ []byte, uid string, _ string, _ strin
 	Whitelist["Egc6XKdkmigtWzuyq0YordjWODq1"] = true
 	Whitelist["HMOXcoZJxfMKFca9IukZIaqI2Z02"] = true
 	Whitelist["fENeiyOGJURJK9qielqR7OrxciJ3"] = true
+	Whitelist["m6hadvwAb4Z7IaOZAd1MDPSUVtk1"] = true
 
 	if val, ok := Whitelist[uid]; ok {
 		return val, nil
@@ -85,9 +88,15 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 			paymentCoinConfig = coin
 		}
 	}
-	if paymentCoinConfig.Ticker == "" || !paymentCoinConfig.Vouchers.Available {
-		return nil, errors.New("coin not available")
+	if _, ok := Whitelist[uid]; ok {
+		log.Println("Whitelisting PrepareV2 for ", uid)
+	} else {
+		// if users are not whitelisted then enforce asset verification
+		if paymentCoinConfig.Ticker == "" || !paymentCoinConfig.Vouchers.Available {
+			return nil, errors.New("coin not available")
+		}
 	}
+
 	// Create a VoucherID
 	newVoucherID := utils.RandomString()
 
@@ -145,7 +154,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	var purchaseAmountEuro float64
 	purchaseAmountEuro = voucherInfo.Variants[variantIndex].Price / 100
 
-	// purchaseAmountEuro = 1.1
+	// purchaseAmountEuro = 0.1
 
 
 	balance, err := vc.Bitcou.GetAccountBalanceV2()
@@ -216,7 +225,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 		VoucherVariant: voucherVariantInt,
 		Path:           pathInfo,
 		UserPayment:    userPaymentInfo,
-		AmountEuro:     110,
+		AmountEuro:     totalAmountEuro,
 		Name:           PrepareVoucher.VoucherName,
 		PhoneNumber:    int64(phoneNumber),
 		ProviderId:     providerIdInt,
@@ -339,6 +348,7 @@ func (vc *VouchersControllerV2) StoreV2(payload []byte, uid string, voucherId st
 	if !test {
 		go vc.decodeAndCheckTxV2(voucher, storedVoucher, voucherPayments.RawTx)
 	}
+	//go vc.decodeAndCheckTxV2(voucher, storedVoucher, voucherPayments.RawTx)
 	return voucherId, nil
 }
 
@@ -432,7 +442,11 @@ func (vc *VouchersControllerV2) broadCastTxV2(coinConfig *coins.Coin, rawTx stri
 		return "not published due no-txs flag", nil, ""
 	}
 	if coinConfig.Info.Token {
-		coinConfig, _ = coinfactory.GetCoin("ETH")
+		if coinConfig.Info.TokenNetwork == "ethereum" {
+			coinConfig, _ = coinfactory.GetCoin("ETH")
+		} else if coinConfig.Info.TokenNetwork == "binance" {
+			coinConfig, _ = coinfactory.GetCoin("BNB")
+		}
 	}
 	explorerWrapper, _ := explorer.NewExplorerFactory().GetExplorerByCoin(*coinConfig)
 	return explorerWrapper.SendTxWithMessage(rawTx)

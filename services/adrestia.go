@@ -21,7 +21,7 @@ type AdrestiaRequests struct {
 }
 
 func (a *AdrestiaRequests) DepositInfo(depositParams models.DepositParams) (depositInfo models.DepositInfo, err error) {
-	url := os.Getenv(a.AdrestiaUrl) + "/deposit"
+	url := os.Getenv(a.AdrestiaUrl) + "deposit"
 	req, err := mvt.CreateMVTToken("POST", url, "ladon", os.Getenv("MASTER_PASSWORD"), depositParams, os.Getenv("HESTIA_AUTH_USERNAME"), os.Getenv("HESTIA_AUTH_PASSWORD"), os.Getenv("LADON_PRIVATE_KEY"))
 	if err != nil {
 		return
