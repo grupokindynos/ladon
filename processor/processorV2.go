@@ -25,12 +25,12 @@ type ProcessorV2 struct {
 func (p *ProcessorV2) Start() {
 	var wg sync.WaitGroup
 	fmt.Println("Starting ProcessorV2")
-	wg.Add(1)
+	wg.Add(5)
 	go p.handlePaymentProcessing(&wg)
-	//go p.handleRedeemed(&wg)
-	//go p.handlePerformingTrade(&wg)
-	//go p.handleNeedsRefund(&wg)
-	//go p.handleWaitingRefundTxId(&wg)
+	go p.handleRedeemed(&wg)
+	go p.handlePerformingTrade(&wg)
+	go p.handleNeedsRefund(&wg)
+	go p.handleWaitingRefundTxId(&wg)
 	fmt.Println("Ending ProcessorV2")
 	wg.Wait()
 }
@@ -120,7 +120,7 @@ func (p *ProcessorV2) handleRedeemed(wg *sync.WaitGroup) {
 				continue
 			}
 			voucher.Conversion.Conversions[0].Amount = res.DepositInfo.ReceivedAmount
-			voucher.ReceivedAmount = res.DepositInfo.ReceivedAmount // Esto se va a sobreescribir si se necesitan trades
+			voucher.ReceivedAmount = res.DepositInfo.ReceivedAmount // This will be overwritten as trades are executed
 			_, err := p.Hestia.UpdateVoucherV2(voucher)
 			if err != nil {
 				log.Println("ProcessorV2::handleRedeemed::UpdateVoucherV2::" + err.Error())
