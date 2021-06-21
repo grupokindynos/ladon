@@ -385,6 +385,7 @@ func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2,
 		return
 	}*/
 	// Broadcast rawTx
+	log.Println("RawTx: ", rawTx)
 	coinConfig, err := coinfactory.GetCoin(voucherData.UserPayment.Coin)
 	if err != nil {
 		voucherData.Message = "error getting payment coin info: " + err.Error()
@@ -399,7 +400,7 @@ func (vc *VouchersControllerV2) decodeAndCheckTxV2(voucherData hestia.VoucherV2,
 	paymentTxid, err, _ := vc.broadCastTxV2(coinConfig, rawTx)
 	if err != nil {
 		voucherData.Message = "error broadcasting transaction: " + err.Error()
-		log.Println(voucherData.Message)
+		log.Println("error broadcasting tx: ", voucherData.Message)
 		voucherData.Status = hestia.VoucherStatusV2Error
 		_, err = vc.Hestia.UpdateVoucherV2(voucherData)
 		if err != nil {
