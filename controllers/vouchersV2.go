@@ -51,6 +51,7 @@ func (vc *VouchersControllerV2) StatusV2(_ []byte, uid string, _ string, _ strin
 	Whitelist["HMOXcoZJxfMKFca9IukZIaqI2Z02"] = true
 	Whitelist["fENeiyOGJURJK9qielqR7OrxciJ3"] = true
 	Whitelist["m6hadvwAb4Z7IaOZAd1MDPSUVtk1"] = true
+	Whitelist["oXuH5LwghkQG2JPYEYt1jJ08WU72"] = true
 
 	if val, ok := Whitelist[uid]; ok {
 		return val, nil
