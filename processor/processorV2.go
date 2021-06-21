@@ -38,7 +38,7 @@ func (p *ProcessorV2) Start() {
 func (p *ProcessorV2) handlePaymentProcessing(wg *sync.WaitGroup) {
 	defer wg.Done()
 	vouchers := p.getVoucherByStatus(hestia.VoucherStatusV2PaymentProcessing)
-	fmt.Println("Vouchers handlePaymentProcessing ", GetVoucherIds(vouchers))
+	// fmt.Println("Vouchers handlePaymentProcessing ", GetVoucherIds(vouchers))
 	for _, voucher := range vouchers {
 		coinInfo, err := coinfactory.GetCoin(voucher.UserPayment.Coin)
 		if err != nil {
@@ -216,7 +216,7 @@ func (p *ProcessorV2) getVoucherByStatus(status hestia.VoucherStatusV2) (voucher
 	if err != nil {
 		log.Println("Unable to get vouchers with status " + hestia.GetVoucherStatusV2String(status))
 	}
-	log.Println(hestia.GetVoucherStatusV2String(status), vouchers)
+	// log.Println(hestia.GetVoucherStatusV2String(status), vouchers)
 	return
 }
 
