@@ -155,7 +155,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	var purchaseAmountEuro float64
 	purchaseAmountEuro = voucherInfo.Variants[variantIndex].Price / 100
 
-	// purchaseAmountEuro = 0.1
+	//purchaseAmountEuro = 0.1
 
 
 	balance, err := vc.Bitcou.GetAccountBalanceV2()
@@ -182,7 +182,7 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 	if err != nil {
 		return nil, err
 	}
-	if coinConfig.Info.Token && coinConfig.Info.Tag != "ETH" {
+	if coinConfig.Info.Token && coinConfig.Info.Tag != "ETH" && coinConfig.Info.Tag != "BNB" {
 		aux, _ := paymentAmount.Float64()
 		paymentAmount = decimal.NewFromFloat(roundTo(aux, coinConfig.Info.Decimals))
 	}
@@ -241,12 +241,12 @@ func (vc *VouchersControllerV2) PrepareV2(payload []byte, uid string, voucherid 
 }
 
 func getSecurityFactor(coin string) float64 {
-	exCoins := [3]string{"BTC", "DASH", "LTC"}
-	medCoins := [4]string{"POLIS", "MW", "DIVI", "FYD"}
+	exCoins := [4]string{"BTC", "DASH", "LTC", "BNB"}
+	medCoins := [5]string{"POLIS", "POLISBSC", "MW", "DIVI", "FYD"}
 	exHighCoins := [8]string{"IDX", "BITG", "NULS", "CRW", "COLX", "GTH", "RPD", "TELOS"}
 	for _, c := range exCoins {
 		if c == coin {
-			return 0.99
+			return 0.975
 		}
 	}
 	for _, c := range medCoins {
